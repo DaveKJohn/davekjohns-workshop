@@ -11,7 +11,9 @@
     agent-def die inmiddels ook hier gedeeld is (bv. life-hub .claude/agents/<group>-<id>-agent.md,
     of swb .claude-plugins/specialists/agents/<group>-<id>-agent.md). Dit script:
 
-      1. Leest de gedeelde ids + groups uit specialists/agents/*.md in dit repo (bron van waarheid).
+      1. Leest de ids + groups uit alle drie de plugins (specialists, specialists-lifehub,
+         specialists-shopify) in dit repo (bron van waarheid) -- de gedeelde kern plus de twee
+         domein-groepen.
       2. Zoekt in de opgegeven consumerende repo op de bekende legacy-paden naar een lokaal bestand
          met datzelfde id.
       3. Meldt per gevonden id een van drie uitkomsten:
@@ -45,9 +47,16 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $PluginRoot = Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')
-$SourceDir = Join-Path $PluginRoot 'specialists\agents'
-if (-not (Test-Path -LiteralPath $SourceDir)) {
-    Write-Host "Kan de canonieke agent-defs niet vinden op $SourceDir -- stop." -ForegroundColor Red
+# Alle drie de plugins dragen canonieke agent-defs: de gedeelde kern (specialists) plus de twee
+# domein-groepen (specialists-lifehub, specialists-shopify). We scannen ze alle drie, zodat de
+# drift-check ook de domein-specialisten van een consumerende repo dekt.
+$SourceDirs = @(
+    (Join-Path $PluginRoot 'specialists\agents')
+    (Join-Path $PluginRoot 'specialists-lifehub\agents')
+    (Join-Path $PluginRoot 'specialists-shopify\agents')
+) | Where-Object { Test-Path -LiteralPath $_ }
+if ($SourceDirs.Count -eq 0) {
+    Write-Host "Kan geen canonieke agent-defs vinden onder $PluginRoot -- stop." -ForegroundColor Red
     exit 1
 }
 if (-not (Test-Path -LiteralPath $ConsumerPath)) {
@@ -67,7 +76,7 @@ function Read-NormalizedText {
 
 # --- Bron van waarheid inlezen: id, group en inhoud per gedeelde specialist ------------------------
 $sourceById = @{}
-Get-ChildItem -Path $SourceDir -Filter '*-agent.md' -File | ForEach-Object {
+Get-ChildItem -Path $SourceDirs -Filter '*-agent.md' -File | ForEach-Object {
     $text = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8)
     $idMatch = [regex]::Match($text, '(?m)^id:\s*(\d+)\s*$')
     $groupMatch = [regex]::Match($text, '(?m)^group:\s*(\d+)\s*$')
@@ -86,7 +95,7 @@ Get-ChildItem -Path $SourceDir -Filter '*-agent.md' -File | ForEach-Object {
 }
 
 if ($sourceById.Count -eq 0) {
-    Write-Host "Geen gedeelde agent-defs gevonden in $SourceDir -- niets te vergelijken." -ForegroundColor Yellow
+    Write-Host "Geen agent-defs gevonden onder $PluginRoot -- niets te vergelijken." -ForegroundColor Yellow
     exit 0
 }
 
