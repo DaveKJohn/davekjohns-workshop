@@ -4,14 +4,18 @@
     agent-def-frontmatter en de interne links voordat een wijziging via een PR op master belandt.
 .DESCRIPTION
     De lint-poort van dit repo (aangeroepen door scripts/release/open-pr.ps1). Read-only -- wijzigt
-    niets. Controleert vier dingen; elke bevinding is een error:
+    niets. Controleert het volgende; elke bevinding is een error:
 
       1. .claude-plugin/marketplace.json: geldige JSON; elke plugins[].source verwijst naar een
          bestaande map met een .claude-plugin/plugin.json.
       2. elke <plugin>/.claude-plugin/plugin.json: geldige JSON met een niet-lege 'name'.
       3. elke <plugin>/agents/*.md: frontmatter bevat 'name:', 'id:' en 'group:'.
-      4. dode relatieve links in README.md en in elke <plugin>/skills/*/SKILL.md (het gelinkte
-         bestand/pad bestaat). Externe http(s)-/mailto-links en pure anchors worden overgeslagen.
+      3b. elke <plugin>/manuals/*-manual.md: frontmatter bevat 'id:' en 'group:', en de bestandsnaam
+         <group>-<id>-manual.md komt overeen met die frontmatter (het draagbare vakboek dat de
+         bijbehorende agent-def via ${CLAUDE_PLUGIN_ROOT}/manuals/ inleest).
+      4. dode relatieve links in README.md, in elke <plugin>/skills/*/SKILL.md en in elke
+         <plugin>/manuals/*-manual.md (het gelinkte bestand/pad bestaat). Externe http(s)-/mailto-links
+         en pure anchors worden overgeslagen.
 
     Exit-code: 0 = geen errors. 1 = minstens een error (bruikbaar als poort in open-pr.ps1).
 .EXAMPLE
@@ -84,12 +88,39 @@ Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-agent.md' -File |
         }
     }
 
-# --- 4. dode relatieve links in README.md + SKILL.md ------------------------------------------------
+# --- 3b. manual-frontmatter: id/group + bestandsnaam <group>-<id>-manual.md -------------------------
+Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-manual.md' -File |
+    Where-Object { $_.FullName -match '\\manuals\\' } | ForEach-Object {
+        $text = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8)
+        $rel = $_.FullName.Replace($RepoRoot, '.')
+        foreach ($key in 'id', 'group') {
+            if (-not [regex]::IsMatch($text, "(?m)^$key`:\s*\S")) {
+                Add-Error "[manual] $rel mist '$key`:' in de frontmatter."
+            }
+        }
+        if ($_.BaseName -match '^(\d{2})-(\d{2})-manual$') {
+            $fnG = $Matches[1]; $fnI = $Matches[2]
+            $mI = [regex]::Match($text, '(?m)^id:\s*(\S+)\s*$')
+            $mG = [regex]::Match($text, '(?m)^group:\s*(\S+)\s*$')
+            if ($mI.Success -and $mI.Groups[1].Value.Trim() -ne $fnI) {
+                Add-Error "[manual] $rel`: bestandsnaam-id '$fnI' != frontmatter 'id: $($mI.Groups[1].Value.Trim())'."
+            }
+            if ($mG.Success -and $mG.Groups[1].Value.Trim() -ne $fnG) {
+                Add-Error "[manual] $rel`: bestandsnaam-group '$fnG' != frontmatter 'group: $($mG.Groups[1].Value.Trim())'."
+            }
+        } else {
+            Add-Error "[manual] $rel`: bestandsnaam volgt niet het <group>-<id>-manual-patroon."
+        }
+    }
+
+# --- 4. dode relatieve links in README.md + SKILL.md + manuals --------------------------------------
 $linkFiles = @()
 $readme = Join-Path $RepoRoot 'README.md'
 if (Test-Path -LiteralPath $readme) { $linkFiles += $readme }
 $linkFiles += (Get-ChildItem -Path $RepoRoot -Recurse -Filter 'SKILL.md' -File |
     Where-Object { $_.FullName -match '\\skills\\' } | Select-Object -ExpandProperty FullName)
+$linkFiles += (Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-manual.md' -File |
+    Where-Object { $_.FullName -match '\\manuals\\' } | Select-Object -ExpandProperty FullName)
 
 $linkRegex = [regex]'\[(?:[^\]]*)\]\(([^)]+)\)'
 foreach ($lf in $linkFiles) {

@@ -38,14 +38,29 @@ life-hub-achtige repo krijgt Liam/Sandra/Steven nooit te zien.
 
 ## Wat hier wél en niet woont
 
-**Wél:** de drie plugin-mappen met uitsluitend **subagent-definities**.
+**Wél:** de drie plugin-mappen met **subagent-definities** (`agents/`); voor een gemigreerde
+domein-groep ook het **draagbare vakboek** (`manuals/<group>-<id>-manual.md`) dat de agent-def via
+`${CLAUDE_PLUGIN_ROOT}/manuals/` inleest.
 
-**Niet:** governance (`CLAUDE.md`, `.claude/manuals/*`), safety-hooks of MCP-config. Die blijven
+**Niet:** governance (`CLAUDE.md`, de workflow-regels), safety-hooks of MCP-config. Die blijven
 bewust op repo-niveau, want ze zijn per repo verschillend (of veiligheidskritisch). De plugins
 dragen ook bewust **geen hooks** — alleen subagents (groep 2/3 mogen wél domein-skills meedragen als
-een repo die deelt). De **volledige vakboeken** (`.claude/manuals/<group>-<id>-manual.md`) van álle
-specialisten — ook die van groep 1 — blijven in de consumerende repo; alleen de compacte,
-uitvoerbare agent-def verhuist naar deze marketplace.
+een repo die deelt).
+
+### Manuals — het gesplitste model (in uitrol)
+
+Een specialist-vakboek valt uiteen in een **draagbaar** deel (repo-neutraal, identiek in elke repo:
+het vak, de harde regels, de toon) en een **repo-lens** (het `## Eigen aan deze repo`-deel: wélke
+content/context van díe repo de specialist bedient). Bij een gemigreerde groep verhuist het draagbare
+deel naar `<plugin>/manuals/<group>-<id>-manual.md` in deze marketplace, en houdt de consumerende repo
+alleen de lens in `.claude/extensions/<group>-<id>-extension.md`. De agent-def verwijst naar beide.
+
+- **`specialists-lifehub` — gemigreerd.** Astrid, Fiona, Hugo, Ian, Onyx: draagbaar vakboek hier in
+  `specialists-lifehub/manuals/`, life-hub-lens in `.claude/extensions/` van de consumerende repo.
+- **`specialists` (groep 1) & `specialists-shopify` — nog niet gemigreerd.** Hun volledige vakboeken
+  (`.claude/manuals/<group>-<id>-manual.md`) blijven voorlopig in de consumerende repo; de agent-def
+  verwijst daarnaar. Migratie volgt als aparte beweging (groep 1 raakt meerdere consumerende repo's
+  tegelijk en wordt daarom apart gecoördineerd).
 
 ## Aanroep
 
