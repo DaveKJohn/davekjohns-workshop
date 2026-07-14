@@ -102,3 +102,28 @@ verwijderen). Opruimen zelf gebeurt in de consumerende repo, niet door dit scrip
 ./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\pad\naar\life-hub
 ./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\pad\naar\smartwatchbanden
 ```
+
+## Bijdragen — changelog & PR-workflow
+
+Wijzigingen aan dit repo gaan via een branch + Pull Request naar `master`, met een gevouwen
+changelog-entry — dezelfde workflow als de consumerende repo's. De stappen:
+
+1. **Branch** met een `<prefix>/<korte-naam>`-naam. Geldige prefixes (prefix → label → changelog-type):
+   `feat/` → enhancement → Feat · `fix/` → bug → Fix · `docs/` → documentation → Docs ·
+   `chore/` → documentation → Chore (onderhoud: scripts, tooling, config). De tabel staat in
+   [`scripts/lib/branch-info.ps1`](scripts/lib/branch-info.ps1).
+2. **Changelog-entry aanmaken:** [`scripts/release/new-changelog-entry.ps1`](scripts/release/new-changelog-entry.ps1)`-Title "…"`
+   maakt `<branch-naam>.md` in de repo-root met kop + datum + type al ingevuld; vul de beschrijving in.
+3. **Werk + commit** op de branch (entry-bestand meecommitten).
+4. **PR openen:** [`scripts/release/open-pr.ps1`](scripts/release/open-pr.ps1)`-Title "…"` draait eerst
+   de **lint-poort** [`scripts/lint/check-plugin-integrity.ps1`](scripts/lint/check-plugin-integrity.ps1)
+   (geldige manifesten, agent-def-frontmatter, geen dode links); bij een error wordt er niet gepusht en
+   geen PR geopend. Slaagt de poort, dan pusht het script en opent de PR met label + auto-ingevulde body.
+5. **Merge** (op Dave's woord).
+6. **Folden:** op `master`, direct na de merge,
+   [`scripts/release/fold-changelog-entry.ps1`](scripts/release/fold-changelog-entry.ps1)`-Branch <naam>`
+   vouwt het entry-bestand in de `## Pull Requests`-sectie van [`CHANGELOG.md`](CHANGELOG.md) (met
+   `#NN` + PR-link) en verwijdert het entry-bestand; commit dat rechtstreeks op `master`.
+
+Versiebeheer loopt per plugin via de `version` in elke `plugin.json` (zie [Versiebeheer](#versiebeheer));
+een repo-brede release-pijplijn (versie-bump, tags, GitHub Releases) is bewust **nog buiten scope**.
