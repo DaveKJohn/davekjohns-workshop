@@ -9,6 +9,19 @@ folden) staat in [`README.md`](README.md#bijdragen--changelog--pr-workflow).
 Alles wat sinds de laatste release naar `master` is gemergd — nieuwste bovenaan, één blok per pull
 request.
 
+### #9 · Shopify-domeingroep: 3 manuals naar specialists-shopify/manuals/, agent-defs naar plugin + repo-extensie · Feat · 2026-07-14
+
+Sluitstuk van het gesplitste manual-model: de laatste domeingroep `specialists-shopify` (Liam, Sandra, Steven) volgt nu ook. Enkele consument (smartwatchbanden), dus geen reconciliatie — het draagbare deel is repo-neutraal gemaakt (Shopify-domeincontext behouden; de specifieke store naar de repo-lens).
+
+- `specialists-shopify/manuals/{04-20,05-21,05-22}-manual.md` — nieuw: de 3 draagbare vakboeken (Liam 💧 Liquid Developer, Sandra 🛍️ Webshopbeheerder, Steven 🗂️ Configuratiebeheerder).
+- `specialists-shopify/agents/*.md` (3) — vakboek-verwijzing naar `${CLAUDE_PLUGIN_ROOT}/manuals/<g-i>-manual.md` + `.claude/extensions/<g-i>-extension.md`; de nagelopen kruisverwijzing naar de style-guide gerepoint naar `.claude/extensions/04-12-extension.md`.
+
+De repo-lenzen + het opruimen van de lokale manuals zitten in de smartwatchbanden-PR. Hiermee is het gesplitste model voor alle drie de plugins doorgevoerd.
+
+[PR #9](https://github.com/DaveKJohn/claude-specialists/pull/9)
+
+---
+
 ### #8 · Repo consumeert nu zelf het specialisten-team (groep 1) + volwaardige CLAUDE.md · Feat · 2026-07-14
 
 De marketplace-repo huisvestte het specialisten-systeem al, maar gebruikte het niet zelf. Nu schakelt
