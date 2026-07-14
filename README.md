@@ -53,7 +53,7 @@ Een specialist-vakboek valt uiteen in een **draagbaar** deel (repo-neutraal, ide
 het vak, de harde regels, de toon) en een **repo-lens** (het `## Eigen aan deze repo`-deel: wélke
 content/context van díe repo de specialist bedient). Bij een gemigreerde groep verhuist het draagbare
 deel naar `<plugin>/manuals/<group>-<id>-manual.md` in deze marketplace, en houdt de consumerende repo
-alleen de lens in `.claude/extensions/<group>-<id>.md`. De agent-def verwijst naar beide.
+alleen de lens in `.claude/extensions/<group>-<id>-extension.md`. De agent-def verwijst naar beide.
 
 - **`specialists-lifehub` — gemigreerd.** Astrid, Fiona, Hugo, Ian, Onyx: draagbaar vakboek hier in
   `specialists-lifehub/manuals/`, life-hub-lens in `.claude/extensions/` van de consumerende repo.
