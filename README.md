@@ -45,12 +45,13 @@ bare naam die gold toen de agent-def nog los in de consumerende repo stond.
 ## Consumptie
 
 Een consumerende repo voegt deze marketplace toe via `extraKnownMarketplaces` in
-`.claude/settings.json` en schakelt de plugin in via `enabledPlugins`. Bootstrap-fase: consumptie
-loopt via een **lokale `directory`-marketplace-source** (deze repo lokaal gecloond naast de
-consumerende repo) — dat vermijdt een live cross-account git-dependency tijdens het opzetten.
-Zodra trust en account-toegang op de betrokken machine(s) gevalideerd zijn, kan dit promoveren naar
-een remote `github`-marketplace-source, zodat een verse clone van de consumerende repo de plugin
-zonder handmatige lokale stap kan ophalen.
+`.claude/settings.json` en schakelt de plugin in via `enabledPlugins`. Beide huidige consumenten
+(life-hub en smartwatchbanden) zijn gepromoveerd naar een remote **`github`-marketplace-source**
+(`"source": "github", "repo": "DaveKJohn/claude-specialists"`) — machine-onafhankelijk, want de
+Claude Code CLI clonet en cachet dit repo zelf; een verse clone van de consumerende repo krijgt de
+plugin zonder handmatige lokale stap. De eerdere bootstrap-fase met een lokale `directory`-source
+(deze repo lokaal gecloond naast de consumerende repo, om een live cross-account git-dependency
+tijdens het opzetten te vermijden) is daarmee afgesloten.
 
 ## Versiebeheer
 
@@ -61,10 +62,11 @@ hier terug te leggen).
 
 ## Onderhoud: drift-lint
 
-Zolang life-hub en swb via een lokale `directory`-marketplace-source rechtstreeks naar deze
-checkout wijzen, is er geen fysieke kopie nodig en dus ook geen sync-stap — beide consumeren
-letterlijk dezelfde bestanden. Tijdens de overgang (Fase 3) kan een consumerende repo echter nog
-een eigen, verouderde lokale kopie hebben van een agent-def die inmiddels hier gedeeld is.
+Via de `github`-marketplace-source clonet en cachet de Claude Code CLI dit repo zelf voor elke
+consument, dus is er geen fysieke kopie in de consumerende repo nodig en dus ook geen sync-stap —
+beide consumeren letterlijk dezelfde bestanden. Uit de overgang (Fase 3, toen life-hub en swb nog
+eigen lokale agent-def-kopieën hadden) kan een consumerende repo echter nog een verouderde lokale
+kopie van een agent-def hebben die inmiddels hier gedeeld is.
 [`scripts/lint/check-consumer-drift.ps1`](scripts/lint/check-consumer-drift.ps1) vergelijkt zo'n
 lokale kopie (read-only, wijzigt niets) met de canonieke versie hier en meldt `MISSING` (al
 gemigreerd), `IDENTICAL` (dode kopie, veilig te verwijderen) of `DRIFTED` (eerst bekijken vóór
