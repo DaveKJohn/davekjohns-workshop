@@ -20,6 +20,9 @@
          Externe http(s)-/mailto-links worden overgeslagen.
       5. elke scripts/**/*.ps1 parseert foutloos (vangt syntaxfouten in de orkestratie zelf, die pas
          bij uitvoering zouden breken).
+      6. specialisten-systeem-integriteit: per plugin is elk '<group>-<id>' uniek over de agent-defs,
+         heeft elke agent-def een geldige 'name:' + een bijbehorende manuals/<g>-<id>-manual.md die
+         hij ook noemt, en heeft elke manual omgekeerd een agent-def (geen wees-manual).
 
     Exit-code: 0 = geen errors. 1 = minstens een error (bruikbaar als poort in open-pr.ps1).
 .EXAMPLE
@@ -179,9 +182,13 @@ $linkRegex = [regex]'\[(?:[^\]]*)\]\(([^)]+)\)'
 $slugCache = @{}
 foreach ($lf in $linkFiles) {
     $content = [System.IO.File]::ReadAllText($lf, [System.Text.Encoding]::UTF8)
+    # Code uitsluiten: fenced (```...```) en inline (`...`). Link-achtige tekst binnen code is
+    # illustratie, geen echte link -- anders wordt bv. een `[..](#anchor)`-voorbeeld gevalideerd.
+    $scan = [regex]::Replace($content, '(?s)```.*?```', '')
+    $scan = [regex]::Replace($scan, '`[^`]*`', '')
     $dir = Split-Path -Parent $lf
     $rel = $lf.Replace($RepoRoot, '.')
-    foreach ($m in $linkRegex.Matches($content)) {
+    foreach ($m in $linkRegex.Matches($scan)) {
         $target = $m.Groups[1].Value.Trim()
         if ($target -match '^(https?:|mailto:)') { continue }
 
@@ -224,6 +231,59 @@ Get-ChildItem -Path (Join-Path $RepoRoot 'scripts') -Recurse -Filter '*.ps1' -Fi
         Add-Error "[parse] $rel`: $($parseErrors[0].Message)"
     }
 }
+
+# --- 6. specialisten-systeem-integriteit ------------------------------------------------------------
+# Deze repo is de bron van het specialisten-systeem, dus de agent-def<->manual-koppeling moet hier
+# minstens zo streng zijn als bij een consument. Per plugin (map met agents/ en manuals/):
+#   6a. elk '<group>-<id>' is uniek over alle agent-defs; elke agent-def heeft een geldige 'name:'
+#       (Claude Code-aanroepnaam), een bijbehorende manuals/<g>-<id>-manual.md in dezelfde plugin, en
+#       noemt die manual in zijn tekst.
+#   6b. geen wees-manual: elke manuals/<g>-<id>-manual.md heeft een agents/<g>-<id>-agent.md.
+# (De roster->lens-koppeling wordt al door de dode-link-scan hierboven gedekt, want die scant CLAUDE.md.)
+
+$idOwner = @{}
+Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-agent.md' -File |
+    Where-Object { $_.FullName -match '\\agents\\' } | ForEach-Object {
+        $rel = $_.FullName.Replace($RepoRoot, '.')
+        if ($_.BaseName -notmatch '^(\d{2})-(\d{2})-agent$') {
+            Add-Error "[specialist] $rel volgt niet het <group>-<id>-agent.md-patroon."
+            return
+        }
+        $g = $Matches[1]; $id = $Matches[2]; $key = "$g-$id"
+        if ($idOwner.ContainsKey($key)) {
+            Add-Error "[specialist] ${rel}: dubbel id '$key' (al geclaimd door $($idOwner[$key]))."
+        } else {
+            $idOwner[$key] = $rel
+        }
+
+        $text = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8)
+        $nm = [regex]::Match($text, '(?m)^name:\s*(\S+)\s*$')
+        if ($nm.Success -and ($nm.Groups[1].Value.Trim() -notmatch '^[a-z0-9-]+$')) {
+            Add-Error "[specialist] ${rel}: 'name: $($nm.Groups[1].Value.Trim())' moet uit kleine letters/cijfers/koppeltekens bestaan (Claude Code-aanroepnaam)."
+        }
+
+        $pluginRoot = Split-Path (Split-Path $_.FullName -Parent) -Parent
+        $manualBase = "$g-$id-manual"
+        $manualPath = Join-Path $pluginRoot ("manuals\$manualBase.md")
+        if (-not (Test-Path -LiteralPath $manualPath -PathType Leaf)) {
+            Add-Error "[specialist] ${rel}: bijbehorende manual 'manuals/$manualBase.md' ontbreekt in dezelfde plugin."
+        } elseif ($text -notmatch [regex]::Escape("manuals/$manualBase.md")) {
+            Add-Error "[specialist] ${rel}: agent-def noemt zijn manual 'manuals/$manualBase.md' niet."
+        }
+    }
+
+Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-manual.md' -File |
+    Where-Object { $_.FullName -match '\\manuals\\' } | ForEach-Object {
+        if ($_.BaseName -match '^(\d{2})-(\d{2})-manual$') {
+            $g = $Matches[1]; $id = $Matches[2]
+            $pluginRoot = Split-Path (Split-Path $_.FullName -Parent) -Parent
+            $agentPath = Join-Path $pluginRoot ("agents\$g-$id-agent.md")
+            if (-not (Test-Path -LiteralPath $agentPath -PathType Leaf)) {
+                $rel = $_.FullName.Replace($RepoRoot, '.')
+                Add-Error "[specialist] ${rel}: wees-manual -- geen bijbehorende agents/$g-$id-agent.md in dezelfde plugin."
+            }
+        }
+    }
 
 # --- Rapport ----------------------------------------------------------------------------------------
 if ($errors.Count -eq 0) {
