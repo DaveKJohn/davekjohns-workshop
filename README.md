@@ -58,3 +58,19 @@ zonder handmatige lokale stap kan ophalen.
 agent-def landen hier eerst, worden hier gecommit, en pas daarna door de consumerende repo's
 opgehaald — nooit andersom (geen repo mag een gedeelde agent-def lokaal overschrijven zonder dat
 hier terug te leggen).
+
+## Onderhoud: drift-lint
+
+Zolang life-hub en swb via een lokale `directory`-marketplace-source rechtstreeks naar deze
+checkout wijzen, is er geen fysieke kopie nodig en dus ook geen sync-stap — beide consumeren
+letterlijk dezelfde bestanden. Tijdens de overgang (Fase 3) kan een consumerende repo echter nog
+een eigen, verouderde lokale kopie hebben van een agent-def die inmiddels hier gedeeld is.
+[`scripts/lint/check-consumer-drift.ps1`](scripts/lint/check-consumer-drift.ps1) vergelijkt zo'n
+lokale kopie (read-only, wijzigt niets) met de canonieke versie hier en meldt `MISSING` (al
+gemigreerd), `IDENTICAL` (dode kopie, veilig te verwijderen) of `DRIFTED` (eerst bekijken vóór
+verwijderen). Opruimen zelf gebeurt in de consumerende repo, niet door dit script.
+
+```powershell
+./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\pad\naar\life-hub
+./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\pad\naar\smartwatchbanden
+```
