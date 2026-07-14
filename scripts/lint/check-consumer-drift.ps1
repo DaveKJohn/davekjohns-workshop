@@ -24,12 +24,23 @@
            - DRIFTED   de inhoud wijkt af -- eerst bekijken voor het verwijderen; kan een
                        nog-niet-teruggelegde wijziging zijn die eerst hierheen moet.
 
+    Naast de agent-def-kopieen vergelijkt dit script ook de PERSONA'S (de orchestrator +
+    hoofdloop-specialisten zoals Chris/Derek/Rendall). Die hebben bewust geen agent-def; hun
+    draagbare bron woont in <plugin>/personas/<g>-<id>-persona.md en wordt bij het bootstrappen naar
+    de repo-laag van een consument gekopieerd (.claude/extensions/<g>-<id>-extension.md). Voor elke
+    plugin-persona vergelijkt dit script de DRAAGBARE BODY (alles boven de '## Eigen aan deze
+    repo'-marker; de repo-lens eronder is per repo verschillend en wordt niet vergeleken) met de
+    body van de consument-kopie. Deze persona-bevindingen zijn INFORMATIEF: ze tellen niet mee in de
+    exit-code, want een bestaande consument met een handgeschreven persona is per definitie DRIFTED
+    tot hij gecoordineerd is gereconcilieerd -- dat is het signaal, geen poortbreuk.
+
     Dit script wijzigt NIETS in de consumerende repo -- puur read-only signalering. Opruimen of
     het instellen van de marketplace-source zelf is Fase-3-werk in de consumerende repo (Sylvester
     daar), niet iets wat dit plugin-repo cross-repo doet.
 
-    Exit-code: 0 = geen DRIFTED-bevindingen. 1 = minstens een DRIFTED-bevinding (bruikbaar als
-    lokale poort in de consumerende repo, naast diens eigen lint-brain.ps1).
+    Exit-code: 0 = geen DRIFTED agent-def-bevindingen. 1 = minstens een DRIFTED agent-def-bevinding
+    (bruikbaar als lokale poort in de consumerende repo, naast diens eigen lint-brain.ps1).
+    Persona-drift beinvloedt de exit-code NIET.
 .PARAMETER ConsumerPath
     Pad naar de root van de consumerende repo (life-hub of smartwatchbanden). Verplicht.
 .PARAMETER Quiet
@@ -73,6 +84,26 @@ function Read-NormalizedText {
     # geen semantische diff. Zie categorie B/C in lint-brain.ps1 (life-hub) voor dezelfde heuristiek-aanpak.
     $lines = $raw -split "`r?`n" | ForEach-Object { $_.TrimEnd() }
     return ($lines -join "`n").Trim()
+}
+
+function Get-PortableBody {
+    # Haalt de DRAAGBARE body uit een persona-sjabloon of een extensions-kopie: alles vanaf de eerste
+    # markdown-H1-kop (^# ) tot NET VOOR de '## Eigen aan deze repo'-marker. Frontmatter en leidende
+    # HTML-commentaren vallen er vanzelf buiten (ze staan voor de eerste #-kop). Zelfde normalisatie
+    # als Read-NormalizedText, zodat een puur tekstuele vergelijking mogelijk is.
+    param([string]$Path)
+    $raw = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
+    $lines = $raw -split "`r?`n"
+    $body = New-Object System.Collections.Generic.List[string]
+    $started = $false
+    foreach ($line in $lines) {
+        if (-not $started) {
+            if ($line -match '^#\s') { $started = $true } else { continue }
+        }
+        if ($line -match '^##\s+Eigen aan deze repo') { break }
+        $body.Add($line.TrimEnd())
+    }
+    return (($body -join "`n").Trim())
 }
 
 # --- Bron van waarheid inlezen: id, group en inhoud per gedeelde specialist ------------------------
@@ -150,9 +181,49 @@ foreach ($r in ($results | Sort-Object Id)) {
     }
 }
 Write-Host ""
-Write-Host "Samenvatting: $missingCount missing, $identicalCount identical (dode kopieen), $driftCount drifted." -ForegroundColor Cyan
+Write-Host "Samenvatting agent-defs: $missingCount missing, $identicalCount identical (dode kopieen), $driftCount drifted." -ForegroundColor Cyan
+
+# --- Persona-drift (informatief): draagbare body van de plugin-persona's vs. de consument-kopie -----
+$personaDirs = @(@(
+    (Join-Path $PluginRoot 'specialists\personas')
+    (Join-Path $PluginRoot 'specialists-lifehub\personas')
+    (Join-Path $PluginRoot 'specialists-shopify\personas')
+) | Where-Object { Test-Path -LiteralPath $_ })
+
+$personaResults = New-Object System.Collections.Generic.List[object]
+if ($personaDirs.Count -gt 0) {
+    Get-ChildItem -Path $personaDirs -Filter '*-persona.md' -File | Sort-Object Name | ForEach-Object {
+        if ($_.BaseName -notmatch '^(\d{2})-(\d{2})-persona$') { return }
+        $g = $Matches[1]; $id = $Matches[2]
+        $srcBody = Get-PortableBody $_.FullName
+        $consumerExt = Join-Path $ConsumerRoot ".claude\extensions\$g-$id-extension.md"
+        if (-not (Test-Path -LiteralPath $consumerExt -PathType Leaf)) {
+            $personaResults.Add([pscustomobject]@{ Name = $_.Name; Status = 'MISSING'; Path = $null })
+        } else {
+            $localBody = Get-PortableBody $consumerExt
+            $status = if ($localBody -eq $srcBody) { 'IDENTICAL' } else { 'DRIFTED' }
+            $personaResults.Add([pscustomobject]@{ Name = $_.Name; Status = $status; Path = $consumerExt })
+        }
+    }
+}
+
+if ($personaResults.Count -gt 0) {
+    Write-Host ""
+    Write-Host "-- Persona's (draagbare body vs. .claude/extensions/<g>-<id>-extension.md) --" -ForegroundColor Cyan
+    $pDrift = 0
+    foreach ($r in $personaResults) {
+        switch ($r.Status) {
+            'MISSING'   { if (-not $Quiet) { Write-Host "  [MISSING]   $($r.Name) -- geen extensions-kopie in de consument (nog niet gebootstrapt)." -ForegroundColor DarkGray } }
+            'IDENTICAL' { Write-Host "  [IDENTICAL] $($r.Name) -- body gelijk aan de canonieke bron." -ForegroundColor Green }
+            'DRIFTED'   { $pDrift++; Write-Host "  [DRIFTED]   $($r.Name) -- body wijkt af van de canonieke bron: $($r.Path)" -ForegroundColor Yellow }
+        }
+    }
+    Write-Host "  Persona-drift is INFORMATIEF (telt niet mee in de exit-code): $pDrift drifted." -ForegroundColor DarkGray
+}
+
 if ($driftCount -gt 0) {
-    Write-Host "Bekijk de DRIFTED-bestanden voor het verwijderen -- kan een wijziging bevatten die eerst hierheen (canoniek) terug moet." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Bekijk de DRIFTED agent-def-bestanden voor het verwijderen -- kan een wijziging bevatten die eerst hierheen (canoniek) terug moet." -ForegroundColor Yellow
     exit 1
 }
 exit 0

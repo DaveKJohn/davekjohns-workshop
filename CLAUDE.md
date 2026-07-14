@@ -166,7 +166,10 @@ verzonnen — alleen in overleg met Dave (zie
 - **`.claude-plugin/marketplace.json`** — de marketplace-definitie: de drie plugins met hun `source`.
 - **`specialists/`, `specialists-lifehub/`, `specialists-shopify/`** — de drie plugins, elk met een
   eigen `.claude-plugin/plugin.json` (`version`), `agents/` en — voor een gemigreerde groep —
-  `manuals/`. `specialists-shopify` draagt daarnaast een `skills/`-map.
+  `manuals/`. `specialists` draagt daarnaast `personas/` (de draagbare sjablonen van de
+  hoofdloop-specialisten Chris/Derek/Rendall) en `skills/specialists-init/` (het repo-neutrale
+  bootstrap-adoptiepad, zie [`README.md`](README.md#adoptie-het-bootstrap-pad)); `specialists-shopify`
+  draagt een domein-`skills/`-map.
 - **`scripts/lib/`, `scripts/lint/`, `scripts/release/`, `scripts/tests/`** — de gedeelde helpers
   (`branch-info.ps1`, `release-lib.ps1`), de lint-poort + drift-check, de changelog/PR/release-scripts
   (incl. `cut-release.ps1`), en de tests.

@@ -26,9 +26,12 @@ georganiseerd zijn**. Het is **geen vervanging** van de safety-rules of de routi
     draagbare vakboek in de plugin aanvult met de context van déze repo. De subagent leest
     plugin-vakboek + deze lens samen; de agent-def verwijst naar beide.
   - **Persona-manual** — voor de persona-only specialisten (Chris, Derek, Rendall), die in het
-    hoofdgesprek draaien i.p.v. als subagent. Zij kunnen hun vakboek niet uit een plugin laden (de
-    main-loop leest geen plugin-bestanden), dus hier staat hun **volledige** manual. Chris wordt
-    hiervandaan auto-geladen (`@.claude/extensions/01-01-extension.md` onderaan `../CLAUDE.md`).
+    hoofdgesprek draaien i.p.v. als subagent. De main-loop leest geen plugin-bestanden, dus hier
+    staat hun **volledige** manual en wordt Chris hiervandaan auto-geladen
+    (`@.claude/extensions/01-01-extension.md` onderaan `../CLAUDE.md`). De **draagbare body** van elke
+    persona heeft wél een canonieke bron in de plugin — `specialists/personas/<group>-<id>-persona.md`
+    — die de bootstrap-skill `specialists-init` bij adoptie naar `.claude/extensions/` kopieert; dit
+    lokale bestand is dus een (met drift-lint bewaakte) kopie van die bron, aangevuld met de repo-lens.
 - **Subagent-definities — uit de eigen `specialists`-plugin, niet lokaal.** De compacte, uitvoerbare
   vorm van een specialist (`<group>-<id>-agent.md`) bewaart deze repo **niet** in een lokale
   `.claude/agents/`-map: ze komen uit de `specialists`-plugin van deze marketplace zelf, ingeschakeld

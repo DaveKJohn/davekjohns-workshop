@@ -40,12 +40,16 @@ life-hub-achtige repo krijgt Liam/Sandra/Steven nooit te zien.
 
 **Wél:** de drie plugin-mappen met **subagent-definities** (`agents/`); voor een gemigreerde
 domein-groep ook het **draagbare vakboek** (`manuals/<group>-<id>-manual.md`) dat de agent-def via
-`${CLAUDE_PLUGIN_ROOT}/manuals/` inleest.
+`${CLAUDE_PLUGIN_ROOT}/manuals/` inleest. Groep 1 draagt daarnaast twee dingen die de
+**hoofdloop-laag** dekken (zie [Adoptie: het bootstrap-pad](#adoptie-het-bootstrap-pad)): de
+**persona-sjablonen** (`personas/<group>-<id>-persona.md`) van de orchestrator + hoofdloop-specialisten
+(Chris, Derek, Rendall), en de **repo-neutrale bootstrap-skill** `specialists-init`.
 
 **Niet:** governance (`CLAUDE.md`, de workflow-regels), safety-hooks of MCP-config. Die blijven
 bewust op repo-niveau, want ze zijn per repo verschillend (of veiligheidskritisch). De plugins
-dragen ook bewust **geen hooks** — alleen subagents (groep 2/3 mogen wél domein-skills meedragen als
-een repo die deelt).
+dragen bewust **geen hooks** en **geen repo-specifieke skills** — de enige skill hier (`specialists-init`)
+is repo-neutraal (het adoptiepad zelf), een bewuste uitzondering; domein-groep 2/3 mogen wél
+domein-skills meedragen als een repo die deelt.
 
 ### Manuals — het gesplitste model
 
@@ -62,6 +66,17 @@ zijn plugin, en elke consumerende repo houdt daarvan enkel nog de repo-lens in `
   Sylvester, Tessa, Edith, Victor).
 - **`specialists-lifehub` (groep 2)** → `specialists-lifehub/manuals/` (Astrid, Fiona, Hugo, Ian, Onyx).
 - **`specialists-shopify` (groep 3)** → `specialists-shopify/manuals/` (Liam, Sandra, Steven).
+
+**Persona-sjablonen — een derde artefact naast agent-def en manual.** De orchestrator en de
+hoofdloop-specialisten (Chris #01, Derek #05, Rendall #06) draaien in de **hoofdloop**, niet als
+subagent — een plugin kan geen altijd-aan-hoofdloop-context injecteren. Ze hebben daarom bewust
+**geen** agent-def; hun draagbare bron woont in `specialists/personas/<group>-<id>-persona.md` als
+**self-contained sjabloon** (draagbare body + een repo-lens-placeholder). De consument krijgt geen
+plugin-verwijzing maar een **kopie** in `.claude/extensions/<group>-<id>-extension.md`, die via een
+`@`-import in zijn `CLAUDE.md` wordt auto-geladen. De [bootstrap-skill](#adoptie-het-bootstrap-pad)
+zet die kopie neer; de [drift-lint](#onderhoud-drift-lint) bewaakt de draagbare body ervan tegen de
+canonieke bron. De agent-def↔manual-koppeling van de lint laat persona's bewust met rust (ze hebben
+geen agent-def).
 
 ## Aanroep
 
@@ -96,6 +111,24 @@ plugins zonder handmatige lokale stap.
 
 Een nieuw ingeschakelde plugin is pas in een **volgende** Claude Code-sessie zichtbaar.
 
+## Adoptie: het bootstrap-pad
+
+De plugin inschakelen levert de **werker-subagents**, maar niet de **dirigent** (Chris) of de
+governance-/hooks-laag — die kunnen niet uit een plugin komen (een plugin injecteert geen
+hoofdloop-context en bewerkt geen `CLAUDE.md`). De skill **`specialists-init`** (groep 1) dicht dat
+gat in een consumerende repo. Omdat een plugin-skill zichzelf niet kan aanhaken, is het pad
+tweetraps:
+
+- **Stap 0 (handmatig).** Zet de marketplace-source + `enabledPlugins` in `.claude/settings.json`
+  (zie [Consumptie](#consumptie)) en **herstart** de sessie — pas dán is de skill beschikbaar.
+- **Stap 1 (de skill).** Roep `specialists-init` aan. Het bijgeleverde
+  [`bootstrap.ps1`](specialists/skills/specialists-init/bootstrap.ps1) doet alleen **additieve**
+  handelingen: het kopieert de persona-sjablonen naar `.claude/extensions/<group>-<id>-extension.md`
+  (nooit overschrijven), zet de `@.claude/extensions/01-01-extension.md`-import onderaan `CLAUDE.md`
+  (of maakt een scaffold), en schrijft een `settings.suggested.jsonc` met een `permissions.deny` +
+  hooks-**stub**. Het raakt `settings.json` niet aan — die merge en de repo-lens invullen zijn
+  daarna handwerk (repo-specifiek), waarna nog één **herstart** de nieuwe context activeert.
+
 ## Versiebeheer
 
 Elke plugin (`specialists/…`, `specialists-lifehub/…`, `specialists-shopify/…`) draagt een eigen
@@ -115,6 +148,13 @@ echter nog een verouderde lokale kopie van een agent-def hebben die inmiddels hi
 lokale kopie (read-only, wijzigt niets) met de canonieke versie hier en meldt `MISSING` (al
 gemigreerd), `IDENTICAL` (dode kopie, veilig te verwijderen) of `DRIFTED` (eerst bekijken vóór
 verwijderen). Opruimen zelf gebeurt in de consumerende repo, niet door dit script.
+
+Hetzelfde script vergelijkt ook de **persona's**: het legt de draagbare body van elke
+`personas/<group>-<id>-persona.md` naast de body van de consument-kopie in
+`.claude/extensions/<group>-<id>-extension.md` (alles boven de `## Eigen aan deze repo`-marker; de
+repo-lens eronder is per repo verschillend en wordt niet vergeleken). Die persona-bevindingen zijn
+**informatief** — ze tellen niet mee in de exit-code, want een consument met een handgeschreven
+persona is per definitie `DRIFTED` tot hij gecoördineerd is gereconcilieerd.
 
 ```powershell
 ./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\pad\naar\life-hub

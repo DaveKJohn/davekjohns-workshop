@@ -13,9 +13,14 @@
       3b. elke <plugin>/manuals/*-manual.md: frontmatter bevat 'id:' en 'group:', en de bestandsnaam
          <group>-<id>-manual.md komt overeen met die frontmatter (het draagbare vakboek dat de
          bijbehorende agent-def via ${CLAUDE_PLUGIN_ROOT}/manuals/ inleest).
+      3c. elke <plugin>/personas/*-persona.md: frontmatter bevat 'id:' en 'group:', en de bestandsnaam
+         <group>-<id>-persona.md komt overeen met die frontmatter. Persona's (orchestrator +
+         hoofdloop-specialisten) hebben BEWUST geen agent-def -- ze draaien in de hoofdloop, niet als
+         subagent -- en worden daarom door de agent-def<->manual-koppeling van check 6 met rust gelaten.
       4. dode relatieve links EN kapotte anchors in README.md, CHANGELOG.md, CLAUDE.md, elke
-         .claude/extensions/*.md, elke <plugin>/skills/*/SKILL.md, elke <plugin>/manuals/*-manual.md
-         en elke releases/**/*.md. Gecontroleerd: (a) het gelinkte bestand bestaat, en (b) als de link
+         .claude/extensions/*.md, elke <plugin>/skills/*/SKILL.md, elke <plugin>/manuals/*-manual.md,
+         elke <plugin>/personas/*-persona.md en elke releases/**/*.md. Gecontroleerd: (a) het gelinkte
+         bestand bestaat, en (b) als de link
          een #anchor heeft, dat die anchor als kop bestaat in het doelbestand (GitHub-slugregels).
          Externe http(s)-/mailto-links worden overgeslagen.
       5. elke scripts/**/*.ps1 parseert foutloos (vangt syntaxfouten in de orkestratie zelf, die pas
@@ -120,6 +125,36 @@ Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-manual.md' -File |
         }
     }
 
+# --- 3c. persona-frontmatter: id/group + bestandsnaam <group>-<id>-persona.md -----------------------
+# Persona's (Chris/Derek/Rendall e.d.) draaien in de HOOFDLOOP, niet als subagent, dus ze hebben
+# bewust geen agent-def. Ze wonen in <plugin>/personas/ als draagbaar sjabloon dat de bootstrap-skill
+# naar de repo-laag (.claude/extensions/<g>-<id>-extension.md) van een consument kopieert. Check 6
+# (agent-def<->manual-koppeling) negeert ze daarom; hier valideren we hun frontmatter + bestandsnaam
+# op zichzelf (spiegelt 3b).
+Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-persona.md' -File |
+    Where-Object { $_.FullName -match '\\personas\\' } | ForEach-Object {
+        $text = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8)
+        $rel = $_.FullName.Replace($RepoRoot, '.')
+        foreach ($key in 'id', 'group') {
+            if (-not [regex]::IsMatch($text, "(?m)^$key`:\s*\S")) {
+                Add-Error "[persona] $rel mist '$key`:' in de frontmatter."
+            }
+        }
+        if ($_.BaseName -match '^(\d{2})-(\d{2})-persona$') {
+            $fnG = $Matches[1]; $fnI = $Matches[2]
+            $mI = [regex]::Match($text, '(?m)^id:\s*(\S+)\s*$')
+            $mG = [regex]::Match($text, '(?m)^group:\s*(\S+)\s*$')
+            if ($mI.Success -and $mI.Groups[1].Value.Trim() -ne $fnI) {
+                Add-Error "[persona] $rel`: bestandsnaam-id '$fnI' != frontmatter 'id: $($mI.Groups[1].Value.Trim())'."
+            }
+            if ($mG.Success -and $mG.Groups[1].Value.Trim() -ne $fnG) {
+                Add-Error "[persona] $rel`: bestandsnaam-group '$fnG' != frontmatter 'group: $($mG.Groups[1].Value.Trim())'."
+            }
+        } else {
+            Add-Error "[persona] $rel`: bestandsnaam volgt niet het <group>-<id>-persona-patroon."
+        }
+    }
+
 # --- 4. dode relatieve links + kapotte anchors ------------------------------------------------------
 # Gescande bestanden: README.md, CHANGELOG.md, CLAUDE.md, elke .claude/extensions/*.md, elke
 # <plugin>/skills/*/SKILL.md, elke <plugin>/manuals/*-manual.md en elke releases/**/*.md. Voor elke
@@ -173,6 +208,8 @@ $linkFiles += (Get-ChildItem -Path $RepoRoot -Recurse -Filter 'SKILL.md' -File |
     Where-Object { $_.FullName -match '\\skills\\' } | Select-Object -ExpandProperty FullName)
 $linkFiles += (Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-manual.md' -File |
     Where-Object { $_.FullName -match '\\manuals\\' } | Select-Object -ExpandProperty FullName)
+$linkFiles += (Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-persona.md' -File |
+    Where-Object { $_.FullName -match '\\personas\\' } | Select-Object -ExpandProperty FullName)
 $releasesDir = Join-Path $RepoRoot 'releases'
 if (Test-Path -LiteralPath $releasesDir) {
     $linkFiles += (Get-ChildItem -Path $releasesDir -Recurse -Filter '*.md' -File | Select-Object -ExpandProperty FullName)
@@ -220,10 +257,15 @@ foreach ($lf in $linkFiles) {
 }
 
 # --- 5. PowerShell-scripts moeten parsen ------------------------------------------------------------
-# Vangt syntaxfouten in scripts/**/*.ps1 voor ze op master belanden. De pure logica van een script
-# kun je los testen, maar een parse-fout in de orkestratie zelf breekt pas bij uitvoering -- deze
-# check trekt dat naar voren, naar de PR-poort.
-Get-ChildItem -Path (Join-Path $RepoRoot 'scripts') -Recurse -Filter '*.ps1' -File | ForEach-Object {
+# Vangt syntaxfouten voor ze op master belanden. De pure logica van een script kun je los testen,
+# maar een parse-fout in de orkestratie zelf breekt pas bij uitvoering -- deze check trekt dat naar
+# voren, naar de PR-poort. Gescand: scripts/**/*.ps1 EN de scripts die een plugin-skill meedraagt
+# (<plugin>/skills/**/*.ps1, bv. de bootstrap van specialists-init).
+$psScripts = @()
+$psScripts += (Get-ChildItem -Path (Join-Path $RepoRoot 'scripts') -Recurse -Filter '*.ps1' -File)
+$psScripts += (Get-ChildItem -Path $RepoRoot -Recurse -Filter '*.ps1' -File |
+    Where-Object { $_.FullName -match '\\skills\\' })
+$psScripts | ForEach-Object {
     $parseErrors = $null
     [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$parseErrors) | Out-Null
     if ($parseErrors -and $parseErrors.Count -gt 0) {
