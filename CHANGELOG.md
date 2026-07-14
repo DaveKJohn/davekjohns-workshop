@@ -9,6 +9,18 @@ folden) staat in [`README.md`](README.md#bijdragen--changelog--pr-workflow).
 Alles wat sinds de laatste release naar `master` is gemergd — nieuwste bovenaan, één blok per pull
 request.
 
+### #10 · README-migratiestatus geactualiseerd: alle drie de groepen gemigreerd · Docs · 2026-07-14
+
+De README-sectie "Manuals — het gesplitste model" beweerde nog dat groep 1 (`specialists`) en
+`specialists-shopify` "nog niet gemigreerd" waren. Beide zijn inmiddels wél gemigreerd (commits
+`2b6f401` resp. `02ff48a` / PR #9): hun draagbare vakboeken wonen in de `manuals/`-map van hun eigen
+plugin. De sectie is bijgewerkt naar de actuele stand — alle drie de groepen gemigreerd, met per
+plugin de bijbehorende `manuals/`-map — en het achterhaalde kopje "(in uitrol)" is verwijderd.
+
+[PR #10](https://github.com/DaveKJohn/claude-specialists/pull/10)
+
+---
+
 ### #9 · Shopify-domeingroep: 3 manuals naar specialists-shopify/manuals/, agent-defs naar plugin + repo-extensie · Feat · 2026-07-14
 
 Sluitstuk van het gesplitste manual-model: de laatste domeingroep `specialists-shopify` (Liam, Sandra, Steven) volgt nu ook. Enkele consument (smartwatchbanden), dus geen reconciliatie — het draagbare deel is repo-neutraal gemaakt (Shopify-domeincontext behouden; de specifieke store naar de repo-lens).
