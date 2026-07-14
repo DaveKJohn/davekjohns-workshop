@@ -47,20 +47,21 @@ bewust op repo-niveau, want ze zijn per repo verschillend (of veiligheidskritisc
 dragen ook bewust **geen hooks** — alleen subagents (groep 2/3 mogen wél domein-skills meedragen als
 een repo die deelt).
 
-### Manuals — het gesplitste model (in uitrol)
+### Manuals — het gesplitste model
 
 Een specialist-vakboek valt uiteen in een **draagbaar** deel (repo-neutraal, identiek in elke repo:
 het vak, de harde regels, de toon) en een **repo-lens** (het `## Eigen aan deze repo`-deel: wélke
-content/context van díe repo de specialist bedient). Bij een gemigreerde groep verhuist het draagbare
-deel naar `<plugin>/manuals/<group>-<id>-manual.md` in deze marketplace, en houdt de consumerende repo
-alleen de lens in `.claude/extensions/<group>-<id>-extension.md`. De agent-def verwijst naar beide.
+content/context van díe repo de specialist bedient). Het draagbare deel woont in
+`<plugin>/manuals/<group>-<id>-manual.md` in deze marketplace; de consumerende repo houdt alleen de
+lens in `.claude/extensions/<group>-<id>-extension.md`. De agent-def verwijst naar beide.
 
-- **`specialists-lifehub` — gemigreerd.** Astrid, Fiona, Hugo, Ian, Onyx: draagbaar vakboek hier in
-  `specialists-lifehub/manuals/`, life-hub-lens in `.claude/extensions/` van de consumerende repo.
-- **`specialists` (groep 1) & `specialists-shopify` — nog niet gemigreerd.** Hun volledige vakboeken
-  (`.claude/manuals/<group>-<id>-manual.md`) blijven voorlopig in de consumerende repo; de agent-def
-  verwijst daarnaar. Migratie volgt als aparte beweging (groep 1 raakt meerdere consumerende repo's
-  tegelijk en wordt daarom apart gecoördineerd).
+**Alle drie de groepen zijn inmiddels gemigreerd** — elk vakboek woont hier in de `manuals/`-map van
+zijn plugin, en elke consumerende repo houdt daarvan enkel nog de repo-lens in `.claude/extensions/`:
+
+- **`specialists` (groep 1)** → `specialists/manuals/` (Paula, Rebecca, Vera, Gwen, Cody, Tycho,
+  Sylvester, Tessa, Edith, Victor).
+- **`specialists-lifehub` (groep 2)** → `specialists-lifehub/manuals/` (Astrid, Fiona, Hugo, Ian, Onyx).
+- **`specialists-shopify` (groep 3)** → `specialists-shopify/manuals/` (Liam, Sandra, Steven).
 
 ## Aanroep
 
