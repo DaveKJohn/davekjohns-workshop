@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "claude-specialists": {
+      "source": {
+        "source": "github",
+        "repo": "DaveKJohn/claude-specialists"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "specialists@claude-specialists": true
+  }
+}
