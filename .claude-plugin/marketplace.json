@@ -1,0 +1,12 @@
+{
+  "name": "claude-specialists",
+  "description": "Standalone marketplace die de gedeelde, draagbare kern van het Claude-Specialists-systeem huisvest, consumeerbaar door meerdere repo's.",
+  "owner": { "name": "DaveKJohn" },
+  "plugins": [
+    {
+      "name": "specialists",
+      "source": "./specialists",
+      "description": "Draagbare uitvoerbare kern van het Claude-Specialists-systeem: de gedeelde subagents. Governance (CLAUDE.md + .claude/manuals/*) en repo-eigen specialisten blijven bewust op repo-niveau."
+    }
+  ]
+}

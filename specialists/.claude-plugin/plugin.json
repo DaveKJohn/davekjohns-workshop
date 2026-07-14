@@ -1,0 +1,8 @@
+{
+  "name": "specialists",
+  "displayName": "Claude Specialists",
+  "description": "Draagbare uitvoerbare kern van het Claude-Specialists-systeem: de gedeelde subagents. Bevat bewust GEEN hooks en GEEN repo-specifieke skills — de governance-laag (CLAUDE.md + .claude/manuals/*), de safety-hooks en de repo-eigen specialisten blijven op repo-niveau.",
+  "version": "0.1.0",
+  "author": { "name": "DaveKJohn" },
+  "keywords": ["specialists", "workflow", "claude-code"]
+}
