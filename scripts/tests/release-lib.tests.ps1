@@ -42,7 +42,6 @@ function Assert-Throws {
 }
 
 $midDot = [char]0x00B7
-$emDash = [char]0x2014
 
 Write-Host "Get-NextVersion" -ForegroundColor Cyan
 Assert-Equal '0.2.0' (Get-NextVersion -Current '0.1.0' -BumpKind 'minor') 'minor bumpt tweede cijfer, nult patch'
@@ -50,12 +49,17 @@ Assert-Equal '0.1.1' (Get-NextVersion -Current '0.1.0' -BumpKind 'patch') 'patch
 Assert-Equal '1.0.0' (Get-NextVersion -Current '0.9.9' -BumpKind 'major') 'major nult minor + patch'
 Assert-Throws { Get-NextVersion -Current 'x.y.z' -BumpKind 'patch' } 'ongeldige huidige versie gooit'
 
+Write-Host "Get-BumpType" -ForegroundColor Cyan
+Assert-Equal 'major' (Get-BumpType -From '0.1.0' -To '1.0.0') '0.1.0->1.0.0 = major'
+Assert-Equal 'minor' (Get-BumpType -From '1.0.0' -To '1.1.0') '1.0.0->1.1.0 = minor'
+Assert-Equal 'patch' (Get-BumpType -From '1.1.0' -To '1.1.1') '1.1.0->1.1.1 = patch'
+
 Write-Host "Get-LockstepVersion" -ForegroundColor Cyan
 Assert-Equal '0.1.0' (Get-LockstepVersion -ManifestContents @{ a = '{"version": "0.1.0"}'; b = '{"version": "0.1.0"}' }) 'gelijke versies -> die versie'
 Assert-Throws { Get-LockstepVersion -ManifestContents @{ a = '{"version": "0.1.0"}'; b = '{"version": "0.2.0"}' } } 'ongelijke versies gooit'
 Assert-Throws { Get-LockstepVersion -ManifestContents @{ a = '{"name": "x"}' } } 'ontbrekende version gooit'
 
-Write-Host "Convert-ChangelogForRelease" -ForegroundColor Cyan
+# Gedeeld sample-CHANGELOG voor de transformatie-tests.
 $sample = @"
 # Changelog
 
@@ -65,7 +69,7 @@ Intro-regel van het bestand.
 
 Intro van de PR-sectie.
 
-### #2 $midDot Tweede $midDot Feat $midDot 2026-01-02
+### #2 $midDot Tweede feature $midDot Feat $midDot 2026-01-02
 
 Body twee.
 
@@ -73,7 +77,7 @@ Body twee.
 
 ---
 
-### #1 $midDot Eerste $midDot Docs $midDot 2026-01-01
+### #1 $midDot Eerste fix $midDot Fix $midDot 2026-01-01
 
 Body een.
 
@@ -84,39 +88,41 @@ Body een.
 Nog geen releases vastgelegd. Versiebeheer loopt per plugin.
 "@
 
-$result = Convert-ChangelogForRelease -Content $sample -Version '0.2.0' -Date '2026-07-14'
-Assert-Match $result "### v0\.2\.0 $([regex]::Escape($midDot)) 2026-07-14" 'versieblok-kop met versie en datum'
-Assert-Match $result '2 pull requests in deze release' 'telt beide PRs, meervoud'
-Assert-Match $result '- #2 .* Tweede .* \[PR #2\]' 'bullet voor PR #2 met link'
-Assert-Match $result '- #1 .* Eerste .* \[PR #1\]' 'bullet voor PR #1 met link'
-Assert-Match $result 'De vastgelegde versies van de marketplace' 'placeholder-intro vervangen'
-# Pull-Requests-sectie is geleegd: geen ### -entries meer tussen de twee kopjes.
+Write-Host "Get-PullRequestEntries" -ForegroundColor Cyan
+$entries = @(Get-PullRequestEntries -Content $sample)
+Assert-Equal 2 $entries.Count 'twee entries geextraheerd'
+Assert-Match $entries[0] '^### #2 ' 'eerste entry begint met ### #2'
+Assert-Match $entries[0] '\[PR #2\]' 'eerste entry bevat de PR-link'
+Assert-Throws { Get-PullRequestEntries -Content "# Changelog`n`n## Pull Requests`n`nIntro.`n`n## Releases`n" } 'lege PR-sectie gooit'
+
+Write-Host "Convert-ChangelogForRelease (verwijzing)" -ForegroundColor Cyan
+$notesPath = 'releases/development/0.2/0.2.0.md'
+$result = Convert-ChangelogForRelease -Content $sample -Version '0.2.0' -Date '2026-07-14' -Type 'Minor' -NotesRelPath $notesPath
+Assert-Match $result '### \[v0\.2\.0\] - 2026-07-14 .* Minor' 'verwijzingskop met versie/datum/type'
+Assert-Match $result ([regex]::Escape("[$notesPath]($notesPath)")) 'verwijzing naar het notes-bestand'
 $prSection = ($result -split '## Releases')[0]
 Assert-Equal $false ([bool]($prSection -match '(?m)^### ')) 'Pull Requests-sectie bevat geen entries meer'
 Assert-Match $result '(?s)Intro van de PR-sectie' 'PR-intro blijft staan'
+Assert-Equal $false ([bool]($result -match '(?m)^- #\d')) 'geen inline PR-bullets meer (alleen verwijzing)'
 
-# Randgevallen.
-Assert-Throws { Convert-ChangelogForRelease -Content $result -Version '0.3.0' -Date '2026-07-14' } 'lege PR-sectie -> niets te releasen gooit'
-Assert-Throws { Convert-ChangelogForRelease -Content "# Changelog`n`n## Releases`n" -Version '0.2.0' -Date '2026-07-14' } 'ontbrekende Pull Requests-sectie gooit'
+Write-Host "Build-ReleaseNotes" -ForegroundColor Cyan
+$notes = Build-ReleaseNotes -Entries $entries -Version '0.2.0' -Date '2026-07-14' -Type 'Minor' -Title 'Test-release'
+Assert-Match $notes '^# Release notes v0\.2\.0' 'kop met versie'
+Assert-Match $notes '\*\*Type:\*\* Minor' 'type-regel'
+Assert-Match $notes 'Test-release' 'titel opgenomen'
+Assert-Match $notes '## Nieuwe features & verbeteringen' 'Feat-categorie-sectie'
+Assert-Match $notes '## Fixes' 'Fix-categorie-sectie'
+Assert-Match $notes '(?s)## Nieuwe features.*## Fixes' 'Feat staat voor Fix (categorie-volgorde)'
+Assert-Match $notes '### #2 .* Tweede feature' 'entry #2 aanwezig met volledige kop'
+Assert-Match $notes '\[PR #1\]' 'PR-link van entry #1 behouden'
 
-# Enkelvoud bij precies 1 PR.
-$one = @"
-## Pull Requests
-
-Intro.
-
-### #1 $midDot Enige $midDot Feat $midDot 2026-01-01
-
-Body.
-
-[PR #1](https://example.com/1)
-
-## Releases
-
-Nog geen releases vastgelegd.
-"@
-$r1 = Convert-ChangelogForRelease -Content $one -Version '1.0.0' -Date '2026-07-14'
-Assert-Match $r1 '1 pull request in deze release' 'enkelvoud bij 1 PR'
+# Link-herschrijving: repo-root-relatieve links krijgen het prefix, externe/anker niet.
+$linkEntry = @("### #3 $midDot Iets $midDot Fix $midDot 2026-01-03", '', 'Zie [de lint](scripts/lint/x.ps1) en [de site](https://example.com) en [#kop](#kop).', '', '[PR #3](https://example.com/3)') -join "`n"
+$ln = Build-ReleaseNotes -Entries @($linkEntry) -Version '0.2.1' -Date '2026-07-14' -Type 'Patch' -LinkPrefix '../../../'
+Assert-Match $ln '\[de lint\]\(\.\./\.\./\.\./scripts/lint/x\.ps1\)' 'root-relatieve link krijgt ../../../-prefix'
+Assert-Match $ln '\[de site\]\(https://example\.com\)' 'externe link ongemoeid'
+Assert-Match $ln '\[#kop\]\(#kop\)' 'anker-link ongemoeid'
+Assert-Match $ln '\[PR #3\]\(https://example\.com/3\)' 'PR-link ongemoeid'
 
 Write-Host ""
 if ($script:fail -gt 0) {

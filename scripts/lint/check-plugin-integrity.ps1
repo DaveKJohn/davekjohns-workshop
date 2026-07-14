@@ -13,9 +13,9 @@
       3b. elke <plugin>/manuals/*-manual.md: frontmatter bevat 'id:' en 'group:', en de bestandsnaam
          <group>-<id>-manual.md komt overeen met die frontmatter (het draagbare vakboek dat de
          bijbehorende agent-def via ${CLAUDE_PLUGIN_ROOT}/manuals/ inleest).
-      4. dode relatieve links in README.md, in elke <plugin>/skills/*/SKILL.md en in elke
-         <plugin>/manuals/*-manual.md (het gelinkte bestand/pad bestaat). Externe http(s)-/mailto-links
-         en pure anchors worden overgeslagen.
+      4. dode relatieve links in README.md, CHANGELOG.md, elke <plugin>/skills/*/SKILL.md, elke
+         <plugin>/manuals/*-manual.md en elke releases/**/*.md (het gelinkte bestand/pad bestaat).
+         Externe http(s)-/mailto-links en pure anchors worden overgeslagen.
       5. elke scripts/**/*.ps1 parseert foutloos (vangt syntaxfouten in de orkestratie zelf, die pas
          bij uitvoering zouden breken).
 
@@ -117,12 +117,18 @@ Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-manual.md' -File |
 
 # --- 4. dode relatieve links in README.md + SKILL.md + manuals --------------------------------------
 $linkFiles = @()
-$readme = Join-Path $RepoRoot 'README.md'
-if (Test-Path -LiteralPath $readme) { $linkFiles += $readme }
+foreach ($root in 'README.md', 'CHANGELOG.md') {
+    $p = Join-Path $RepoRoot $root
+    if (Test-Path -LiteralPath $p) { $linkFiles += $p }
+}
 $linkFiles += (Get-ChildItem -Path $RepoRoot -Recurse -Filter 'SKILL.md' -File |
     Where-Object { $_.FullName -match '\\skills\\' } | Select-Object -ExpandProperty FullName)
 $linkFiles += (Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-manual.md' -File |
     Where-Object { $_.FullName -match '\\manuals\\' } | Select-Object -ExpandProperty FullName)
+$releasesDir = Join-Path $RepoRoot 'releases'
+if (Test-Path -LiteralPath $releasesDir) {
+    $linkFiles += (Get-ChildItem -Path $releasesDir -Recurse -Filter '*.md' -File | Select-Object -ExpandProperty FullName)
+}
 
 $linkRegex = [regex]'\[(?:[^\]]*)\]\(([^)]+)\)'
 foreach ($lf in $linkFiles) {

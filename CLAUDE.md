@@ -170,6 +170,8 @@ verzonnen — alleen in overleg met Dave (zie
 - **`scripts/lib/`, `scripts/lint/`, `scripts/release/`, `scripts/tests/`** — de gedeelde helpers
   (`branch-info.ps1`, `release-lib.ps1`), de lint-poort + drift-check, de changelog/PR/release-scripts
   (incl. `cut-release.ps1`), en de tests.
+- **`releases/`** — de release-historie: `development/<X.Y>/<X.Y.Z>.md` (volledige notes per versie) +
+  `README.md` (overzichtstabel). `CHANGELOG.md`'s `## Releases`-sectie verwijst hiernaartoe.
 - **`.claude/`** — de repo-laag: `extensions/` (de repo-lenzen + persona-manuals), `settings.json`
   (harness-config), en `README.md` (het specialisten-handboek).
 - **`CLAUDE.md`, `README.md`, `CHANGELOG.md`, `.github/pull_request_template.md`** — de root-docs.
@@ -192,9 +194,9 @@ De grondwet hierboven, hier concreet ingevuld:
      vouwt het entry-bestand in `CHANGELOG.md` en verwijdert het — scope beperkt tot `CHANGELOG.md` +
      het entry-bestand. Zie [Rendall #06](.claude/extensions/05-06-extension.md#changelog).
   2. De **release-commit** (alleen op expliciet verzoek): [`cut-release.ps1`](scripts/release/cut-release.ps1)
-     bumpt alle plugin-versies in lockstep, verplaatst de Pull-Requests-entries naar `## Releases`,
-     commit dat op `master` en tagt `vX.Y.Z`. Bewust géén branch/PR — net als de fold. Zie
-     [Rendall #06](.claude/extensions/05-06-extension.md#versioning--releases).
+     bumpt alle plugin-versies in lockstep, genereert de release-notes in `releases/development/`,
+     verwijst ernaar vanuit `## Releases`, commit dat op `master` en tagt `vX.Y.Z`. Bewust géén
+     branch/PR — net als de fold. Zie [Rendall #06](.claude/extensions/05-06-extension.md#versioning--releases).
 - **Deze repo is `public`.** Bewuste keuze, zodat de remote `github`-marketplace-source zonder
   gh-auth te lezen is. Gevolg: hier hoort **niets vertrouwelijks** in — geen persoonlijke informatie,
   inloggegevens of secrets. De agent-defs van groep 1 zijn daarom bewust repo-neutraal; repo-specifieke

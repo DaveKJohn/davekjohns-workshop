@@ -1,44 +1,47 @@
 <#
 .SYNOPSIS
     Snijdt een repo-brede release rechtstreeks op master: bumpt alle plugin-versies in lockstep,
-    verplaatst de gevouwen Pull-Requests-entries naar de ## Releases-sectie van CHANGELOG.md, commit
-    dat op master, en zet + pusht de git-tag vX.Y.Z.
+    genereert release-notes in releases/development/, zet in CHANGELOG.md een verwijzing onder
+    ## Releases, werkt de overzichtstabel in releases/README.md bij, commit dat op master, en zet +
+    pusht de git-tag vX.Y.Z.
 
 .DESCRIPTION
     Een release is hier een *vastgelegd moment*: alle drie de plugins krijgen hetzelfde versienummer
     (lockstep, repo-breed) en de staat wordt getagd als vX.Y.Z. Er wordt niets naar GitHub Releases
-    gepubliceerd -- alleen een git-tag + een versieblok in CHANGELOG.md.
+    gepubliceerd -- alleen een git-tag, release-notes in releases/, en een verwijzing in CHANGELOG.md.
 
     Een release loopt bewust NIET via een branch + PR. Net als de fold-commit is de release-commit een
     toegestane directe-op-master-actie (de tweede uitzondering op "alles via branch + PR" -- zie de
     safety rules). Het script draait daarom op master zelf en wordt ALLEEN op Dave's expliciete verzoek
-    gestart (een versie-bump is expliciet-verzoek-werk).
+    gestart.
 
     Stappen (alles op master):
-      1. Vangrails: moet op een schone master staan, geen ongevouwen entry-bestanden in de root, en
-         de lint-poort (check-plugin-integrity.ps1) moet groen zijn.
-      2. Leest de huidige lockstep-versie uit elke <plugin>/.claude-plugin/plugin.json (moeten gelijk
-         zijn) en bepaalt de nieuwe versie (-Version expliciet, of -Bump major|minor|patch).
-      3. Bumpt alle plugin.json-versies, verplaatst de Pull-Requests-entries naar een nieuw blok
-         ### vX.Y.Z onder ## Releases (en leegt de Pull-Requests-sectie tot zijn intro).
+      1. Vangrails: schone master, geen ongevouwen entry-bestanden in de root, lint-poort groen.
+      2. Leest de huidige lockstep-versie uit elke <plugin>/.claude-plugin/plugin.json; bepaalt de
+         nieuwe versie (-Version of -Bump) en het bump-type.
+      3. Genereert releases/development/<X.Y>/<X.Y.Z>.md uit de ## Pull Requests-entries (per
+         branch-type gegroepeerd), voegt een rij toe aan releases/README.md, zet in CHANGELOG.md een
+         verwijzing onder ## Releases en leegt de Pull-Requests-sectie, en bumpt alle plugin.json's.
       4. Commit dat rechtstreeks op master (release: vX.Y.Z) en zet een annotated tag vX.Y.Z.
       5. Pusht master + de tag (tenzij -NoPush).
 
 .PARAMETER Version
-    Expliciete nieuwe versie in de vorm X.Y.Z (bv. "1.0.0"). Gebruik dit OF -Bump.
+    Expliciete nieuwe versie X.Y.Z (bv. "1.1.0"). Gebruik dit OF -Bump.
 
 .PARAMETER Bump
     Verhoog de huidige versie automatisch: major | minor | patch. Gebruik dit OF -Version.
 
+.PARAMETER Title
+    Korte omschrijving van de release als geheel (1 zin, optioneel) -- komt in de notes + de tabelrij.
+
 .PARAMETER NoPush
-    Doe alles lokaal (commit + tag) maar push master/tag niet -- voor inspectie vooraf. Push daarna
-    zelf: git push origin master && git push origin vX.Y.Z.
+    Alles lokaal (commit + tag) maar master/tag niet pushen -- voor inspectie vooraf.
 
 .PARAMETER SkipLint
     Sla de lint-poort bewust over (noodklep).
 
 .EXAMPLE
-    ./scripts/release/cut-release.ps1 -Version 1.0.0
+    ./scripts/release/cut-release.ps1 -Version 1.0.0 -Title "Eerste officiele release"
 
 .EXAMPLE
     ./scripts/release/cut-release.ps1 -Bump minor -NoPush
@@ -47,6 +50,7 @@
 param(
     [string]$Version,
     [ValidateSet('major', 'minor', 'patch')][string]$Bump,
+    [string]$Title = '',
     [switch]$NoPush,
     [switch]$SkipLint
 )
@@ -57,7 +61,7 @@ Set-Location $repoRoot
 
 . (Join-Path $PSScriptRoot '..\lib\release-lib.ps1')
 
-# BOM-loze UTF8 -- de rest van de repo (CHANGELOG.md, plugin.json) heeft geen BOM.
+# BOM-loze UTF8 -- de rest van de repo heeft geen BOM.
 $Utf8NoBom = New-Object System.Text.UTF8Encoding $false
 function Write-Utf8NoBom([string]$Path, [string]$Content) {
     [System.IO.File]::WriteAllText($Path, $Content, $Utf8NoBom)
@@ -66,7 +70,6 @@ function Write-Utf8NoBom([string]$Path, [string]$Content) {
 $reservedRootMd = @('CHANGELOG.md', 'CLAUDE.md', 'README.md', 'LICENSE.md')
 
 function Get-PluginManifests {
-    # Alle plugin-manifesten in de marketplace: <plugin>/.claude-plugin/plugin.json
     Get-ChildItem -Path $repoRoot -Directory |
         ForEach-Object { Join-Path $_.FullName '.claude-plugin\plugin.json' } |
         Where-Object { Test-Path $_ }
@@ -85,7 +88,7 @@ if ($strayEntries.Count -gt 0) {
     exit 1
 }
 
-# --- Versie bepalen ------------------------------------------------------------------------------
+# --- Versie + bump-type bepalen ------------------------------------------------------------------
 $manifests = @(Get-PluginManifests)
 if ($manifests.Count -eq 0) { Write-Error "Geen plugin-manifesten gevonden."; exit 1 }
 $manifestContents = @{}
@@ -103,6 +106,8 @@ if ($Version) {
 }
 if ($new -eq $current) { Write-Error "Nieuwe versie ($new) is gelijk aan de huidige -- niets te bumpen."; exit 1 }
 
+$bumpType = Get-BumpType -From $current -To $new
+$typeLabel = @{ major = 'Major'; minor = 'Minor'; patch = 'Patch' }[$bumpType]
 $tagName = "v$new"
 if ((git tag --list $tagName)) { Write-Error "Tag $tagName bestaat al."; exit 1 }
 
@@ -118,22 +123,56 @@ if (-not $SkipLint) {
     }
 }
 
-# --- CHANGELOG transformeren (voor de schrijf-acties, zodat een parse-fout niets achterlaat) ------
-$changelogPath = Join-Path $repoRoot 'CHANGELOG.md'
+# --- Inhoud opbouwen (voor de schrijf-acties, zodat een parse-fout niets achterlaat) --------------
+$minorDir = ($new -split '\.')[0..1] -join '.'
+$notesRelPath = "releases/development/$minorDir/$new.md"
 $today = (Get-Date -Format 'yyyy-MM-dd')
-$changelogNew = Convert-ChangelogForRelease -Content (Get-Content -Path $changelogPath -Raw -Encoding UTF8) -Version $new -Date $today
+
+$changelogPath = Join-Path $repoRoot 'CHANGELOG.md'
+$changelogRaw = Get-Content -Path $changelogPath -Raw -Encoding UTF8
+$entries = @(Get-PullRequestEntries -Content $changelogRaw)
+$notesContent = Build-ReleaseNotes -Entries $entries -Version $new -Date $today -Type $typeLabel -Title $Title
+$changelogNew = Convert-ChangelogForRelease -Content $changelogRaw -Version $new -Date $today -Type $typeLabel -NotesRelPath $notesRelPath
+
+# --- Release-notes-bestand schrijven -------------------------------------------------------------
+$notesDir = Join-Path $repoRoot ("releases\development\$minorDir")
+New-Item -ItemType Directory -Force -Path $notesDir | Out-Null
+$notesAbs = Join-Path $repoRoot ($notesRelPath -replace '/', '\')
+if (Test-Path $notesAbs) { Write-Error "$notesRelPath bestaat al."; exit 1 }
+Write-Utf8NoBom -Path $notesAbs -Content $notesContent
+Write-Host "  aangemaakt: $notesRelPath ($($entries.Count) entries)" -ForegroundColor DarkGray
+
+# --- releases/README.md overzichtstabel bijwerken ------------------------------------------------
+$relReadme = Join-Path $repoRoot 'releases\README.md'
+$shortTitle = if ($Title) { $Title } else { "$typeLabel release" }
+$newRow = "| [$new](development/$minorDir/$new.md) | $today | $typeLabel | $shortTitle |"
+if (Test-Path $relReadme) {
+    $rm = Get-Content -Path $relReadme -Raw -Encoding UTF8
+    $rmNl = if ($rm.Contains("`r`n")) { "`r`n" } else { "`n" }
+    $headerRe = [regex]"(?m)^\| Versie \| Datum \| Type \| Titel \|\r?\n\|[-| ]+\|\r?\n"
+    $hm = $headerRe.Match($rm)
+    if ($hm.Success) {
+        $at = $hm.Index + $hm.Length
+        $rm = $rm.Substring(0, $at) + $newRow + $rmNl + $rm.Substring($at)
+        Write-Utf8NoBom -Path $relReadme -Content $rm
+        Write-Host "  bijgewerkt: releases/README.md" -ForegroundColor DarkGray
+    } else {
+        Write-Warning "Overzichtstabel niet gevonden in releases/README.md -- voeg de rij handmatig toe: $newRow"
+    }
+} else {
+    Write-Warning "releases/README.md ontbreekt -- rij niet toegevoegd: $newRow"
+}
+
+Write-Utf8NoBom -Path $changelogPath -Content $changelogNew
 
 # --- Plugin-versies bumpen (regex op de version-regel -- behoudt de JSON-opmaak) -----------------
 foreach ($m in $manifests) {
     $raw = Get-Content -Path $m -Raw -Encoding UTF8
     $bumped = [regex]::Replace($raw, '("version"\s*:\s*")\d+\.\d+\.\d+(")', "`${1}$new`$2", 1)
     Write-Utf8NoBom -Path $m -Content $bumped
-    # Plugin-naam = de map twee niveaus boven plugin.json (<plugin>/.claude-plugin/plugin.json).
     $pluginName = Split-Path (Split-Path (Split-Path $m -Parent) -Parent) -Leaf
     Write-Host "  gebumpt: $pluginName/.claude-plugin/plugin.json -> $new" -ForegroundColor DarkGray
 }
-
-Write-Utf8NoBom -Path $changelogPath -Content $changelogNew
 
 # --- Commit + tag rechtstreeks op master ---------------------------------------------------------
 git add -A
@@ -157,4 +196,4 @@ git push origin $tagName
 if ($LASTEXITCODE -ne 0) { Write-Error "git push van de tag mislukte."; exit 1 }
 
 Write-Host ""
-Write-Host "En... actie: v$new is gesneden ($current -> $new), gecommit op master en getagd als $tagName. Vastgelegd." -ForegroundColor Green
+Write-Host "En... actie: v$new is gesneden ($current -> $new, $typeLabel), gecommit op master en getagd als $tagName. Vastgelegd." -ForegroundColor Green

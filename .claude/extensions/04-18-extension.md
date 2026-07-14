@@ -16,7 +16,7 @@ claude-specialists repo-eigen is, is niet dát Tycho test, maar wát er hier te 
 Het testbare oppervlak van deze repo zijn de **PowerShell-scripts** in `scripts/**` — met name de
 lint-poort `check-plugin-integrity.ps1` en de drift-check `check-consumer-drift.ps1`, die
 beslissingen nemen (geldig/ongeldig, MISSING/IDENTICAL/DRIFTED) die stil kunnen breken, en de pure
-release-logica in `release-lib.ps1` (versie-bump + CHANGELOG-transformatie).
+release-logica in `release-lib.ps1` (versie-bump, CHANGELOG-transformatie, release-notes-opbouw).
 
 ### Eerlijke stand & Tycho's rol
 
