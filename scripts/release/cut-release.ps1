@@ -158,7 +158,9 @@ foreach ($m in $manifests) {
     $raw = Get-Content -Path $m -Raw -Encoding UTF8
     $bumped = [regex]::Replace($raw, '("version"\s*:\s*")\d+\.\d+\.\d+(")', "`${1}$new`$2", 1)
     Write-Utf8NoBom -Path $m -Content $bumped
-    Write-Host "  gebumpt: $([System.IO.Path]::GetFileName((Split-Path $m -Parent) | Split-Path -Parent))/.../plugin.json -> $new" -ForegroundColor DarkGray
+    # Plugin-naam = de map twee niveaus boven plugin.json (<plugin>/.claude-plugin/plugin.json).
+    $pluginName = Split-Path (Split-Path (Split-Path $m -Parent) -Parent) -Leaf
+    Write-Host "  gebumpt: $pluginName/.claude-plugin/plugin.json -> $new" -ForegroundColor DarkGray
 }
 
 Write-Utf8NoBom -Path $changelogPath -Content $changelogNew

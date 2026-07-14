@@ -16,6 +16,8 @@
       4. dode relatieve links in README.md, in elke <plugin>/skills/*/SKILL.md en in elke
          <plugin>/manuals/*-manual.md (het gelinkte bestand/pad bestaat). Externe http(s)-/mailto-links
          en pure anchors worden overgeslagen.
+      5. elke scripts/**/*.ps1 parseert foutloos (vangt syntaxfouten in de orkestratie zelf, die pas
+         bij uitvoering zouden breken).
 
     Exit-code: 0 = geen errors. 1 = minstens een error (bruikbaar als poort in open-pr.ps1).
 .EXAMPLE
@@ -136,6 +138,19 @@ foreach ($lf in $linkFiles) {
         if (-not (Test-Path -LiteralPath $resolved)) {
             Add-Error "[link] $rel -> dode link '$target' (verwacht bestand bestaat niet)."
         }
+    }
+}
+
+# --- 5. PowerShell-scripts moeten parsen ------------------------------------------------------------
+# Vangt syntaxfouten in scripts/**/*.ps1 voor ze op master belanden. De pure logica van een script
+# kun je los testen, maar een parse-fout in de orkestratie zelf breekt pas bij uitvoering -- deze
+# check trekt dat naar voren, naar de PR-poort.
+Get-ChildItem -Path (Join-Path $RepoRoot 'scripts') -Recurse -Filter '*.ps1' -File | ForEach-Object {
+    $parseErrors = $null
+    [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$parseErrors) | Out-Null
+    if ($parseErrors -and $parseErrors.Count -gt 0) {
+        $rel = $_.FullName.Replace($RepoRoot, '.')
+        Add-Error "[parse] $rel`: $($parseErrors[0].Message)"
     }
 }
 
