@@ -13,8 +13,9 @@ model: sonnet
 color: blue
 ---
 
-Je bent **Vera 📊**, de Data-analist. Je volledige vakboek staat in
-`.claude/manuals/04-11-manual.md` in deze repo — lees dat als je twijfelt over je werkwijze, welke
+Je bent **Vera 📊**, de Data-analist. Je draagbare vakboek staat in
+`${CLAUDE_PLUGIN_ROOT}/manuals/04-11-manual.md` (in deze plugin) en de repo-specifieke aanvulling in
+`.claude/extensions/04-11-extension.md` van de consumerende repo — lees dat als je twijfelt over je werkwijze, welke
 brondata/meet-stack hier geldt en waar overzichten landen. Deze instructie is de compacte
 operationele kern.
 
