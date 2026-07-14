@@ -80,10 +80,11 @@ expliciet PR-commando), **dán is dat meteen goedkeuring voor de hele beweging**
 de changelog-entry folden lopen daarna zonder verdere tussenvraag door. Let op: "open de branch"
 (checkout), "check dit" (review) of "klaar?" (een vraag) zijn **géén** PR-commando.
 
-Op de hoofdbranch bestaat één bewuste uitzondering op "nooit direct committen" — de **fold-commit**
-na een merge — en er hoort een **lint-poort** als veiligheidswacht vóór elke PR. Hoe die hier precies
-zijn ingevuld (scripts, scope) staat in het repo-slot. Een release-cut en de destructieve acties
-hierboven blijven eveneens expliciet op verzoek.
+Op de hoofdbranch bestaan een paar nauw omschreven, bewuste uitzonderingen op "nooit direct
+committen" — de **fold-commit** na een merge en de **release-commit** (op expliciet verzoek) — en er
+hoort een **lint-poort** als veiligheidswacht vóór elke PR. Welke uitzonderingen hier precies gelden
+en hoe ze zijn ingevuld (scripts, scope) staat in het repo-slot. Een release en de destructieve acties
+hierboven gebeuren alleen op expliciet verzoek van Dave.
 
 ---
 
@@ -186,10 +187,14 @@ De grondwet hierboven, hier concreet ingevuld:
   manifesten (`marketplace.json` + elke `plugin.json`), de agent-def- en manual-frontmatter en scant
   op dode links. `open-pr.ps1` draait die poort eerst; bij een error wordt er niet gepusht en geen PR
   geopend (`-SkipLint` is de noodklep). Zie [Sylvester #15](.claude/extensions/05-15-extension.md).
-- **De enige uitzondering op "nooit direct op `master`"** is de **fold-commit** na een merge:
-  [`fold-changelog-entry.ps1`](scripts/release/fold-changelog-entry.ps1) vouwt het entry-bestand in
-  `CHANGELOG.md` en verwijdert het — scope beperkt tot `CHANGELOG.md` + het entry-bestand. Zie
-  [Rendall #06](.claude/extensions/05-06-extension.md#changelog).
+- **Twee bewuste uitzonderingen op "nooit direct op `master`":**
+  1. De **fold-commit** na een merge: [`fold-changelog-entry.ps1`](scripts/release/fold-changelog-entry.ps1)
+     vouwt het entry-bestand in `CHANGELOG.md` en verwijdert het — scope beperkt tot `CHANGELOG.md` +
+     het entry-bestand. Zie [Rendall #06](.claude/extensions/05-06-extension.md#changelog).
+  2. De **release-commit** (alleen op expliciet verzoek): [`cut-release.ps1`](scripts/release/cut-release.ps1)
+     bumpt alle plugin-versies in lockstep, verplaatst de Pull-Requests-entries naar `## Releases`,
+     commit dat op `master` en tagt `vX.Y.Z`. Bewust géén branch/PR — net als de fold. Zie
+     [Rendall #06](.claude/extensions/05-06-extension.md#versioning--releases).
 - **Deze repo is `public`.** Bewuste keuze, zodat de remote `github`-marketplace-source zonder
   gh-auth te lezen is. Gevolg: hier hoort **niets vertrouwelijks** in — geen persoonlijke informatie,
   inloggegevens of secrets. De agent-defs van groep 1 zijn daarom bewust repo-neutraal; repo-specifieke

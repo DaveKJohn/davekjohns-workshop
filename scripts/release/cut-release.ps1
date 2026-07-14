@@ -1,56 +1,53 @@
 <#
 .SYNOPSIS
-    Snijdt een repo-brede release: bumpt alle plugin-versies in lockstep, verplaatst de gevouwen
-    Pull-Requests-entries naar de ## Releases-sectie van CHANGELOG.md, en (in -Tag-modus) zet de
-    git-tag vX.Y.Z.
+    Snijdt een repo-brede release rechtstreeks op master: bumpt alle plugin-versies in lockstep,
+    verplaatst de gevouwen Pull-Requests-entries naar de ## Releases-sectie van CHANGELOG.md, commit
+    dat op master, en zet + pusht de git-tag vX.Y.Z.
 
 .DESCRIPTION
     Een release is hier een *vastgelegd moment*: alle drie de plugins krijgen hetzelfde versienummer
     (lockstep, repo-breed) en de staat wordt getagd als vX.Y.Z. Er wordt niets naar GitHub Releases
     gepubliceerd -- alleen een git-tag + een versieblok in CHANGELOG.md.
 
-    De cut verloopt in twee fasen, gescheiden door de PR (net als de rest van de workflow):
+    Een release loopt bewust NIET via een branch + PR. Net als de fold-commit is de release-commit een
+    toegestane directe-op-master-actie (de tweede uitzondering op "alles via branch + PR" -- zie de
+    safety rules). Het script draait daarom op master zelf en wordt ALLEEN op Dave's expliciete verzoek
+    gestart (een versie-bump is expliciet-verzoek-werk).
 
-      FASE 1 -- PREPARE (standaard, draait op master):
-        1. Vangrails: moet op een schone master staan, geen ongevouwen entry-bestanden in de root,
-           en de lint-poort (check-plugin-integrity.ps1) moet groen zijn.
-        2. Leest de huidige lockstep-versie uit elke <plugin>/.claude-plugin/plugin.json (moeten
-           gelijk zijn) en bepaalt de nieuwe versie (-Version expliciet, of -Bump major|minor|patch).
-        3. Maakt branch release/vX.Y.Z, bumpt alle plugin.json-versies, verplaatst de
-           Pull-Requests-entries naar een nieuw blok ### vX.Y.Z onder ## Releases (en leegt de
-           Pull-Requests-sectie tot zijn intro), en commit dat op de branch.
-        4. Pusht NIET en opent GEEN PR -- dat doet Dave's woord via open-pr.ps1.
-
-      FASE 2 -- TAG (-Tag, draait op master NA het mergen van de release-PR):
-        Verifieert dat master schoon is en de plugin.json-versies op X.Y.Z staan (release gemerged),
-        zet dan een annotated git-tag vX.Y.Z en pusht die.
+    Stappen (alles op master):
+      1. Vangrails: moet op een schone master staan, geen ongevouwen entry-bestanden in de root, en
+         de lint-poort (check-plugin-integrity.ps1) moet groen zijn.
+      2. Leest de huidige lockstep-versie uit elke <plugin>/.claude-plugin/plugin.json (moeten gelijk
+         zijn) en bepaalt de nieuwe versie (-Version expliciet, of -Bump major|minor|patch).
+      3. Bumpt alle plugin.json-versies, verplaatst de Pull-Requests-entries naar een nieuw blok
+         ### vX.Y.Z onder ## Releases (en leegt de Pull-Requests-sectie tot zijn intro).
+      4. Commit dat rechtstreeks op master (release: vX.Y.Z) en zet een annotated tag vX.Y.Z.
+      5. Pusht master + de tag (tenzij -NoPush).
 
 .PARAMETER Version
-    Expliciete nieuwe versie in de vorm X.Y.Z (bv. "0.2.0"). Gebruik dit OF -Bump.
+    Expliciete nieuwe versie in de vorm X.Y.Z (bv. "1.0.0"). Gebruik dit OF -Bump.
 
 .PARAMETER Bump
     Verhoog de huidige versie automatisch: major | minor | patch. Gebruik dit OF -Version.
 
-.PARAMETER Tag
-    Fase 2: zet en push de git-tag vX.Y.Z op master (na de merge). Vereist -Version of -Bump zodat
-    het versienummer eenduidig is.
+.PARAMETER NoPush
+    Doe alles lokaal (commit + tag) maar push master/tag niet -- voor inspectie vooraf. Push daarna
+    zelf: git push origin master && git push origin vX.Y.Z.
 
 .PARAMETER SkipLint
-    Sla de lint-poort in fase 1 bewust over (noodklep).
+    Sla de lint-poort bewust over (noodklep).
 
 .EXAMPLE
-    ./scripts/release/cut-release.ps1 -Bump minor
-    # Fase 1: bereidt release/v0.2.0 voor op een branch.
+    ./scripts/release/cut-release.ps1 -Version 1.0.0
 
 .EXAMPLE
-    ./scripts/release/cut-release.ps1 -Version 0.2.0 -Tag
-    # Fase 2: tagt master als v0.2.0 na de merge.
+    ./scripts/release/cut-release.ps1 -Bump minor -NoPush
 #>
 [CmdletBinding()]
 param(
     [string]$Version,
     [ValidateSet('major', 'minor', 'patch')][string]$Bump,
-    [switch]$Tag,
+    [switch]$NoPush,
     [switch]$SkipLint
 )
 $ErrorActionPreference = 'Stop'
@@ -75,52 +72,11 @@ function Get-PluginManifests {
         Where-Object { Test-Path $_ }
 }
 
-# --- Uitvoering ----------------------------------------------------------------------------------
-
-# Versie bepalen (vereist bij zowel prepare als tag).
-$manifests = @(Get-PluginManifests)
-if ($manifests.Count -eq 0) { Write-Error "Geen plugin-manifesten gevonden."; exit 1 }
-$manifestContents = @{}
-foreach ($m in $manifests) { $manifestContents[$m] = (Get-Content -Path $m -Raw -Encoding UTF8) }
-$current = Get-LockstepVersion -ManifestContents $manifestContents
-
-if ($Version) {
-    if ($Version -notmatch '^\d+\.\d+\.\d+$') { Write-Error "-Version moet de vorm X.Y.Z hebben (bv. 0.2.0)."; exit 1 }
-    $new = $Version
-} elseif ($Bump) {
-    $new = Get-NextVersion -Current $current -BumpKind $Bump
-} else {
-    Write-Error "Geef -Version <X.Y.Z> of -Bump <major|minor|patch>. Huidige versie: $current."
-    exit 1
-}
-
+# --- Vangrails: op master, schoon, geen ongevouwen entries ---------------------------------------
 $branch = (git rev-parse --abbrev-ref HEAD).Trim()
-
-if ($Tag) {
-    # -------- FASE 2: TAG --------
-    if ($branch -ne 'master') { Write-Error "De tag-stap draait op master (na de merge); je staat op '$branch'."; exit 1 }
-    if ((git status --porcelain)) { Write-Error "Working tree niet schoon -- commit/stash eerst."; exit 1 }
-    if ($current -ne $new) {
-        Write-Error "master staat op versie $current, niet op $new -- is de release-PR al gemerged? (Verwacht dat plugin.json op $new staat.)"
-        exit 1
-    }
-    $tagName = "v$new"
-    $existing = (git tag --list $tagName)
-    if ($existing) { Write-Error "Tag $tagName bestaat al."; exit 1 }
-    git tag -a $tagName -m "Release $tagName"
-    if ($LASTEXITCODE -ne 0) { Write-Error "git tag mislukte."; exit 1 }
-    git push origin $tagName
-    if ($LASTEXITCODE -ne 0) { Write-Error "git push van de tag mislukte."; exit 1 }
-    Write-Host "En... vastgelegd: $tagName staat op master en is gepusht." -ForegroundColor Green
-    exit 0
-}
-
-# -------- FASE 1: PREPARE --------
-if ($branch -ne 'master') { Write-Error "Bereid een release voor vanaf een schone master; je staat op '$branch'."; exit 1 }
+if ($branch -ne 'master') { Write-Error "Een release wordt rechtstreeks op master gesneden; je staat op '$branch'."; exit 1 }
 if ((git status --porcelain)) { Write-Error "Working tree niet schoon -- commit/stash eerst."; exit 1 }
 
-# Geen ongevouwen entry-bestanden in de root (die horen eerst gevouwen te zijn -- anders raken ze
-# de release niet in en blijven ze rondslingeren).
 $strayEntries = Get-ChildItem -Path $repoRoot -Filter '*.md' -File |
     Where-Object { $reservedRootMd -notcontains $_.Name } |
     Select-Object -ExpandProperty Name
@@ -129,31 +85,45 @@ if ($strayEntries.Count -gt 0) {
     exit 1
 }
 
+# --- Versie bepalen ------------------------------------------------------------------------------
+$manifests = @(Get-PluginManifests)
+if ($manifests.Count -eq 0) { Write-Error "Geen plugin-manifesten gevonden."; exit 1 }
+$manifestContents = @{}
+foreach ($m in $manifests) { $manifestContents[$m] = (Get-Content -Path $m -Raw -Encoding UTF8) }
+$current = Get-LockstepVersion -ManifestContents $manifestContents
+
+if ($Version) {
+    if ($Version -notmatch '^\d+\.\d+\.\d+$') { Write-Error "-Version moet de vorm X.Y.Z hebben (bv. 1.0.0)."; exit 1 }
+    $new = $Version
+} elseif ($Bump) {
+    $new = Get-NextVersion -Current $current -BumpKind $Bump
+} else {
+    Write-Error "Geef -Version <X.Y.Z> of -Bump <major|minor|patch>. Huidige versie: $current."
+    exit 1
+}
 if ($new -eq $current) { Write-Error "Nieuwe versie ($new) is gelijk aan de huidige -- niets te bumpen."; exit 1 }
 
-# Lint-poort.
+$tagName = "v$new"
+if ((git tag --list $tagName)) { Write-Error "Tag $tagName bestaat al."; exit 1 }
+
+# --- Lint-poort ----------------------------------------------------------------------------------
 if (-not $SkipLint) {
     $lintPath = Join-Path $PSScriptRoot '..\lint\check-plugin-integrity.ps1'
     if (Test-Path $lintPath) {
         Write-Host "check-plugin-integrity: integriteitscheck voor de release..." -ForegroundColor Cyan
         & powershell -NoProfile -ExecutionPolicy Bypass -File $lintPath
-        if ($LASTEXITCODE -ne 0) { Write-Error "check-plugin-integrity vond fouten -- release niet voorbereid. Fix ze, of draai met -SkipLint."; exit 1 }
+        if ($LASTEXITCODE -ne 0) { Write-Error "check-plugin-integrity vond fouten -- release afgebroken. Fix ze, of draai met -SkipLint."; exit 1 }
     } else {
         Write-Warning "check-plugin-integrity.ps1 niet gevonden -- lint-poort overgeslagen."
     }
 }
 
-# CHANGELOG transformeren (voor de git-branch, zodat een parse-fout niets achterlaat).
+# --- CHANGELOG transformeren (voor de schrijf-acties, zodat een parse-fout niets achterlaat) ------
 $changelogPath = Join-Path $repoRoot 'CHANGELOG.md'
 $today = (Get-Date -Format 'yyyy-MM-dd')
 $changelogNew = Convert-ChangelogForRelease -Content (Get-Content -Path $changelogPath -Raw -Encoding UTF8) -Version $new -Date $today
 
-# Release-branch aanmaken.
-$relBranch = "release/v$new"
-git checkout -b $relBranch
-if ($LASTEXITCODE -ne 0) { Write-Error "Kon branch '$relBranch' niet aanmaken (bestaat hij al?)."; exit 1 }
-
-# Plugin-versies bumpen (regex op de version-regel -- behoudt de JSON-opmaak).
+# --- Plugin-versies bumpen (regex op de version-regel -- behoudt de JSON-opmaak) -----------------
 foreach ($m in $manifests) {
     $raw = Get-Content -Path $m -Raw -Encoding UTF8
     $bumped = [regex]::Replace($raw, '("version"\s*:\s*")\d+\.\d+\.\d+(")', "`${1}$new`$2", 1)
@@ -165,13 +135,26 @@ foreach ($m in $manifests) {
 
 Write-Utf8NoBom -Path $changelogPath -Content $changelogNew
 
+# --- Commit + tag rechtstreeks op master ---------------------------------------------------------
 git add -A
-git commit -m "release: cut v$new"
+git commit -m "release: v$new"
 if ($LASTEXITCODE -ne 0) { Write-Error "git commit mislukte."; exit 1 }
 
+git tag -a $tagName -m "Release $tagName"
+if ($LASTEXITCODE -ne 0) { Write-Error "git tag mislukte."; exit 1 }
+
+if ($NoPush) {
+    Write-Host ""
+    Write-Host "Release v$new lokaal vastgelegd op master (commit + tag $tagName), niet gepusht." -ForegroundColor Green
+    Write-Host "Push zelf wanneer je klaar bent:" -ForegroundColor Cyan
+    Write-Host "  git push origin master; git push origin $tagName"
+    exit 0
+}
+
+git push origin master
+if ($LASTEXITCODE -ne 0) { Write-Error "git push van master mislukte."; exit 1 }
+git push origin $tagName
+if ($LASTEXITCODE -ne 0) { Write-Error "git push van de tag mislukte."; exit 1 }
+
 Write-Host ""
-Write-Host "Release v$new voorbereid op branch '$relBranch' (versies $current -> $new, CHANGELOG bijgewerkt)." -ForegroundColor Green
-Write-Host "Volgende stappen:" -ForegroundColor Cyan
-Write-Host "  1. Bekijk de diff."
-Write-Host "  2. Op Dave's woord: ./scripts/release/open-pr.ps1 -Title `"release: v$new`" -> mergen."
-Write-Host "  3. Daarna op master: ./scripts/release/cut-release.ps1 -Version $new -Tag"
+Write-Host "En... actie: v$new is gesneden ($current -> $new), gecommit op master en getagd als $tagName. Vastgelegd." -ForegroundColor Green

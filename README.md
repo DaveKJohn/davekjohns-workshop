@@ -148,18 +148,20 @@ changelog-entry — dezelfde workflow als de consumerende repo's. De stappen:
 Een release is een **vastgelegd moment**: alle drie de plugins krijgen hetzelfde versienummer
 (**lockstep, repo-breed**) en de staat wordt getagd als `vX.Y.Z`. Er wordt niets naar GitHub Releases
 gepubliceerd — alleen een git-tag plus een versieblok in [`CHANGELOG.md`](CHANGELOG.md). Een release
-wordt **alleen op Dave's expliciete verzoek** gesneden en verloopt, net als de rest, via een
-`release/vX.Y.Z`-branch + PR:
+wordt **alleen op Dave's expliciete verzoek** gesneden en loopt bewust **niet via een branch + PR**:
+net als de fold-commit is de release-commit een toegestane directe-op-`master`-actie (de tweede
+uitzondering op "alles via branch + PR").
 
-1. **Prepare** — [`scripts/release/cut-release.ps1`](scripts/release/cut-release.ps1)`(-Version <X.Y.Z> | -Bump <major|minor|patch>)`
-   op een schone `master`: maakt branch `release/vX.Y.Z`, bumpt alle `plugin.json`-versies in lockstep,
-   verplaatst de gevouwen `## Pull Requests`-entries naar een nieuw blok `### vX.Y.Z` onder
-   `## Releases`, en commit dat op de branch. Vangrails: schone `master`, geen ongevouwen
-   entry-bestanden, lint-poort groen.
-2. **PR + merge** — `open-pr.ps1 -Title "release: vX.Y.Z"`, daarna mergen (op Dave's woord).
-3. **Tag** — `cut-release.ps1 -Version <X.Y.Z> -Tag` op `master` na de merge: zet en pusht de
-   annotated tag `vX.Y.Z`.
+In één beweging, op een schone `master`:
+[`scripts/release/cut-release.ps1`](scripts/release/cut-release.ps1)`(-Version <X.Y.Z> | -Bump <major|minor|patch>)`
 
+1. bumpt alle `plugin.json`-versies in lockstep naar `X.Y.Z`;
+2. verplaatst de gevouwen `## Pull Requests`-entries naar een nieuw blok `### vX.Y.Z` onder
+   `## Releases` (en leegt de Pull-Requests-sectie tot zijn intro);
+3. commit dat rechtstreeks op `master` (`release: vX.Y.Z`) en zet een annotated tag `vX.Y.Z`;
+4. pusht `master` + de tag (tenzij `-NoPush` voor inspectie vooraf).
+
+Vangrails: schone `master`, geen ongevouwen entry-bestanden, lint-poort groen, tag bestaat nog niet.
 De pure logica (versie-bump + CHANGELOG-transformatie) woont in
 [`scripts/lib/release-lib.ps1`](scripts/lib/release-lib.ps1) en wordt gedekt door
 [`scripts/tests/release-lib.tests.ps1`](scripts/tests/release-lib.tests.ps1).

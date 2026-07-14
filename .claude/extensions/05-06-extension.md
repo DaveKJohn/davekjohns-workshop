@@ -110,32 +110,32 @@ De `version` in elke `.claude-plugin/plugin.json` blijft de fijnmazige marker, m
 bewegen ze samen.
 
 Een release wordt **alleen op Dave's expliciete verzoek** gesneden (een versie-bump valt onder de
-[safety rules](../../CLAUDE.md#safety-rules)) en verloopt in **twee fasen**, gescheiden door de PR —
-net als de rest van de workflow, want de version-bump en de `## Releases`-verplaatsing horen via een
-`release/vX.Y.Z`-branch + PR te gaan (de fold-commit is de énige toegestane directe-op-`master`-actie):
+[safety rules](../../CLAUDE.md#safety-rules)) en loopt bewust **niet via een branch + PR**. Net als de
+fold-commit is de release-commit een toegestane **directe-op-`master`-actie** — de **tweede**
+uitzondering op "alles via branch + PR". `cut-release.ps1` draait dus op `master` zelf en doet alles
+in één beweging:
 
-1. **Prepare** — `cut-release.ps1 -Version <X.Y.Z>` of `-Bump <major|minor|patch>` op een schone
-   `master`: maakt branch `release/vX.Y.Z`, bumpt alle plugin-versies in lockstep, verplaatst de
-   gevouwen Pull-Requests-entries naar een nieuw blok `### vX.Y.Z` onder `## Releases` (en leegt de
-   Pull-Requests-sectie tot zijn intro), en commit dat op de branch. Pusht niet en opent geen PR.
-   Vangrails: op schone `master`, geen ongevouwen entry-bestanden in de root, lint-poort groen.
-2. **Tag** — na de merge, `cut-release.ps1 -Version <X.Y.Z> -Tag` op `master`: zet een annotated tag
-   `vX.Y.Z` en pusht die.
+`cut-release.ps1 (-Version <X.Y.Z> | -Bump <major|minor|patch>)` op een schone `master`:
+1. bumpt alle plugin-versies in lockstep naar `X.Y.Z`;
+2. verplaatst de gevouwen `## Pull Requests`-entries naar een nieuw blok `### vX.Y.Z` onder
+   `## Releases` (en leegt de Pull-Requests-sectie tot zijn intro);
+3. commit dat rechtstreeks op `master` (`release: vX.Y.Z`) en zet een annotated tag `vX.Y.Z`;
+4. pusht `master` + de tag (tenzij `-NoPush` voor inspectie vooraf).
 
-De `release/`-prefix zit in [`branch-info.ps1`](../../scripts/lib/branch-info.ps1) (label `release`)
-en krijgt bewust géén eigen Pull-Requests-entry-bestand — de release sluit die sectie juist af. Een
-gedeelde agent-def-wijziging landt nog steeds eerst hier, wordt gecommit, en pas daarna door de
-consumerende repo's opgehaald.
+Vangrails: op een schone `master`, geen ongevouwen entry-bestanden in de root, lint-poort groen, en de
+tag mag nog niet bestaan. Er is bewust **geen release-branch en geen `release`-prefix** — de release
+raakt de branch-workflow niet. Een gedeelde agent-def-wijziging landt nog steeds eerst hier, wordt
+gecommit, en pas daarna door de consumerende repo's opgehaald.
 
 ### Rendall's gereedschap
 
 - `scripts/release/new-changelog-entry.ps1 [-Title <string>]` — entry-bestand scaffolden op de branch.
 - `scripts/release/fold-changelog-entry.ps1 [-Branch <naam>]` — entry(s) folden in `## Pull Requests`
   op `master` na een merge.
-- `scripts/release/cut-release.ps1 (-Version <X.Y.Z> | -Bump <major|minor|patch>) [-Tag]` — een
-  repo-brede release snijden: fase 1 bereidt `release/vX.Y.Z` voor (bump + `## Releases`-verplaatsing),
-  fase 2 (`-Tag`) tagt `master` na de merge. De pure logica (versie-bump, CHANGELOG-transformatie)
-  woont in [`scripts/lib/release-lib.ps1`](../../scripts/lib/release-lib.ps1), afgedekt door
+- `scripts/release/cut-release.ps1 (-Version <X.Y.Z> | -Bump <major|minor|patch>) [-NoPush]` — een
+  repo-brede release snijden, rechtstreeks op `master`: lockstep-bump + `## Releases`-verplaatsing +
+  commit + tag `vX.Y.Z` + push. De pure logica (versie-bump, CHANGELOG-transformatie) woont in
+  [`scripts/lib/release-lib.ps1`](../../scripts/lib/release-lib.ps1), afgedekt door
   [`scripts/tests/release-lib.tests.ps1`](../../scripts/tests/release-lib.tests.ps1).
 
 Nieuw terugkerend release-klusje? Rendall bouwt er een script bij met dezelfde guardrails.

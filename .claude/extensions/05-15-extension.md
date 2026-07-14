@@ -15,13 +15,16 @@ repo is dat een groot en zichtbaar deel van het werk, want de repo is zelf een s
 ### Wat Sylvester hier bezit
 
 - **`scripts/lint/check-plugin-integrity.ps1`** — de PR-lint-poort: valideert `marketplace.json` +
-  elke `plugin.json`, de agent-def-/manual-frontmatter (`name`/`id`/`group` + bestandsnaam-match) en
-  scant op dode links. Dit is de veiligheidswacht die [Derek #05](05-05-extension.md)'s `open-pr.ps1`
-  vóór elke push draait.
+  elke `plugin.json`, de agent-def-/manual-frontmatter (`name`/`id`/`group` + bestandsnaam-match),
+  scant op dode links, en controleert dat elke `scripts/**/*.ps1` foutloos parseert (vangt
+  syntaxfouten in de orkestratie die pas bij uitvoering zouden breken). Dit is de veiligheidswacht die
+  [Derek #05](05-05-extension.md)'s `open-pr.ps1` vóór elke push draait — én die `cut-release.ps1`
+  vóór een release draait.
 - **`scripts/lint/check-consumer-drift.ps1`** — de read-only drift-check tegen een consumerende repo
   (`MISSING`/`IDENTICAL`/`DRIFTED`).
 - **`scripts/lib/branch-info.ps1`** — de prefix→label→changelog-type-tabel (gedeeld met de
-  release-scripts; bevat ook het `release`-prefix voor een release-branch).
+  release-scripts). Bewust géén `release`-prefix: een release loopt niet via een branch/PR maar
+  rechtstreeks op `master`.
 - **`scripts/lib/release-lib.ps1`** — de pure release-helpers (versie-bump + CHANGELOG-transformatie)
   die [`cut-release.ps1`](../../scripts/release/cut-release.ps1) dot-source't; bewust puur zodat
   [Tycho #18](04-18-extension.md) ze los kan testen. Het release-*proces* is
