@@ -21,7 +21,11 @@ repo is dat een groot en zichtbaar deel van het werk, want de repo is zelf een s
 - **`scripts/lint/check-consumer-drift.ps1`** — de read-only drift-check tegen een consumerende repo
   (`MISSING`/`IDENTICAL`/`DRIFTED`).
 - **`scripts/lib/branch-info.ps1`** — de prefix→label→changelog-type-tabel (gedeeld met de
-  release-scripts).
+  release-scripts; bevat ook het `release`-prefix voor een release-branch).
+- **`scripts/lib/release-lib.ps1`** — de pure release-helpers (versie-bump + CHANGELOG-transformatie)
+  die [`cut-release.ps1`](../../scripts/release/cut-release.ps1) dot-source't; bewust puur zodat
+  [Tycho #18](04-18-extension.md) ze los kan testen. Het release-*proces* is
+  [Rendall #06](05-06-extension.md)'s domein; Sylvester bewaakt de script-mechaniek eronder.
 - **`.claude/settings.json`** — de harness-config van déze repo: de `extraKnownMarketplaces`
   (`github`-source `DaveKJohn/claude-specialists`) en `enabledPlugins` waarmee de repo zijn eigen
   `specialists`-plugin (groep 1) inschakelt.

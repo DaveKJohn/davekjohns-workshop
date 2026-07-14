@@ -18,10 +18,15 @@
 
 # prefix -> GitHub-label (PR) + branch-type (changelog-entry).
 $script:BranchPrefixTable = @{
-    feat  = @{ Label = 'enhancement';   Type = 'Feat' }
-    fix   = @{ Label = 'bug';           Type = 'Fix' }
-    docs  = @{ Label = 'documentation'; Type = 'Docs' }
-    chore = @{ Label = 'documentation'; Type = 'Chore' }
+    feat    = @{ Label = 'enhancement';   Type = 'Feat' }
+    fix     = @{ Label = 'bug';           Type = 'Fix' }
+    docs    = @{ Label = 'documentation'; Type = 'Docs' }
+    chore   = @{ Label = 'documentation'; Type = 'Chore' }
+    # Een release-branch (release/vX.Y.Z) bumpt de plugin-versies en verplaatst de gevouwen
+    # Pull-Requests-entries naar de ## Releases-sectie. Anders dan de andere prefixes krijgt een
+    # release-branch GEEN eigen Pull-Requests-entry-bestand (hij sluit die sectie juist af); het
+    # Type dient hier alleen als classificatie. Zie scripts/release/cut-release.ps1.
+    release = @{ Label = 'release';       Type = 'Release' }
 }
 
 function Get-BranchPrefix {

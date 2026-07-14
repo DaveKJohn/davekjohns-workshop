@@ -99,9 +99,11 @@ Een nieuw ingeschakelde plugin is pas in een **volgende** Claude Code-sessie zic
 ## Versiebeheer
 
 Elke plugin (`specialists/…`, `specialists-lifehub/…`, `specialists-shopify/…`) draagt een eigen
-`version` in zijn `plugin.json`. Wijzigingen aan een gedeelde agent-def landen hier eerst, worden
-hier gecommit, en pas daarna door de consumerende repo's opgehaald — nooit andersom (geen repo mag
-een gedeelde agent-def lokaal overschrijven zonder dat hier terug te leggen).
+`version` in zijn `plugin.json`. Bij een release bewegen die versies **in lockstep** — ze krijgen
+allemaal hetzelfde nummer en één repo-brede tag `vX.Y.Z` (zie [Een release snijden](#een-release-snijden)).
+Wijzigingen aan een gedeelde agent-def landen hier eerst, worden hier gecommit, en pas daarna door de
+consumerende repo's opgehaald — nooit andersom (geen repo mag een gedeelde agent-def lokaal
+overschrijven zonder dat hier terug te leggen).
 
 ## Onderhoud: drift-lint
 
@@ -141,5 +143,23 @@ changelog-entry — dezelfde workflow als de consumerende repo's. De stappen:
    vouwt het entry-bestand in de `## Pull Requests`-sectie van [`CHANGELOG.md`](CHANGELOG.md) (met
    `#NN` + PR-link) en verwijdert het entry-bestand; commit dat rechtstreeks op `master`.
 
-Versiebeheer loopt per plugin via de `version` in elke `plugin.json` (zie [Versiebeheer](#versiebeheer));
-een repo-brede release-pijplijn (versie-bump, tags, GitHub Releases) is bewust **nog buiten scope**.
+### Een release snijden
+
+Een release is een **vastgelegd moment**: alle drie de plugins krijgen hetzelfde versienummer
+(**lockstep, repo-breed**) en de staat wordt getagd als `vX.Y.Z`. Er wordt niets naar GitHub Releases
+gepubliceerd — alleen een git-tag plus een versieblok in [`CHANGELOG.md`](CHANGELOG.md). Een release
+wordt **alleen op Dave's expliciete verzoek** gesneden en verloopt, net als de rest, via een
+`release/vX.Y.Z`-branch + PR:
+
+1. **Prepare** — [`scripts/release/cut-release.ps1`](scripts/release/cut-release.ps1)`(-Version <X.Y.Z> | -Bump <major|minor|patch>)`
+   op een schone `master`: maakt branch `release/vX.Y.Z`, bumpt alle `plugin.json`-versies in lockstep,
+   verplaatst de gevouwen `## Pull Requests`-entries naar een nieuw blok `### vX.Y.Z` onder
+   `## Releases`, en commit dat op de branch. Vangrails: schone `master`, geen ongevouwen
+   entry-bestanden, lint-poort groen.
+2. **PR + merge** — `open-pr.ps1 -Title "release: vX.Y.Z"`, daarna mergen (op Dave's woord).
+3. **Tag** — `cut-release.ps1 -Version <X.Y.Z> -Tag` op `master` na de merge: zet en pusht de
+   annotated tag `vX.Y.Z`.
+
+De pure logica (versie-bump + CHANGELOG-transformatie) woont in
+[`scripts/lib/release-lib.ps1`](scripts/lib/release-lib.ps1) en wordt gedekt door
+[`scripts/tests/release-lib.tests.ps1`](scripts/tests/release-lib.tests.ps1).

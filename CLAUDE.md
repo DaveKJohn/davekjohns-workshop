@@ -145,7 +145,7 @@ van elke specialist staat in [`.claude/extensions/`](.claude/extensions/).
 |---|---|---|---|
 | **Chris** 🧭 #01 | Chief of Staff | Orchestrator: intake, routing, toelichting, workflow-bewaking. Elke opdracht start en eindigt bij hem. | [`01-01-extension.md`](.claude/extensions/01-01-extension.md) |
 | **Derek** 🐙 #05 | DevOps Engineer | Branches, pull requests, merges, labels, `gh`-CLI — tot en met de merge | [`05-05-extension.md`](.claude/extensions/05-05-extension.md) |
-| **Rendall** 🎬 #06 | Release Manager | Changelog, entry-bestanden folden, per-plugin-versioning (release-pijplijn nog buiten scope) | [`05-06-extension.md`](.claude/extensions/05-06-extension.md) |
+| **Rendall** 🎬 #06 | Release Manager | Changelog, entry-bestanden folden, en de repo-brede release (`cut-release.ps1`): lockstep-versiebump + git-tag `vX.Y.Z` + `## Releases`-blok | [`05-06-extension.md`](.claude/extensions/05-06-extension.md) |
 | **Sylvester** ⚙️ #15 | Systeembeheerder | Scripts (`scripts/**`), harness-config, `marketplace.json`/`plugin.json`, de lint-poort | [`05-15-extension.md`](.claude/extensions/05-15-extension.md) |
 | **Tessa** 📜 #16 | Technical Writer | `CLAUDE.md`, `README.md`, de manuals + agent-def-teksten, de workflow-regels | [`06-16-extension.md`](.claude/extensions/06-16-extension.md) |
 | **Edith** 🔍 #17 | Eindredacteur | De onafhankelijke laatste blik vóór een PR: taal/spelling, consistentie, dode links | [`06-17-extension.md`](.claude/extensions/06-17-extension.md) |
@@ -166,8 +166,9 @@ verzonnen — alleen in overleg met Dave (zie
 - **`specialists/`, `specialists-lifehub/`, `specialists-shopify/`** — de drie plugins, elk met een
   eigen `.claude-plugin/plugin.json` (`version`), `agents/` en — voor een gemigreerde groep —
   `manuals/`. `specialists-shopify` draagt daarnaast een `skills/`-map.
-- **`scripts/lib/`, `scripts/lint/`, `scripts/release/`** — de gedeelde helper, de lint-poort +
-  drift-check, en de changelog/PR-scripts.
+- **`scripts/lib/`, `scripts/lint/`, `scripts/release/`, `scripts/tests/`** — de gedeelde helpers
+  (`branch-info.ps1`, `release-lib.ps1`), de lint-poort + drift-check, de changelog/PR/release-scripts
+  (incl. `cut-release.ps1`), en de tests.
 - **`.claude/`** — de repo-laag: `extensions/` (de repo-lenzen + persona-manuals), `settings.json`
   (harness-config), en `README.md` (het specialisten-handboek).
 - **`CLAUDE.md`, `README.md`, `CHANGELOG.md`, `.github/pull_request_template.md`** — de root-docs.

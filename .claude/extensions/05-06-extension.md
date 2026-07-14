@@ -101,24 +101,45 @@ mechanisme is Rendall's.
 3. **Meer branches mergen** → elk brengt zijn entry-bestand; elk wordt gevouwen. `## Pull Requests`
    stapelt op.
 
-### Versioning & releases — bewust nog buiten scope
+### Versioning & releases
 
-Anders dan in een repo met een volledige release-pijplijn is er **hier (nog) geen `cut-release.ps1`
-en geen repo-brede release-flow**. Versiebeheer loopt **per plugin** via de `version` in elke
-`.claude-plugin/plugin.json` (`specialists`, `specialists-lifehub`, `specialists-shopify`). Een
-gedeelde agent-def-wijziging landt hier, wordt gecommit, en pas daarna door de consumerende repo's
-opgehaald. Een repo-brede release-pijplijn (versie-bump, tags, GitHub Releases, de `## Releases`-sectie
-vullen) is bewust buiten scope tot Dave er expliciet om vraagt — dán is dat een eigen, met Dave
-afgestemde beweging (nieuw script + release-branch-conventie).
+Een release is hier een **vastgelegd moment**: alle drie de plugins krijgen hetzelfde versienummer
+(**lockstep, repo-breed**) en de staat wordt getagd als `vX.Y.Z`. Er wordt **niets naar GitHub
+Releases gepubliceerd** — alleen een git-tag plus een versieblok in `CHANGELOG.md` (Dave's keuze).
+De `version` in elke `.claude-plugin/plugin.json` blijft de fijnmazige marker, maar bij een release
+bewegen ze samen.
+
+Een release wordt **alleen op Dave's expliciete verzoek** gesneden (een versie-bump valt onder de
+[safety rules](../../CLAUDE.md#safety-rules)) en verloopt in **twee fasen**, gescheiden door de PR —
+net als de rest van de workflow, want de version-bump en de `## Releases`-verplaatsing horen via een
+`release/vX.Y.Z`-branch + PR te gaan (de fold-commit is de énige toegestane directe-op-`master`-actie):
+
+1. **Prepare** — `cut-release.ps1 -Version <X.Y.Z>` of `-Bump <major|minor|patch>` op een schone
+   `master`: maakt branch `release/vX.Y.Z`, bumpt alle plugin-versies in lockstep, verplaatst de
+   gevouwen Pull-Requests-entries naar een nieuw blok `### vX.Y.Z` onder `## Releases` (en leegt de
+   Pull-Requests-sectie tot zijn intro), en commit dat op de branch. Pusht niet en opent geen PR.
+   Vangrails: op schone `master`, geen ongevouwen entry-bestanden in de root, lint-poort groen.
+2. **Tag** — na de merge, `cut-release.ps1 -Version <X.Y.Z> -Tag` op `master`: zet een annotated tag
+   `vX.Y.Z` en pusht die.
+
+De `release/`-prefix zit in [`branch-info.ps1`](../../scripts/lib/branch-info.ps1) (label `release`)
+en krijgt bewust géén eigen Pull-Requests-entry-bestand — de release sluit die sectie juist af. Een
+gedeelde agent-def-wijziging landt nog steeds eerst hier, wordt gecommit, en pas daarna door de
+consumerende repo's opgehaald.
 
 ### Rendall's gereedschap
 
 - `scripts/release/new-changelog-entry.ps1 [-Title <string>]` — entry-bestand scaffolden op de branch.
 - `scripts/release/fold-changelog-entry.ps1 [-Branch <naam>]` — entry(s) folden in `## Pull Requests`
   op `master` na een merge.
+- `scripts/release/cut-release.ps1 (-Version <X.Y.Z> | -Bump <major|minor|patch>) [-Tag]` — een
+  repo-brede release snijden: fase 1 bereidt `release/vX.Y.Z` voor (bump + `## Releases`-verplaatsing),
+  fase 2 (`-Tag`) tagt `master` na de merge. De pure logica (versie-bump, CHANGELOG-transformatie)
+  woont in [`scripts/lib/release-lib.ps1`](../../scripts/lib/release-lib.ps1), afgedekt door
+  [`scripts/tests/release-lib.tests.ps1`](../../scripts/tests/release-lib.tests.ps1).
 
 Nieuw terugkerend release-klusje? Rendall bouwt er een script bij met dezelfde guardrails.
 
-Kortom: het **hóé** (changelog, SemVer, tags, GitHub Releases) is draagbaar; het **wát** (deze twee
-scripts, de per-branch-entry + fold-conventie, per-plugin-versioning via `plugin.json` en "release-
-pijplijn nog buiten scope") is van deze repo.
+Kortom: het **hóé** (changelog, SemVer, tags, GitHub Releases) is draagbaar; het **wát** (deze
+scripts, de per-branch-entry + fold-conventie, en de lockstep repo-brede release via `cut-release.ps1`
+met git-tag + `## Releases`-blok maar zonder GitHub Release) is van deze repo.

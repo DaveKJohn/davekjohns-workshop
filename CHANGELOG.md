@@ -158,5 +158,6 @@ lokale agent-def-kopie in een consumerende repo met de canonieke versie hier en 
 
 ## Releases
 
-Nog geen releases vastgelegd. Versiebeheer loopt per plugin via de `version` in elke `plugin.json`;
-een repo-brede release-pijplijn is (nog) buiten scope.
+Nog geen releases vastgelegd. Zodra Dave de eerste release snijdt (`cut-release.ps1`), bumpt dat alle
+plugin-versies in lockstep, verplaatst het de bovenstaande Pull Requests naar een versieblok hier, en
+tagt het de staat als `vX.Y.Z`.
