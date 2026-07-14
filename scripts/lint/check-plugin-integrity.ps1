@@ -13,9 +13,11 @@
       3b. elke <plugin>/manuals/*-manual.md: frontmatter bevat 'id:' en 'group:', en de bestandsnaam
          <group>-<id>-manual.md komt overeen met die frontmatter (het draagbare vakboek dat de
          bijbehorende agent-def via ${CLAUDE_PLUGIN_ROOT}/manuals/ inleest).
-      4. dode relatieve links in README.md, CHANGELOG.md, elke <plugin>/skills/*/SKILL.md, elke
-         <plugin>/manuals/*-manual.md en elke releases/**/*.md (het gelinkte bestand/pad bestaat).
-         Externe http(s)-/mailto-links en pure anchors worden overgeslagen.
+      4. dode relatieve links EN kapotte anchors in README.md, CHANGELOG.md, CLAUDE.md, elke
+         .claude/extensions/*.md, elke <plugin>/skills/*/SKILL.md, elke <plugin>/manuals/*-manual.md
+         en elke releases/**/*.md. Gecontroleerd: (a) het gelinkte bestand bestaat, en (b) als de link
+         een #anchor heeft, dat die anchor als kop bestaat in het doelbestand (GitHub-slugregels).
+         Externe http(s)-/mailto-links worden overgeslagen.
       5. elke scripts/**/*.ps1 parseert foutloos (vangt syntaxfouten in de orkestratie zelf, die pas
          bij uitvoering zouden breken).
 
@@ -115,11 +117,54 @@ Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-manual.md' -File |
         }
     }
 
-# --- 4. dode relatieve links in README.md + SKILL.md + manuals --------------------------------------
+# --- 4. dode relatieve links + kapotte anchors ------------------------------------------------------
+# Gescande bestanden: README.md, CHANGELOG.md, CLAUDE.md, elke .claude/extensions/*.md, elke
+# <plugin>/skills/*/SKILL.md, elke <plugin>/manuals/*-manual.md en elke releases/**/*.md. Voor elke
+# relatieve link wordt gecontroleerd (a) dat het gelinkte bestand bestaat, en (b) als de link een
+# #anchor heeft: dat die anchor als kop bestaat in het doelbestand (GitHub-slugregels). Externe
+# http(s)-/mailto-links worden overgeslagen.
+
+function ConvertTo-GhSlug {
+    # Zet een kop-tekst om naar een GitHub-anchor-slug.
+    param([string]$Text)
+    $t = [regex]::Replace($Text, '\[([^\]]*)\]\([^)]*\)', '$1')  # [tekst](url) -> tekst
+    $t = $t -replace '[`*_]', ''                                  # inline code/emphasis-markers weg
+    $t = $t.ToLowerInvariant()
+    $t = [regex]::Replace($t, '[^\p{L}\p{N} \-]', '')             # alleen letter/cijfer/spatie/hyphen
+    $t = $t.Trim() -replace ' ', '-'
+    return $t
+}
+
+function Get-HeadingSlugs {
+    # Verzamelt de anchor-slugs van alle koppen in een markdown-bestand (met GitHub-duplicaatsuffixen).
+    param([string]$Path)
+    $slugs = New-Object System.Collections.Generic.HashSet[string]
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $slugs }
+    $lines = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8) -split "`r?`n"
+    $counts = @{}
+    $inFence = $false
+    foreach ($line in $lines) {
+        if ($line -match '^\s*```') { $inFence = -not $inFence; continue }
+        if ($inFence) { continue }
+        if ($line -match '^#{1,6}\s+(.*)$') {
+            $base = ConvertTo-GhSlug -Text $Matches[1]
+            if (-not $base) { continue }
+            if (-not $counts.ContainsKey($base)) { $counts[$base] = 0; $slug = $base }
+            else { $counts[$base] = $counts[$base] + 1; $slug = "$base-$($counts[$base])" }
+            [void]$slugs.Add($slug)
+        }
+    }
+    return $slugs
+}
+
 $linkFiles = @()
-foreach ($root in 'README.md', 'CHANGELOG.md') {
+foreach ($root in 'README.md', 'CHANGELOG.md', 'CLAUDE.md') {
     $p = Join-Path $RepoRoot $root
     if (Test-Path -LiteralPath $p) { $linkFiles += $p }
+}
+$extDir = Join-Path $RepoRoot '.claude\extensions'
+if (Test-Path -LiteralPath $extDir) {
+    $linkFiles += (Get-ChildItem -Path $extDir -Filter '*.md' -File | Select-Object -ExpandProperty FullName)
 }
 $linkFiles += (Get-ChildItem -Path $RepoRoot -Recurse -Filter 'SKILL.md' -File |
     Where-Object { $_.FullName -match '\\skills\\' } | Select-Object -ExpandProperty FullName)
@@ -131,18 +176,38 @@ if (Test-Path -LiteralPath $releasesDir) {
 }
 
 $linkRegex = [regex]'\[(?:[^\]]*)\]\(([^)]+)\)'
+$slugCache = @{}
 foreach ($lf in $linkFiles) {
     $content = [System.IO.File]::ReadAllText($lf, [System.Text.Encoding]::UTF8)
     $dir = Split-Path -Parent $lf
     $rel = $lf.Replace($RepoRoot, '.')
     foreach ($m in $linkRegex.Matches($content)) {
         $target = $m.Groups[1].Value.Trim()
-        if ($target -match '^(https?:|mailto:|#)') { continue }
-        $pathPart = ($target -split '#', 2)[0]
-        if (-not $pathPart) { continue }   # pure anchor
-        $resolved = Join-Path $dir ($pathPart -replace '/', '\')
-        if (-not (Test-Path -LiteralPath $resolved)) {
-            Add-Error "[link] $rel -> dode link '$target' (verwacht bestand bestaat niet)."
+        if ($target -match '^(https?:|mailto:)') { continue }
+
+        $parts = $target -split '#', 2
+        $pathPart = $parts[0]
+        $anchor = if ($parts.Count -gt 1) { $parts[1] } else { $null }
+
+        # Doelbestand bepalen: leeg pathPart = ditzelfde bestand (pure #anchor).
+        if (-not $pathPart) {
+            $targetFile = $lf
+        } else {
+            $resolved = Join-Path $dir ($pathPart -replace '/', '\')
+            if (-not (Test-Path -LiteralPath $resolved)) {
+                Add-Error "[link] $rel -> dode link '$target' (verwacht bestand bestaat niet)."
+                continue
+            }
+            $targetFile = $resolved
+        }
+
+        # Anchor-validatie: alleen zinvol voor een bestaand .md-doelbestand.
+        if ($anchor -and $targetFile -match '\.md$' -and (Test-Path -LiteralPath $targetFile -PathType Leaf)) {
+            $full = (Resolve-Path -LiteralPath $targetFile).Path
+            if (-not $slugCache.ContainsKey($full)) { $slugCache[$full] = Get-HeadingSlugs -Path $full }
+            if (-not $slugCache[$full].Contains($anchor)) {
+                Add-Error "[anchor] $rel -> '$target' (anchor '#$anchor' bestaat niet als kop in het doelbestand)."
+            }
         }
     }
 }

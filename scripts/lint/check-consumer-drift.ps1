@@ -4,10 +4,11 @@
     verouderde agent-def-kopieen in een consumerende repo (life-hub/smartwatchbanden) met de
     canonieke bron in dit plugin-repo, en signaleert drift voordat zo'n kopie wordt opgeruimd.
 .DESCRIPTION
-    Topologie (vastgesteld door Dave): life-hub en swb wijzen via een lokale directory-marketplace-
-    source rechtstreeks naar deze checkout (zie README.md, sectie "Consumptie") -- er is dus GEEN
-    fysieke kopie nodig zodra een consumerende repo is omgebouwd naar de gedeelde bron. Tijdens de
-    overgang (Fase 3) kan een consumerende repo echter nog een eigen lokale kopie hebben van een
+    Topologie: life-hub en swb wijzen via een remote `github`-marketplace-source
+    (`DaveKJohn/claude-specialists`) naar dit repo -- de Claude Code CLI clonet en cachet het zelf
+    (zie README.md, sectie "Consumptie"). Er is dus GEEN fysieke kopie nodig zodra een consumerende
+    repo is omgebouwd naar de gedeelde bron. Tijdens de overgang (Fase 3) kan een consumerende repo
+    echter nog een eigen lokale kopie hebben van een
     agent-def die inmiddels ook hier gedeeld is (bv. life-hub .claude/agents/<group>-<id>-agent.md,
     of swb .claude-plugins/specialists/agents/<group>-<id>-agent.md). Dit script:
 
