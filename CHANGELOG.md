@@ -9,6 +9,18 @@ folden) staat in [`README.md`](README.md#bijdragen--changelog--pr-workflow).
 Alles wat sinds de laatste release naar `main` is gemergd — nieuwste bovenaan, één blok per pull
 request.
 
+### #23 · Familie-README: agent-def vs. manual uitgelegd · Docs · 2026-07-15
+
+Nieuwe sectie "Agent-def vs. manual — twee bestanden, één specialist" in de familie-README
+(`claude-code-plugins/claude-specialists/README.md`), op verzoek van Dave: wat de agent-definitie
+(uitvoerbare vorm, frontmatter als registratie- en routing-signaal) en het vakboek (volledige
+vakregels, on-demand gelezen) elk zijn, waarom de manual leidend is, en waarom de twee bewust
+gescheiden blijven — met kruisverwijzing naar het gesplitste-manual-model in de root-README.
+
+[PR #23](https://github.com/DaveKJohn/davekjohns-workshop/pull/23)
+
+---
+
 ### #22 · Plugin-sharing-traject: stand & vervolgstappen gelogd · Docs · 2026-07-15
 
 Nieuw logboek `research/plugin-sharing/vervolgstappen.md`: de geverifieerde stand van het
