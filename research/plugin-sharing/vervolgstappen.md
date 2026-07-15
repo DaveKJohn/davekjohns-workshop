@@ -33,9 +33,9 @@ github-source (zie [`CLAUDE.md`](../../CLAUDE.md)).
    `...\DaveKJohn\claude-specialists` is opgeruimd — niet via `/plugin` of de CLI, maar
    chirurgisch via de administratie zelf, zie de record-les hieronder. De twee cache-mappen
    waar geen record meer naar verwijst (`cache/davekjohns-workshop/specialists/1.0.0` en `1.1.0`)
-   staan er nog; verwijderen kan veilig ná een sessie-herstart (een lopende sessie kan
-   agent-defs nog on-demand uit een oude cache-map lezen — vergelijk de
-   `.in_use`-marker-les).
+   zijn ná de sessie-herstart verwijderd (15 juli 2026): hun `.in_use`-markers waren leeg
+   (geen sessie hield ze meer vast — zie de marker-structuur-les hieronder) en de nieuwe
+   sessie draaide geverifieerd op v1.1.1 (`claude plugin list --json`, `projectPath`-check).
 
 ## Geleerde lessen
 
@@ -62,3 +62,12 @@ github-source (zie [`CLAUDE.md`](../../CLAUDE.md)).
   update-commando uit de scope-les hierboven. Veilige volgorde: (1) verifieer dat het `projectPath` echt niet
   meer bestaat (`Test-Path`); (2) maak een backup van het JSON-bestand; (3) verwijder
   alleen dat record; (4) valideer de JSON en controleer met `claude plugin list --json`.
+- **Marker-structuur-les: de `.in_use`-marker is geen bestand maar een máp** (15 juli 2026,
+  cache-opruiming na de v1.1.1-herstart). In die map schrijft elke sessie die de versie
+  gebruikt een eigen PID-bestand (bestandsnaam = het proces-id, inhoud `{"pid":N}`); bij
+  het afsluiten van de sessie verdwijnt het weer. "Is deze cache-versie nog in gebruik?"
+  check je dus **niet** met een file-lock-test — een map kun je nooit als bestand openen,
+  dus die test geeft altijd vals alarm "vergrendeld" — maar simpelweg door in de map te
+  kijken: **leeg = vrij** (veilig te verwijderen), en staat er wél een PID-bestand, dan
+  vertelt de PID exact wélke sessie de versie gebruikt (te herleiden via de proceslijst,
+  bv. `Get-Process -Id <pid>`).
