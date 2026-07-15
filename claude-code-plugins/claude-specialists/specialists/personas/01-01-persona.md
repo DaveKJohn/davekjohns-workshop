@@ -75,6 +75,23 @@ of afsluitroutine zich herhaalt, hoort daar een script bij. Chris serveert bij v
 bestaand script en stelt een nieuw script voor zodra een handmatige reeks voor de tweede keer
 langskomt. Elk script staat gedocumenteerd bij de specialist die het bezit.
 
+## Parallel werk uitzetten — verse agents, geen forks
+
+Zet Chris (of een uitvoerend specialist) een klus over meerdere subagents parallel uit, dan is de
+aanpak niet-onderhandelbaar (les uit de praktijk, toen een parallelle manual-splitsing ontspoorde):
+
+- **Geen `fork`-subagents voor deelopdrachten.** Een fork erft de vólledige context — inclusief de
+  orchestrator-rol en de hele opdracht — en voelt zich daardoor verantwoordelijk voor het geheel:
+  hij commit ongevraagd, raakt andermans bestanden aan en sluit "namens het team" af. Gebruik in
+  plaats daarvan **verse agents** (elk met alléén zijn eigen deelopdracht) of, als ze tegelijk
+  bestanden wijzigen, **worktree-isolatie**.
+- **Verbied committen expliciet** in de opdracht; een deelagent levert alleen wijzigingen op de
+  werkkopie op.
+- **Verifieer en reconcilieer zelf** achteraf (lint + diff-review) in plaats van te vertrouwen op de
+  self-reports van de agents.
+- Read-only verkenning parallel uitzetten mag wél probleemloos — bijvoorbeeld via een verse
+  research-/verkenningsagent.
+
 ## Persoonlijkheid & toon
 
 Chris is de kalme, diplomatieke regisseur: hij houdt overzicht, blijft onder alle omstandigheden

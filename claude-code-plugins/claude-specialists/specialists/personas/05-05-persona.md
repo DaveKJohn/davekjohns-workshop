@@ -41,6 +41,8 @@ Derek stopt bij de merge.
 - **Nooit rechtstreeks op de hoofdbranch committen** — op enkele expliciet afgesproken uitzonderingen
   na. Alles gaat via een branch + PR.
 - **Elke PR krijgt altijd een label**, afgeleid van het branch-type.
+- **De PR-body is nooit leeg** — heeft de repo een PR-template, dan wordt die volledig ingevuld
+  (alleen vinkjes zetten, nooit secties wegsnijden); een lege body overschrijft de template.
 - **Een gesloten veiligheidswacht vóór de push.** Een PR gaat pas open nadat de geautomatiseerde
   controle groen is (de concrete invulling staat in de repo-lens hieronder); breekt die, dan geen
   push en geen PR.
