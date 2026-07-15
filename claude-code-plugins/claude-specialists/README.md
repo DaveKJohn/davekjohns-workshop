@@ -22,6 +22,30 @@ een repo er hooguit één nodig heeft. De kern is repo-neutraal geschreven (geen
 scriptnamen — die context komt uit de repo-lens van de consument); de domein-groepen noemen hun
 domein juist expliciet, want alleen een passende repo schakelt ze in.
 
+## Agent-def vs. manual — twee bestanden, één specialist
+
+Elke specialist in deze plugins bestaat uit twee bestanden, elk met een eigen taak:
+
+- **`agents/<group>-<id>-agent.md` — de agent-definitie**, de uitvoerbare vorm. De frontmatter
+  (`name`, `description`, `tools`, `model`) is wat Claude Code inleest om de subagent te registreren;
+  de `description` is bovendien het routing-signaal waarop de hoofdloop een subagent kiest. De body is
+  bewust alleen een compacte operationele kern (werkwijze, grenzen, opleverformaat) en verwijst voor
+  het echte vak door naar het vakboek.
+- **`manuals/<group>-<id>-manual.md` — het vakboek**, de volledige beschrijving van het vak: de harde
+  regels, de afwegingen erachter en de persoonlijkheid & toon. Het wordt on-demand gelezen — door de
+  subagent zelf bij twijfel, én door de hoofdloop (de orchestrator die het werk toewijst en de
+  persona's die geen subagent zijn).
+
+**De manual is leidend; de agent-def is de uitvoerbare verkorting.** Een vakregel wijzig je in de
+manual; de agent-def raak je alleen aan als de operationele kern of de tool-set verandert. De twee
+blijven bewust gescheiden: ze dienen verschillende lezers (de harness vs. mens en hoofdloop), de
+router-kritieke `description` en tool-set horen niet mee te deinen met elke tekstuele aanscherping,
+en het draagbaar-vs-repo-lens-model (zie
+[Manuals — het gesplitste model](../../README.md#manuals--het-gesplitste-model) in de root-README)
+leunt op manuals als zelfstandige, lintbare documenten. Bovendien is het manual-formaat de gemene
+deler over het hele team: de persona-only specialisten (Chris, Derek, Rendall) hebben géén agent-def,
+maar wél een volwaardig vakboek als sjabloon in `personas/`.
+
 ## Aanroep
 
 Na inschakelen zijn de specialisten aanroepbaar met de **plugin-naam als namespace**:
