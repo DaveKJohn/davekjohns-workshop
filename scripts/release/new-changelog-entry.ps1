@@ -21,8 +21,8 @@ $ErrorActionPreference = "Stop"
 $Utf8NoBom = New-Object System.Text.UTF8Encoding $false
 
 $branch = (git rev-parse --abbrev-ref HEAD).Trim()
-if ($branch -eq "master") {
-    Write-Host "Je zit op master - maak eerst een branch aan." -ForegroundColor Red
+if ($branch -eq "main") {
+    Write-Host "Je zit op main - maak eerst een branch aan." -ForegroundColor Red
     exit 1
 }
 

@@ -17,7 +17,7 @@
 #>
 
 # prefix -> GitHub-label (PR) + branch-type (changelog-entry).
-# Let op: een release loopt NIET via een branch/PR (cut-release.ps1 commit rechtstreeks op master),
+# Let op: een release loopt NIET via een branch/PR (cut-release.ps1 commit rechtstreeks op main),
 # dus er is bewust geen 'release'-prefix hier.
 $script:BranchPrefixTable = @{
     feat  = @{ Label = 'enhancement';   Type = 'Feat' }

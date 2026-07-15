@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-    Snijdt een repo-brede release rechtstreeks op master: bumpt alle plugin-versies in lockstep,
+    Snijdt een repo-brede release rechtstreeks op main: bumpt alle plugin-versies in lockstep,
     genereert release-notes in releases/development/, zet in CHANGELOG.md een verwijzing onder
-    ## Releases, werkt de overzichtstabel in releases/README.md bij, commit dat op master, en zet +
+    ## Releases, werkt de overzichtstabel in releases/README.md bij, commit dat op main, en zet +
     pusht de git-tag vX.Y.Z.
 
 .DESCRIPTION
@@ -11,19 +11,19 @@
     gepubliceerd -- alleen een git-tag, release-notes in releases/, en een verwijzing in CHANGELOG.md.
 
     Een release loopt bewust NIET via een branch + PR. Net als de fold-commit is de release-commit een
-    toegestane directe-op-master-actie (de tweede uitzondering op "alles via branch + PR" -- zie de
-    safety rules). Het script draait daarom op master zelf en wordt ALLEEN op Dave's expliciete verzoek
+    toegestane directe-op-main-actie (de tweede uitzondering op "alles via branch + PR" -- zie de
+    safety rules). Het script draait daarom op main zelf en wordt ALLEEN op Dave's expliciete verzoek
     gestart.
 
-    Stappen (alles op master):
-      1. Vangrails: schone master, geen ongevouwen entry-bestanden in de root, lint-poort groen.
+    Stappen (alles op main):
+      1. Vangrails: schone main, geen ongevouwen entry-bestanden in de root, lint-poort groen.
       2. Leest de huidige lockstep-versie uit elke <plugin>/.claude-plugin/plugin.json; bepaalt de
          nieuwe versie (-Version of -Bump) en het bump-type.
       3. Genereert releases/development/<X.Y>/<X.Y.Z>.md uit de ## Pull Requests-entries (per
          branch-type gegroepeerd), voegt een rij toe aan releases/README.md, zet in CHANGELOG.md een
          verwijzing onder ## Releases en leegt de Pull-Requests-sectie, en bumpt alle plugin.json's.
-      4. Commit dat rechtstreeks op master (release: vX.Y.Z) en zet een annotated tag vX.Y.Z.
-      5. Pusht master + de tag (tenzij -NoPush).
+      4. Commit dat rechtstreeks op main (release: vX.Y.Z) en zet een annotated tag vX.Y.Z.
+      5. Pusht main + de tag (tenzij -NoPush).
 
 .PARAMETER Version
     Expliciete nieuwe versie X.Y.Z (bv. "1.1.0"). Gebruik dit OF -Bump.
@@ -35,7 +35,7 @@
     Korte omschrijving van de release als geheel (1 zin, optioneel) -- komt in de notes + de tabelrij.
 
 .PARAMETER NoPush
-    Alles lokaal (commit + tag) maar master/tag niet pushen -- voor inspectie vooraf.
+    Alles lokaal (commit + tag) maar main/tag niet pushen -- voor inspectie vooraf.
 
 .PARAMETER SkipLint
     Sla de lint-poort bewust over (noodklep).
@@ -75,9 +75,9 @@ function Get-PluginManifests {
         Where-Object { Test-Path $_ }
 }
 
-# --- Vangrails: op master, schoon, geen ongevouwen entries ---------------------------------------
+# --- Vangrails: op main, schoon, geen ongevouwen entries ---------------------------------------
 $branch = (git rev-parse --abbrev-ref HEAD).Trim()
-if ($branch -ne 'master') { Write-Error "Een release wordt rechtstreeks op master gesneden; je staat op '$branch'."; exit 1 }
+if ($branch -ne 'main') { Write-Error "Een release wordt rechtstreeks op main gesneden; je staat op '$branch'."; exit 1 }
 if ((git status --porcelain)) { Write-Error "Working tree niet schoon -- commit/stash eerst."; exit 1 }
 
 $strayEntries = Get-ChildItem -Path $repoRoot -Filter '*.md' -File |
@@ -174,7 +174,7 @@ foreach ($m in $manifests) {
     Write-Host "  gebumpt: $pluginName/.claude-plugin/plugin.json -> $new" -ForegroundColor DarkGray
 }
 
-# --- Commit + tag rechtstreeks op master ---------------------------------------------------------
+# --- Commit + tag rechtstreeks op main ---------------------------------------------------------
 git add -A
 git commit -m "release: v$new"
 if ($LASTEXITCODE -ne 0) { Write-Error "git commit mislukte."; exit 1 }
@@ -184,16 +184,16 @@ if ($LASTEXITCODE -ne 0) { Write-Error "git tag mislukte."; exit 1 }
 
 if ($NoPush) {
     Write-Host ""
-    Write-Host "Release v$new lokaal vastgelegd op master (commit + tag $tagName), niet gepusht." -ForegroundColor Green
+    Write-Host "Release v$new lokaal vastgelegd op main (commit + tag $tagName), niet gepusht." -ForegroundColor Green
     Write-Host "Push zelf wanneer je klaar bent:" -ForegroundColor Cyan
-    Write-Host "  git push origin master; git push origin $tagName"
+    Write-Host "  git push origin main; git push origin $tagName"
     exit 0
 }
 
-git push origin master
-if ($LASTEXITCODE -ne 0) { Write-Error "git push van master mislukte."; exit 1 }
+git push origin main
+if ($LASTEXITCODE -ne 0) { Write-Error "git push van main mislukte."; exit 1 }
 git push origin $tagName
 if ($LASTEXITCODE -ne 0) { Write-Error "git push van de tag mislukte."; exit 1 }
 
 Write-Host ""
-Write-Host "En... actie: v$new is gesneden ($current -> $new, $typeLabel), gecommit op master en getagd als $tagName. Vastgelegd." -ForegroundColor Green
+Write-Host "En... actie: v$new is gesneden ($current -> $new, $typeLabel), gecommit op main en getagd als $tagName. Vastgelegd." -ForegroundColor Green

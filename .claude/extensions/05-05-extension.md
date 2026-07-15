@@ -62,7 +62,7 @@ Elke wijziging begint met de juiste branch — dit is Derek's canonieke uitleg.
 **Stap 1 — controleer de branch vóór je één bestand aanraakt.** Draai `git status` + `git branch`.
 Niet-onderhandelbaar: er wordt geen enkel bestand (ook geen script of manifest) geschreven vóór deze
 check.
-- **Op `master`** → maak eerst de juiste branch, dán pas wijzigen. Nooit rechtstreeks op `master`
+- **Op `main`** → maak eerst de juiste branch, dán pas wijzigen. Nooit rechtstreeks op `main`
   committen (behalve de fold-uitzondering in [de safety rules](../../CLAUDE.md#safety-rules)).
 - **Op een feature-branch** → ga door op die branch.
 
@@ -108,7 +108,7 @@ PR. Zodra Dave het zegt, telt dat meteen als goedkeuring voor merge + fold. De l
 Dit pusht de branch en opent de PR met `.github/pull_request_template.md` als body — loop de
 checklist na. Titel-prefix spiegelt het branch-type (`feat:`, `fix:`, `docs:`, `chore:`). Het script
 zet ook automatisch het juiste GitHub-label (zie de prefix→label-tabel hierboven). Ga daarna zonder
-tussentijdse vraag door met [Mergen naar master](#mergen-naar-master) en het
+tussentijdse vraag door met [Mergen naar main](#mergen-naar-main) en het
 [folden van de changelog-entry #06](05-06-extension.md#changelog).
 
 **De PR-body vult zichzelf** via `open-pr.ps1` — laat `-Body` gewoon weg. Het script kruist het
@@ -118,29 +118,29 @@ checklist-items aan ("Changelog entry-bestand aangemaakt" + "Aangevraagd door Da
 alleen mee als je de auto-fill wilt overrulen; doe dat dan via `--body-file`, nooit inline
 (PowerShell 5.1 verminkt embedded quotes).
 
-### Mergen naar master
+### Mergen naar main
 
 Geen ápart merge-akkoord nodig — Dave's "open de PR" dekte dit al, maar de volgorde ligt vast:
 **eerst de PR open, dan de body op GitHub controleren, dán pas mergen** — nooit omgekeerd. Zodra dat
 is gebeurd (en de lint-poort groen):
 
 ```sh
-git checkout master
+git checkout main
 gh pr merge <branch> --merge --delete-branch --subject "merge: <branch> (#<PR-nummer>)"
 ```
 
 `--merge` maakt een **merge-commit** (geen squash/rebase — behoudt de losse commits). `--subject`
 geeft de merge-commit de `merge:`-prefix. `--delete-branch` ruimt de branch op (remote + lokaal).
-Synchroniseer daarna: `git checkout master && git pull --ff-only`.
+Synchroniseer daarna: `git checkout main && git pull --ff-only`.
 
-Het folden van de changelog-entry op `master` (`fold-changelog-entry.ps1`) is daarna
-[Rendall #06](05-06-extension.md#changelog)'s werk. `master` houdt zo een groeiende
+Het folden van de changelog-entry op `main` (`fold-changelog-entry.ps1`) is daarna
+[Rendall #06](05-06-extension.md#changelog)'s werk. `main` houdt zo een groeiende
 `## Pull Requests`-sectie bij van alles wat gemergd is.
 
 ### Branch- & repo-hygiëne
 
-- Alles gaat via een `feat/`/`fix/`/`docs/`/`chore/`-branch + PR naar `master` — **geen directe
-  commits op `master`** behalve de fold-uitzondering in [de safety rules](../../CLAUDE.md#safety-rules).
+- Alles gaat via een `feat/`/`fix/`/`docs/`/`chore/`-branch + PR naar `main` — **geen directe
+  commits op `main`** behalve de fold-uitzondering in [de safety rules](../../CLAUDE.md#safety-rules).
   Er is geen tweede reviewer; de PR gaat pas open op Dave's woord, waarna openen → mergen → folden in
   één beweging doorloopt, bewaakt door de lint-poort en transparant gemeld door Chris.
 - **Nooit "final" in een branchnaam.** Gebruik `-v2`, `-v3` enz. voor een tweede poging.

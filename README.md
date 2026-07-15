@@ -163,7 +163,7 @@ persona is per definitie `DRIFTED` tot hij gecoördineerd is gereconcilieerd.
 
 ## Bijdragen — changelog & PR-workflow
 
-Wijzigingen aan dit repo gaan via een branch + Pull Request naar `master`, met een gevouwen
+Wijzigingen aan dit repo gaan via een branch + Pull Request naar `main`, met een gevouwen
 changelog-entry — dezelfde workflow als de consumerende repo's. De stappen:
 
 1. **Branch** met een `<prefix>/<korte-naam>`-naam. Geldige prefixes (prefix → label → changelog-type):
@@ -178,10 +178,10 @@ changelog-entry — dezelfde workflow als de consumerende repo's. De stappen:
    (geldige manifesten, agent-def-frontmatter, geen dode links); bij een error wordt er niet gepusht en
    geen PR geopend. Slaagt de poort, dan pusht het script en opent de PR met label + auto-ingevulde body.
 5. **Merge** (op Dave's woord).
-6. **Folden:** op `master`, direct na de merge,
+6. **Folden:** op `main`, direct na de merge,
    [`scripts/release/fold-changelog-entry.ps1`](scripts/release/fold-changelog-entry.ps1)`-Branch <naam>`
    vouwt het entry-bestand in de `## Pull Requests`-sectie van [`CHANGELOG.md`](CHANGELOG.md) (met
-   `#NN` + PR-link) en verwijdert het entry-bestand; commit dat rechtstreeks op `master`.
+   `#NN` + PR-link) en verwijdert het entry-bestand; commit dat rechtstreeks op `main`.
 
 ### Een release snijden
 
@@ -190,20 +190,20 @@ Een release is een **vastgelegd moment**: alle drie de plugins krijgen hetzelfde
 gepubliceerd — alleen een git-tag, de volledige notes in [`releases/`](releases/README.md), en een
 verwijzing daarnaartoe in [`CHANGELOG.md`](CHANGELOG.md). Een release wordt **alleen op Dave's
 expliciete verzoek** gesneden en loopt bewust **niet via een branch + PR**: net als de fold-commit is
-de release-commit een toegestane directe-op-`master`-actie (de tweede uitzondering op "alles via
+de release-commit een toegestane directe-op-`main`-actie (de tweede uitzondering op "alles via
 branch + PR").
 
-In één beweging, op een schone `master`:
+In één beweging, op een schone `main`:
 [`scripts/release/cut-release.ps1`](scripts/release/cut-release.ps1)`(-Version <X.Y.Z> | -Bump <major|minor|patch>) [-Title "…"]`
 
 1. bumpt alle `plugin.json`-versies in lockstep naar `X.Y.Z`;
 2. genereert de volledige release-notes in `releases/development/<X.Y>/<X.Y.Z>.md` (uit de gevouwen
    `## Pull Requests`-entries, per branch-type), voegt een rij toe aan `releases/README.md`, en zet in
    `CHANGELOG.md` een verwijzing onder `## Releases` (de Pull-Requests-sectie wordt geleegd tot zijn intro);
-3. commit dat rechtstreeks op `master` (`release: vX.Y.Z`) en zet een annotated tag `vX.Y.Z`;
-4. pusht `master` + de tag (tenzij `-NoPush` voor inspectie vooraf).
+3. commit dat rechtstreeks op `main` (`release: vX.Y.Z`) en zet een annotated tag `vX.Y.Z`;
+4. pusht `main` + de tag (tenzij `-NoPush` voor inspectie vooraf).
 
-Vangrails: schone `master`, geen ongevouwen entry-bestanden, lint-poort groen, tag bestaat nog niet.
+Vangrails: schone `main`, geen ongevouwen entry-bestanden, lint-poort groen, tag bestaat nog niet.
 De pure logica (versie-bump, CHANGELOG-transformatie, notes-opbouw) woont in
 [`scripts/lib/release-lib.ps1`](scripts/lib/release-lib.ps1) en wordt gedekt door
 [`scripts/tests/release-lib.tests.ps1`](scripts/tests/release-lib.tests.ps1).

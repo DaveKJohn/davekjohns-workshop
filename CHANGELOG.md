@@ -6,7 +6,7 @@ folden) staat in [`README.md`](README.md#bijdragen--changelog--pr-workflow).
 
 ## Pull Requests
 
-Alles wat sinds de laatste release naar `master` is gemergd — nieuwste bovenaan, één blok per pull
+Alles wat sinds de laatste release naar `main` is gemergd — nieuwste bovenaan, één blok per pull
 request.
 
 ### #18 · Bootstrap-adoptiepad: persona-sjablonen + specialists-init-skill · Feat · 2026-07-14

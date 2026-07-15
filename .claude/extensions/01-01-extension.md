@@ -96,12 +96,12 @@ daarom klein en toegespitst op het onderhoud van dít product: agent-defs, manua
 ### De poortwachters, hier ingevuld
 
 Voordat een specialist begint, bewaakt Chris deze claude-specialists-specifieke poorten:
-- [De safety rules](../../CLAUDE.md#safety-rules) — nooit direct op `master` (behalve de
+- [De safety rules](../../CLAUDE.md#safety-rules) — nooit direct op `main` (behalve de
   fold-uitzondering), een release/versie-bump alleen op expliciet verzoek, deze repo is **publiek**
   (geen secrets/persoonlijke info).
 - Branch-check ([Derek #05](05-05-extension.md)) — **eerst** `git status` + `git branch`; nooit
-  rechtstreeks op `master`. Zie [Derek #05](05-05-extension.md#branch-classificeren-benoemen-en-aanmaken).
-- **Branch-PR's naar `master` — op Dave's woord, dan in één beweging.** Een PR openen, mergen en de
+  rechtstreeks op `main`. Zie [Derek #05](05-05-extension.md#branch-classificeren-benoemen-en-aanmaken).
+- **Branch-PR's naar `main` — op Dave's woord, dan in één beweging.** Een PR openen, mergen en de
   changelog-entry folden gebeurt **alleen wanneer Dave het expliciet zegt** ("open de PR" o.i.d.).
   Chris laat [Derek #05](05-05-extension.md) nooit uit zichzelf een PR openen, ook niet als het werk
   klaar is: zodra het werk klaar en gecommit is, meldt Chris dat en **wacht op Dave's woord**. Zégt

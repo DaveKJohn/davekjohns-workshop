@@ -66,7 +66,7 @@ entry-bestand, dat Rendall na de merge invouwt.
   middot-scheiding), daaronder de beschrijving en als laatste regel een `PR #NN`-link naar de PR-url —
   en voegt dat toe in de `## Pull Requests`-sectie. Het PR-nummer + url worden opgehaald via
   `gh pr list` op de branch-naam uit de entry (kan pas na de merge). Deze commit gaat direct op
-  `master` (de enige toegestane uitzondering — zie [de safety rules](../../CLAUDE.md#safety-rules)).
+  `main` (de enige toegestane uitzondering — zie [de safety rules](../../CLAUDE.md#safety-rules)).
 
 #### Entry-format
 
@@ -94,8 +94,8 @@ mechanisme is Rendall's.
 
 1. **Branch** → `<branch-naam>.md` aanmaken/bijwerken tijdens het bouwen. Nooit `CHANGELOG.md`
    aanraken.
-2. **Merge naar `master`** ([Derek #05](05-05-extension.md#mergen-naar-master)) → het entry-bestand
-   reist mee. Rendall draait `fold-changelog-entry.ps1 [-Branch <naam>]` op `master`, commit direct
+2. **Merge naar `main`** ([Derek #05](05-05-extension.md#mergen-naar-main)) → het entry-bestand
+   reist mee. Rendall draait `fold-changelog-entry.ps1 [-Branch <naam>]` op `main`, commit direct
    (`chore: fold changelog entry <branch>`), pusht. Laat je `-Branch` weg, dan worden alle aanwezige
    entry-bestanden in één keer gevouwen.
 3. **Meer branches mergen** → elk brengt zijn entry-bestand; elk wordt gevouwen. `## Pull Requests`
@@ -119,19 +119,19 @@ De `releases/`-map (naar het model van life-hub, maar zonder GitHub Releases):
 
 Een release wordt **alleen op Dave's expliciete verzoek** gesneden (een versie-bump valt onder de
 [safety rules](../../CLAUDE.md#safety-rules)) en loopt bewust **niet via een branch + PR**. Net als de
-fold-commit is de release-commit een toegestane **directe-op-`master`-actie** — de **tweede**
-uitzondering op "alles via branch + PR". `cut-release.ps1` draait dus op `master` zelf en doet alles
+fold-commit is de release-commit een toegestane **directe-op-`main`-actie** — de **tweede**
+uitzondering op "alles via branch + PR". `cut-release.ps1` draait dus op `main` zelf en doet alles
 in één beweging:
 
-`cut-release.ps1 (-Version <X.Y.Z> | -Bump <major|minor|patch>) [-Title "…"]` op een schone `master`:
+`cut-release.ps1 (-Version <X.Y.Z> | -Bump <major|minor|patch>) [-Title "…"]` op een schone `main`:
 1. bumpt alle plugin-versies in lockstep naar `X.Y.Z`;
 2. genereert `releases/development/<X.Y>/<X.Y.Z>.md`, voegt een rij toe aan `releases/README.md`, en zet
    in `CHANGELOG.md` een verwijzing onder `## Releases` (de Pull-Requests-sectie wordt geleegd tot zijn
    intro);
-3. commit dat rechtstreeks op `master` (`release: vX.Y.Z`) en zet een annotated tag `vX.Y.Z`;
-4. pusht `master` + de tag (tenzij `-NoPush` voor inspectie vooraf).
+3. commit dat rechtstreeks op `main` (`release: vX.Y.Z`) en zet een annotated tag `vX.Y.Z`;
+4. pusht `main` + de tag (tenzij `-NoPush` voor inspectie vooraf).
 
-Vangrails: op een schone `master`, geen ongevouwen entry-bestanden in de root, lint-poort groen, en de
+Vangrails: op een schone `main`, geen ongevouwen entry-bestanden in de root, lint-poort groen, en de
 tag mag nog niet bestaan. Er is bewust **geen release-branch en geen `release`-prefix** — de release
 raakt de branch-workflow niet. Een gedeelde agent-def-wijziging landt nog steeds eerst hier, wordt
 gecommit, en pas daarna door de consumerende repo's opgehaald.
@@ -140,9 +140,9 @@ gecommit, en pas daarna door de consumerende repo's opgehaald.
 
 - `scripts/release/new-changelog-entry.ps1 [-Title <string>]` — entry-bestand scaffolden op de branch.
 - `scripts/release/fold-changelog-entry.ps1 [-Branch <naam>]` — entry(s) folden in `## Pull Requests`
-  op `master` na een merge.
+  op `main` na een merge.
 - `scripts/release/cut-release.ps1 (-Version <X.Y.Z> | -Bump <major|minor|patch>) [-Title "…"] [-NoPush]`
-  — een repo-brede release snijden, rechtstreeks op `master`: lockstep-bump + release-notes in
+  — een repo-brede release snijden, rechtstreeks op `main`: lockstep-bump + release-notes in
   `releases/development/` + `releases/README.md`-rij + `## Releases`-verwijzing + commit + tag `vX.Y.Z`
   + push. De pure logica (versie-bump, CHANGELOG-transformatie, notes-opbouw) woont in
   [`scripts/lib/release-lib.ps1`](../../scripts/lib/release-lib.ps1), afgedekt door
