@@ -46,9 +46,9 @@
 .PARAMETER Quiet
     Toon alleen ids met een bevinding (DRIFTED/IDENTICAL); onderdruk MISSING-regels.
 .EXAMPLE
-    ./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\Users\davek\Documents\GitHub\DaveKJohn\life-hub
+    ./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\pad\naar\life-hub
 .EXAMPLE
-    ./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\Users\davek\Documents\GitHub\davekokbwj\smartwatchbanden -Quiet
+    ./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\pad\naar\smartwatchbanden -Quiet
 #>
 param(
     [Parameter(Mandatory = $true)][string]$ConsumerPath,

@@ -21,8 +21,8 @@ github-source (zie [`CLAUDE.md`](../../CLAUDE.md)).
 ## Vervolgstappen
 
 1. **Oude `claude-specialists`-marketplace-kloon opruimen** — nu beide consumenten over
-   zijn, is de blokkade weg. Handmatige actie van Dave, op **beide machines** (profielen
-   `davek` én `DaveKok`):
+   zijn, is de blokkade weg. Handmatige actie van Dave, op **beide machines** (beide
+   Windows-profielen):
    `/plugin marketplace remove claude-specialists`
    De kloon staat in `~/.claude/plugins/cache/claude-specialists/`.
 2. **Borging in smartwatchbanden** — de migratie-afronding (rooktest, stale
