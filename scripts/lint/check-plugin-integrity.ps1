@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Integriteitscheck voor de claude-specialists-marketplace: valideert de manifesten, de
-    agent-def-frontmatter en de interne links voordat een wijziging via een PR op master belandt.
+    agent-def-frontmatter en de interne links voordat een wijziging via een PR op main belandt.
 .DESCRIPTION
     De lint-poort van dit repo (aangeroepen door scripts/release/open-pr.ps1). Read-only -- wijzigt
     niets. Controleert het volgende; elke bevinding is een error:
@@ -257,7 +257,7 @@ foreach ($lf in $linkFiles) {
 }
 
 # --- 5. PowerShell-scripts moeten parsen ------------------------------------------------------------
-# Vangt syntaxfouten voor ze op master belanden. De pure logica van een script kun je los testen,
+# Vangt syntaxfouten voor ze op main belanden. De pure logica van een script kun je los testen,
 # maar een parse-fout in de orkestratie zelf breekt pas bij uitvoering -- deze check trekt dat naar
 # voren, naar de PR-poort. Gescand: scripts/**/*.ps1 EN de scripts die een plugin-skill meedraagt
 # (<plugin>/skills/**/*.ps1, bv. de bootstrap van specialists-init).

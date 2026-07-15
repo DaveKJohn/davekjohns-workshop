@@ -13,8 +13,8 @@ Gebruik:
   .\scripts\release\fold-changelog-entry.ps1 -Branch feat/nieuwe-plugin
   .\scripts\release\fold-changelog-entry.ps1              # vouwt alle aanwezige entry-bestanden
 
-Draai dit op master, direct na het mergen van een branch (nadat Dave de merge heeft goedgekeurd).
-Commit het resultaat (CHANGELOG.md + verwijderde entry-bestanden) daarna rechtstreeks op master.
+Draai dit op main, direct na het mergen van een branch (nadat Dave de merge heeft goedgekeurd).
+Commit het resultaat (CHANGELOG.md + verwijderde entry-bestanden) daarna rechtstreeks op main.
 #>
 
 param(

@@ -65,7 +65,7 @@ agent-def-config (frontmatter, tools, model) bij [Sylvester #15](extensions/05-1
 Elk vakboek is in tweeën opgebouwd, en die twee helften wonen fysiek apart:
 
 1. **De body — het draagbare vak** (in de plugin-manual): het beroep generiek, zónder repo-termen
-   ("hoofdbranch" i.p.v. `master`, geen concrete scriptnamen, geen `#id`-verwijzingen).
+   ("hoofdbranch" i.p.v. `main`, geen concrete scriptnamen, geen `#id`-verwijzingen).
 2. **`## Eigen aan deze repo (claude-specialists)` — het repo-eigen slot** (de lens in `extensions/`):
    álles wat repo-specifiek is. Vaste opbouw: cursieve lens-regel → kernclaim → repo-secties → een
    "**hóé** (draagbaar) vs. **wát** (repo-eigen)"-slot.

@@ -25,7 +25,7 @@ repo is dat een groot en zichtbaar deel van het werk, want de repo is zelf een s
   (`MISSING`/`IDENTICAL`/`DRIFTED`).
 - **`scripts/lib/branch-info.ps1`** — de prefix→label→changelog-type-tabel (gedeeld met de
   release-scripts). Bewust géén `release`-prefix: een release loopt niet via een branch/PR maar
-  rechtstreeks op `master`.
+  rechtstreeks op `main`.
 - **`scripts/lib/release-lib.ps1`** — de pure release-helpers (versie-bump, CHANGELOG-transformatie
   naar een `## Releases`-verwijzing, en de opbouw van de `releases/development/`-notes) die
   [`cut-release.ps1`](../../scripts/release/cut-release.ps1) dot-source't; bewust puur zodat

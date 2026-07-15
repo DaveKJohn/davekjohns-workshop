@@ -183,8 +183,8 @@ verzonnen — alleen in overleg met Dave (zie
 
 De grondwet hierboven, hier concreet ingevuld:
 
-- **De hoofdbranch is `master`.** Alle wijzigingen via een `<prefix>/<korte-naam>`-branch + PR naar
-  `master`. Geldige prefixes ([`scripts/lib/branch-info.ps1`](scripts/lib/branch-info.ps1)):
+- **De hoofdbranch is `main`.** Alle wijzigingen via een `<prefix>/<korte-naam>`-branch + PR naar
+  `main`. Geldige prefixes ([`scripts/lib/branch-info.ps1`](scripts/lib/branch-info.ps1)):
   `feat/` → enhancement · `fix/` → bug · `docs/` → documentation · `chore/` → documentation. Zie
   [Derek #05](.claude/extensions/05-05-extension.md#branch-classificeren-benoemen-en-aanmaken).
 - **De lint-poort is de veiligheidswacht vóór elke PR.**
@@ -192,13 +192,13 @@ De grondwet hierboven, hier concreet ingevuld:
   manifesten (`marketplace.json` + elke `plugin.json`), de agent-def- en manual-frontmatter en scant
   op dode links. `open-pr.ps1` draait die poort eerst; bij een error wordt er niet gepusht en geen PR
   geopend (`-SkipLint` is de noodklep). Zie [Sylvester #15](.claude/extensions/05-15-extension.md).
-- **Twee bewuste uitzonderingen op "nooit direct op `master`":**
+- **Twee bewuste uitzonderingen op "nooit direct op `main`":**
   1. De **fold-commit** na een merge: [`fold-changelog-entry.ps1`](scripts/release/fold-changelog-entry.ps1)
      vouwt het entry-bestand in `CHANGELOG.md` en verwijdert het — scope beperkt tot `CHANGELOG.md` +
      het entry-bestand. Zie [Rendall #06](.claude/extensions/05-06-extension.md#changelog).
   2. De **release-commit** (alleen op expliciet verzoek): [`cut-release.ps1`](scripts/release/cut-release.ps1)
      bumpt alle plugin-versies in lockstep, genereert de release-notes in `releases/development/`,
-     verwijst ernaar vanuit `## Releases`, commit dat op `master` en tagt `vX.Y.Z`. Bewust géén
+     verwijst ernaar vanuit `## Releases`, commit dat op `main` en tagt `vX.Y.Z`. Bewust géén
      branch/PR — net als de fold. Zie [Rendall #06](.claude/extensions/05-06-extension.md#versioning--releases).
 - **Deze repo is `public`.** Bewuste keuze, zodat de remote `github`-marketplace-source zonder
   gh-auth te lezen is. Gevolg: hier hoort **niets vertrouwelijks** in — geen persoonlijke informatie,
@@ -211,7 +211,7 @@ De grondwet hierboven, hier concreet ingevuld:
 
 Kortom: het **hóé** (er is een team specialisten onder een Chief of Staff, alles via branch + PR,
 geleerde lessen in de docs, de grondwet boven elk gemak) is draagbaar en staat bovenin. Het **wát**
-(dit kleine onderhoudsteam, de marketplace-/plugin-structuur, de taal, de concrete `master`-branch en
+(dit kleine onderhoudsteam, de marketplace-/plugin-structuur, de taal, de concrete `main`-branch en
 fold-uitzondering, de scripts en de plugin-lint-poort) is van deze repo en staat in dit slot.
 
 De orchestrator (Chris) wordt altijd meegeladen; hij verwijst on-demand door naar de specialisten

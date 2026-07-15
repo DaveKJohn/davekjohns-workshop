@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-    Push de huidige branch en open een Pull Request naar master.
+    Push de huidige branch en open een Pull Request naar main.
 
 .DESCRIPTION
-    Pusht de huidige branch naar origin en maakt een PR naar master via de GitHub CLI. Vangrail:
-    weigert als je op master staat. Gebruikt .github/pull_request_template.md als startpunt voor
+    Pusht de huidige branch naar origin en maakt een PR naar main via de GitHub CLI. Vangrail:
+    weigert als je op main staat. Gebruikt .github/pull_request_template.md als startpunt voor
     de PR-body tenzij je zelf -Body meegeeft (LET OP: gh pr create --fill vult de body met de
-    volledige commit-geschiedenis sinds master, niet met de template -- gebruik dat dus niet als
+    volledige commit-geschiedenis sinds main, niet met de template -- gebruik dat dus niet als
     je de checklist-template wil).
 
     Auto-invullen (als je -Body NIET meegeeft): het script vult de template zelf zoveel mogelijk in,
@@ -27,7 +27,7 @@
     volgt de hoofdcategorieen van de PR-template. Onbekend prefix -> label 'question' + waarschuwing
     (= nader te classificeren).
 
-    Lint-poort (vangrail voor master): voor de push draait scripts/lint/check-plugin-integrity.ps1.
+    Lint-poort (vangrail voor main): voor de push draait scripts/lint/check-plugin-integrity.ps1.
     Vindt die fouten (ongeldige marketplace/plugin-manifesten, ontbrekende agent-def-frontmatter,
     dode links), dan wordt de branch NIET gepusht en GEEN PR geopend. Gebruik -SkipLint om de poort
     bewust over te slaan (noodklep).
@@ -52,9 +52,9 @@ $ErrorActionPreference = 'Stop'
 $repo = 'DaveKJohn/claude-specialists'
 
 $branch = (git rev-parse --abbrev-ref HEAD).Trim()
-if ($branch -eq 'master') { Write-Error "Je staat op master; een PR maak je vanaf een branch."; exit 1 }
+if ($branch -eq 'main') { Write-Error "Je staat op main; een PR maak je vanaf een branch."; exit 1 }
 
-# Lint-poort: vang ongeldige manifesten/frontmatter/dode links voor ze via een PR op master belanden.
+# Lint-poort: vang ongeldige manifesten/frontmatter/dode links voor ze via een PR op main belanden.
 # Fouten blokkeren (exit-code 1); -SkipLint slaat de poort bewust over.
 if (-not $SkipLint) {
     $lintPath = Join-Path $PSScriptRoot '..\lint\check-plugin-integrity.ps1'
@@ -134,7 +134,7 @@ if (-not $Body) {
 $bodyFile = Join-Path ([System.IO.Path]::GetTempPath()) "open-pr-body-$PID.md"
 [System.IO.File]::WriteAllText($bodyFile, $Body, (New-Object System.Text.UTF8Encoding $false))
 try {
-    gh pr create --base master --head $branch --title $Title --body-file $bodyFile --label $label --repo $repo
+    gh pr create --base main --head $branch --title $Title --body-file $bodyFile --label $label --repo $repo
     if ($LASTEXITCODE -ne 0) { Write-Error "PR aanmaken mislukte (is gh ingelogd?)."; exit 1 }
 } finally {
     Remove-Item -Path $bodyFile -Force -ErrorAction SilentlyContinue
