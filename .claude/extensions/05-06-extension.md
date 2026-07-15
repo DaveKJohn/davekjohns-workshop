@@ -108,6 +108,10 @@ Een release is hier een **vastgelegd moment**: alle drie de plugins krijgen hetz
 Releases gepubliceerd** — alleen een git-tag, de volledige notes in `releases/development/`, en een
 verwijzing daarnaartoe in `CHANGELOG.md` (Dave's keuze). De `version` in elke
 `.claude-plugin/plugin.json` blijft de fijnmazige marker, maar bij een release bewegen ze samen.
+Let op: dat nummer is óók de **update-poort** — `claude plugin update` vergelijkt uitsluitend
+versienummers, dus consumenten (en deze repo zelf, die zichzelf consumeert) ontvangen gemergde
+wijzigingen pas ná een bump. Moet werk naar consumenten propageren, dan meldt Rendall dat aan Dave
+als reden voor een release (die blijft op diens expliciete verzoek).
 
 De `releases/`-map (naar het model van life-hub, maar zonder GitHub Releases):
 - **`releases/development/<X.Y>/<X.Y.Z>.md`** — de volledige release-notes, uit de `## Pull Requests`-entries
