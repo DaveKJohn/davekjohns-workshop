@@ -1,0 +1,38 @@
+# CI-poort: draait de lint-poort + alle testsuites bij elke PR en elke push naar main.
+# Dit is dezelfde wacht die open-pr.ps1 lokaal draait, maar dan onontkoombaar -- ook een PR
+# die buiten de scripts om ontstaat (GitHub-UI, of een vergeten -SkipLint) komt hier langs.
+# De scripts zijn Windows PowerShell 5.1-gericht, dus we draaien op windows-latest met
+# `shell: powershell` (5.1), niet pwsh.
+name: CI
+
+# Least-privilege (advies Sean): deze workflow leest alleen -- het GITHUB_TOKEN krijgt geen write.
+permissions:
+  contents: read
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lint-en-tests:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint-poort (check-plugin-integrity)
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/lint/check-plugin-integrity.ps1
+          exit $LASTEXITCODE
+
+      - name: Testsuites (scripts/tests/*.tests.ps1)
+        shell: powershell
+        run: |
+          $failed = 0
+          Get-ChildItem -Path scripts/tests -Filter *.tests.ps1 -File | ForEach-Object {
+            Write-Host "== $($_.Name) ==" -ForegroundColor Cyan
+            powershell -NoProfile -ExecutionPolicy Bypass -File $_.FullName
+            if ($LASTEXITCODE -ne 0) { $failed = 1 }
+          }
+          exit $failed

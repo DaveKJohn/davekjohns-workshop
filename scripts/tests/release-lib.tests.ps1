@@ -124,6 +124,19 @@ Assert-Match $ln '\[de site\]\(https://example\.com\)' 'externe link ongemoeid'
 Assert-Match $ln '\[#kop\]\(#kop\)' 'anker-link ongemoeid'
 Assert-Match $ln '\[PR #3\]\(https://example\.com/3\)' 'PR-link ongemoeid'
 
+Write-Host "Get-PluginManifestPaths" -ForegroundColor Cyan
+# Puur (raakt de schijf niet), dus een fictieve root volstaat.
+$fakeRoot = 'C:\fake-repo'
+$goodJson = '{"plugins": [{"name": "a", "source": "./fam/a"}, {"name": "b", "source": "./fam/b"}]}'
+$paths = @(Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson $goodJson)
+Assert-Equal 2 $paths.Count 'twee geregistreerde plugins -> twee manifest-paden'
+Assert-Equal 'C:\fake-repo\fam\a\.claude-plugin\plugin.json' $paths[0] 'relatieve ./-source resolve''t binnen de repo'
+Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"plugins": [{"name": "x", "source": "../buiten"}]}' } 'source met ..-pad buiten de repo gooit (containment)'
+Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"plugins": [{"name": "x", "source": "C:\\elders"}]}' } 'absolute source gooit (containment)'
+Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"plugins": [{"name": "x"}]}' } 'ontbrekende source gooit'
+Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"name": "leeg"}' } 'ontbrekende plugins-lijst gooit'
+Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson 'geen json' } 'corrupte JSON gooit'
+
 Write-Host ""
 if ($script:fail -gt 0) {
     Write-Host "FAALT: $($script:fail) fout, $($script:pass) goed." -ForegroundColor Red

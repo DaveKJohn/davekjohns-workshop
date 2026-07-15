@@ -21,6 +21,9 @@ repo is dat een groot en zichtbaar deel van het werk, want de repo is zelf een s
   pas bij uitvoering zouden breken). Dit is de veiligheidswacht die
   [Derek #05](05-05-extension.md)'s `open-pr.ps1` vóór elke push draait — én die `cut-release.ps1`
   vóór een release draait.
+- **`.github/workflows/ci.yml`** — de CI-poort op GitHub: draait dezelfde lint-poort + alle
+  testsuites (`scripts/tests/*.tests.ps1`) bij elke PR en elke push naar `main`, zodat de wacht ook
+  geldt voor werk dat buiten `open-pr.ps1` om ontstaat.
 - **`scripts/lint/check-consumer-drift.ps1`** — de read-only drift-check tegen een consumerende repo
   (`MISSING`/`IDENTICAL`/`DRIFTED`).
 - **`scripts/lib/branch-info.ps1`** — de prefix→label→changelog-type-tabel (gedeeld met de

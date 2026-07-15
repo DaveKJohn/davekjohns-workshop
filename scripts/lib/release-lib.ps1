@@ -8,8 +8,8 @@
 
         . (Join-Path $PSScriptRoot '..\lib\release-lib.ps1')
 
-    Levert Get-NextVersion, Get-BumpType, Get-LockstepVersion, Get-PullRequestEntries,
-    Convert-ChangelogForRelease en Build-ReleaseNotes. Deze functies zijn bewust puur (string/waarde
+    Levert Get-NextVersion, Get-BumpType, Get-LockstepVersion, Get-PluginManifestPaths,
+    Get-PullRequestEntries, Convert-ChangelogForRelease en Build-ReleaseNotes. Deze functies zijn bewust puur (string/waarde
     in, string/waarde uit) zodat ze los te testen zijn zonder een release te draaien --
     scripts/release/cut-release.ps1 gebruikt ze, en de tests dekken ze af.
 
@@ -75,6 +75,45 @@ function Get-LockstepVersion {
         throw "Plugin-versies staan niet in lockstep (moeten gelijk zijn voor een repo-brede release):`n$detail"
     }
     return $distinct[0]
+}
+
+function Get-PluginManifestPaths {
+    <#
+        Leidt de plugin-manifest-paden af uit plugins[].source in de marketplace-JSON -- de
+        marketplace is de bron van waarheid over wat een plugin is. Puur (raakt de schijf niet):
+        input is de ruwe JSON-tekst + de repo-root, output is een array van volledige manifest-paden.
+        Gooit bij een ontbrekende plugins-lijst, een ontbrekend source-veld, en (containment,
+        advies Sean) bij een source die via een absoluut of ..-pad buiten de repo-root wijst --
+        de versie-bump mag nooit buiten de repo schrijven.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$RepoRoot,
+        [Parameter(Mandatory)][string]$MarketplaceJson
+    )
+    $marketplace = $MarketplaceJson | ConvertFrom-Json
+    if (-not ($marketplace.PSObject.Properties.Name -contains 'plugins') -or -not $marketplace.plugins) {
+        throw "marketplace.json heeft geen 'plugins'-lijst."
+    }
+    $rootPrefix = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd('\') + '\'
+    foreach ($p in $marketplace.plugins) {
+        if (-not $p.source) { throw "plugin '$($p.name)' mist een 'source'." }
+        # Een absolute source is per definitie buiten de repo-conventie -- expliciet melden i.p.v.
+        # de verwarrende Join-Path/GetFullPath-fout die er anders uit zou rollen.
+        if ([System.IO.Path]::IsPathRooted($p.source)) {
+            throw "plugin '$($p.name)': source '$($p.source)' wijst buiten de repo (absoluut pad)."
+        }
+        $manifest = $null
+        try {
+            $manifest = [System.IO.Path]::GetFullPath(
+                (Join-Path $RepoRoot (Join-Path $p.source '.claude-plugin\plugin.json')))
+        } catch {
+            throw "plugin '$($p.name)': source '$($p.source)' is geen geldig pad."
+        }
+        if (-not $manifest.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw "plugin '$($p.name)': source '$($p.source)' wijst buiten de repo ($manifest)."
+        }
+        $manifest
+    }
 }
 
 function Split-Changelog {

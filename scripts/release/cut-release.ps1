@@ -71,28 +71,21 @@ $reservedRootMd = @('CHANGELOG.md', 'CLAUDE.md', 'README.md', 'LICENSE.md')
 
 function Get-PluginManifests {
     # De marketplace-definitie is de bron van waarheid over wat een plugin is: de manifesten worden
-    # afgeleid uit plugins[].source in marketplace.json in plaats van een repo-brede scan, zodat een
-    # toevallige geneste .claude-plugin/plugin.json (bv. toekomstig test- of voorbeeldmateriaal)
-    # nooit stilzwijgend meegebumpt wordt. Dezelfde controle als de marketplace-check in de lint-poort.
+    # afgeleid uit plugins[].source (incl. containment-check) door Get-PluginManifestPaths in
+    # release-lib.ps1 -- daar puur en dus getest. Hier alleen de IO: lezen + bestaan-check.
     $marketplacePath = Join-Path $repoRoot '.claude-plugin\marketplace.json'
     if (-not (Test-Path -LiteralPath $marketplacePath)) {
         Write-Error ".claude-plugin/marketplace.json ontbreekt."; exit 1
     }
-    $marketplace = Get-Content -Path $marketplacePath -Raw -Encoding UTF8 | ConvertFrom-Json
-    foreach ($p in $marketplace.plugins) {
-        $manifest = [System.IO.Path]::GetFullPath(
-            (Join-Path $repoRoot (Join-Path $p.source '.claude-plugin\plugin.json')))
-        # Containment-check (advies Sean): een absoluut of ..-pad in source mag de bump nooit
-        # buiten de repo laten schrijven.
-        $rootPrefix = [System.IO.Path]::GetFullPath($repoRoot).TrimEnd('\') + '\'
-        if (-not $manifest.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
-            Write-Error "Plugin '$($p.name)': source '$($p.source)' wijst buiten de repo ($manifest)."; exit 1
-        }
+    $paths = @(Get-PluginManifestPaths -RepoRoot $repoRoot `
+        -MarketplaceJson (Get-Content -Path $marketplacePath -Raw -Encoding UTF8))
+    foreach ($manifest in $paths) {
         if (-not (Test-Path -LiteralPath $manifest)) {
-            Write-Error "Plugin '$($p.name)' staat in marketplace.json maar mist zijn manifest ($manifest)."; exit 1
+            $pluginName = Split-Path (Split-Path (Split-Path $manifest -Parent) -Parent) -Leaf
+            Write-Error "Plugin '$pluginName' staat in marketplace.json maar mist zijn manifest ($manifest)."; exit 1
         }
-        $manifest
     }
+    $paths
 }
 
 # --- Vangrails: op main, schoon, geen ongevouwen entries ---------------------------------------

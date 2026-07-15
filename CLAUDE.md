@@ -187,7 +187,9 @@ verzonnen — alleen in overleg met Dave (zie
   `README.md` (overzichtstabel). `CHANGELOG.md`'s `## Releases`-sectie verwijst hiernaartoe.
 - **`.claude/`** — de repo-laag: `extensions/` (de repo-lenzen + persona-manuals), `settings.json`
   (harness-config), en `README.md` (het specialisten-handboek).
-- **`CLAUDE.md`, `README.md`, `CHANGELOG.md`, `.github/pull_request_template.md`** — de root-docs.
+- **`CLAUDE.md`, `README.md`, `CHANGELOG.md`** — de root-docs — en **`.github/`**
+  (`pull_request_template.md` + `workflows/ci.yml`, de CI-poort die de lint + testsuites bij elke
+  PR en push naar `main` draait).
 
 ### Safety-invulling van davekjohns-workshop
 

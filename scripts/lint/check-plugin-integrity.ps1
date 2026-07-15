@@ -65,11 +65,20 @@ if (-not (Test-Path -LiteralPath $marketplacePath)) {
         if (-not ($mp.PSObject.Properties.Name -contains 'plugins') -or -not $mp.plugins) {
             Add-Error "[marketplace] marketplace.json heeft geen 'plugins'-lijst."
         } else {
+            # Containment (advies Sean): een source die via een absoluut of ..-pad buiten de
+            # repo wijst, is altijd fout -- wat hier geregistreerd staat, wordt gepubliceerd.
+            # Bewust gespiegeld aan Get-PluginManifestPaths in scripts/lib/release-lib.ps1 (die
+            # gooit; deze lint verzamelt) -- wijzig je de containment-regel, wijzig dan beide.
+            $rootPrefix = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd('\') + '\'
             foreach ($p in $mp.plugins) {
                 $src = $p.source
                 if (-not $src) { Add-Error "[marketplace] plugin '$($p.name)' mist een 'source'."; continue }
                 $pluginDir = (Join-Path $RepoRoot ($src -replace '/', '\')).TrimEnd('\')
-                if (-not (Test-Path -LiteralPath $pluginDir -PathType Container)) {
+                $resolvedDir = $null
+                try { $resolvedDir = [System.IO.Path]::GetFullPath($pluginDir) } catch {}
+                if (-not $resolvedDir -or -not ($resolvedDir + '\').StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                    Add-Error "[marketplace] plugin '$($p.name)': source '$src' wijst buiten de repo."
+                } elseif (-not (Test-Path -LiteralPath $pluginDir -PathType Container)) {
                     Add-Error "[marketplace] plugin '$($p.name)': source-map '$src' bestaat niet."
                 } elseif (-not (Test-Path -LiteralPath (Join-Path $pluginDir '.claude-plugin\plugin.json'))) {
                     Add-Error "[marketplace] plugin '$($p.name)': '$src' bevat geen .claude-plugin/plugin.json."

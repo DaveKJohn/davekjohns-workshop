@@ -157,6 +157,9 @@ changelog-entry — dezelfde workflow als de consumerende repo's. De stappen:
    de **lint-poort** [`scripts/lint/check-plugin-integrity.ps1`](scripts/lint/check-plugin-integrity.ps1)
    (geldige manifesten, agent-def-frontmatter, geen dode links); bij een error wordt er niet gepusht en
    geen PR geopend. Slaagt de poort, dan pusht het script en opent de PR met label + auto-ingevulde body.
+   Dezelfde poort draait óók als **CI** op GitHub ([`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+   lint + alle testsuites, bij elke PR en elke push naar `main`) — een PR die buiten de scripts om
+   ontstaat, komt er dus evengoed langs.
 5. **Merge** (op Dave's woord).
 6. **Folden:** op `main`, direct na de merge,
    [`scripts/release/fold-changelog-entry.ps1`](scripts/release/fold-changelog-entry.ps1)`-Branch <naam>`
