@@ -28,12 +28,14 @@ github-source (zie [`CLAUDE.md`](../../CLAUDE.md)).
 2. **Borging in smartwatchbanden** — de migratie-afronding (rooktest, stale
    `.in_use`-marker-les: sessie-herstart was de fix) daar vastleggen in
    `research/plugin-sharing/README.md`; staat nu alleen in swb-sessiegeheugen.
-3. **Restant van de map-hernoem (bijgewerkt 15 juli 2026):** de checkout-map is inmiddels
-   hernoemd naar `...\DaveKJohn\davekjohns-workshop`, maar er hangt nog een **verweesd
-   plugin-record** aan het oude pad `...\DaveKJohn\claude-specialists` (`specialists`
-   v1.1.0, zichtbaar via `claude plugin list --json` → `projectPath`). Opruimen via
-   `/plugin` in een interactieve sessie — niet blind via de CLI, zie de scope-les
-   hieronder.
+3. ✅ **Restant van de map-hernoem — afgerond (15 juli 2026):** de checkout-map is hernoemd
+   naar `...\DaveKJohn\davekjohns-workshop` en het verweesde plugin-record aan het oude pad
+   `...\DaveKJohn\claude-specialists` is opgeruimd — niet via `/plugin` of de CLI, maar
+   chirurgisch via de administratie zelf, zie de record-les hieronder. De twee cache-mappen
+   waar geen record meer naar verwijst (`cache/davekjohns-workshop/specialists/1.0.0` en `1.1.0`)
+   staan er nog; verwijderen kan veilig ná een sessie-herstart (een lopende sessie kan
+   agent-defs nog on-demand uit een oude cache-map lezen — vergelijk de
+   `.in_use`-marker-les).
 
 ## Geleerde lessen
 
@@ -52,3 +54,11 @@ github-source (zie [`CLAUDE.md`](../../CLAUDE.md)).
   versie laadt pas na een sessie-herstart. Let op: de install kan de line-endings van
   `.claude/settings.json` herschrijven zonder inhoudswijziging — check `git status` na
   afloop.
+- **Record-les: een verweesd plugin-record ruim je preciezer op via de administratie dan
+  via `/plugin` of de CLI** (15 juli 2026). De installatie-records wonen in
+  `~/.claude/plugins/installed_plugins.json`, per record identificeerbaar aan het
+  `projectPath`-veld — daar kun je exact het bedoelde record verwijderen, terwijl
+  `claude plugin uninstall -s project` dezelfde vage project-doelbepaling heeft als het
+  update-commando uit de scope-les hierboven. Veilige volgorde: (1) verifieer dat het `projectPath` echt niet
+  meer bestaat (`Test-Path`); (2) maak een backup van het JSON-bestand; (3) verwijder
+  alleen dat record; (4) valideer de JSON en controleer met `claude plugin list --json`.
