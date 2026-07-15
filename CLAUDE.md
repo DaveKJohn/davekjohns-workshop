@@ -120,14 +120,17 @@ hierboven gebeuren alleen op expliciet verzoek van Dave.
 > wát déze repo is, welk team er werkt, en hoe de grondwet hier concreet is ingevuld.*
 
 `davekjohns-workshop` is de **werkplaats-repo van Dave (DaveKJohn)**: de marketplace waar al zijn
-plugins worden gebouwd en onderhouden. De eerste product-familie is het Claude-Specialists-systeem
-in [`claude-code-plugins/claude-specialists/`](claude-code-plugins/claude-specialists/), opgedeeld in **drie plugins**: de gedeelde,
-draagbare kern (`specialists`) plus twee domein-groepen (`specialists-lifehub`,
+plugins worden gebouwd en onderhouden, per familie in een eigen map onder `claude-code-plugins/`.
+De eerste product-familie is het Claude-Specialists-systeem in
+[`claude-code-plugins/claude-specialists/`](claude-code-plugins/claude-specialists/): drie plugins —
+de gedeelde, draagbare kern (`specialists`) plus twee domein-groepen (`specialists-lifehub`,
 `specialists-shopify`). Deze repo is de **single source of
 truth** voor alle deelbare subagent-definities — elke consumerende repo (life-hub, smartwatchbanden)
-wijst hierheen en schakelt per plugin aan of uit. De volledige uitleg — de drie groepen, wat hier
-wél/niet woont, het gesplitste manual-model, de aanroep-namespaces, de consumptie-config en de
-drift-lint — staat in [`README.md`](README.md); dit `CLAUDE.md` dupliceert dat niet.
+wijst hierheen en schakelt per plugin aan of uit. De uitleg is verdeeld over twee READMEs en wordt
+hier niet gedupliceerd: wat de specialisten-familie doet en het verschil tussen haar drie
+sub-plugins staat in de [familie-README](claude-code-plugins/claude-specialists/README.md); het
+repo-brede verhaal (wat hier wél/niet woont, het gesplitste manual-model, de consumptie-config, het
+bootstrap-pad en de drift-lint) staat in de [root-`README.md`](README.md).
 
 **De repo consumeert zichzelf.** Via [`.claude/settings.json`](.claude/settings.json) schakelt deze
 repo zijn eigen `specialists`-plugin (groep 1) in, met de `github`-marketplace-source

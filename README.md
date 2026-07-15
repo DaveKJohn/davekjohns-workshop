@@ -8,35 +8,17 @@ draagbare kern plus twee domein-groepen. Deze repo is de **single source of trut
 deelbare subagent-definities — elke consumerende repo wijst ernaar toe in plaats van eigen kopieën
 te onderhouden, en schakelt **per plugin aan of uit** welke groepen hij nodig heeft.
 
-## De drie groepen
+## De plugin-families
 
-Het systeem kent drie groepen specialisten, elk in een eigen plugin:
+Elke plugin-familie woont in een eigen map onder `claude-code-plugins/`, met een **eigen README** die
+uitlegt wat de familie doet en wat de verschillen tussen haar sub-plugins zijn. Vooralsnog is er één
+familie:
 
-| Plugin | Groep | Voor wie | Inhoud |
-|---|---|---|---|
-| `specialists` | **1 · globaal** | elke repo | Paula, Rebecca, Vera, Gwen, Cody, Tycho, Sylvester, Tessa, Edith, Victor |
-| `specialists-lifehub` | **2 · life-hub-achtig** | persoonlijke informatie-hub / brain-gebaseerde kennisrepo | Astrid, Fiona, Hugo, Ian, Onyx |
-| `specialists-shopify` | **3 · Shopify** | Shopify-store-repo (bv. smartwatchbanden) | Liam, Sandra, Steven + de domein-skill `start-task` |
-
-Een consumerende repo schakelt **groep 1 altijd in**, plus de domein-groep die bij hem past:
-
-- **life-hub** → `specialists` + `specialists-lifehub`
-- **smartwatchbanden** → `specialists` + `specialists-shopify`
-- **een nieuwe repo** → `specialists` + de passende domein-plugin (of alleen de kern, als geen domein past)
-
-### Groep 1 — repo-neutraal
-
-Groep 1 (`claude-code-plugins/claude-specialists/specialists/agents/*.md`) is **repo-neutraal** geschreven: geen repo-naam, geen
-teamgenoot-namen, geen repo-specifieke paden of scriptnamen. Het exacte platform/tech, de
-teamgenoten en de vak-conventies van een specialist staan in de manual van de consumerende repo
-(`.claude/manuals/<group>-<id>-manual.md`) — de agent-def verwijst daar zelf naar.
-
-### Groep 2 & 3 — bewust domein-gekleurd
-
-De domein-groepen (`claude-code-plugins/claude-specialists/specialists-lifehub/`, `claude-code-plugins/claude-specialists/specialists-shopify/`) zijn juist **niet** neutraal: ze
-noemen hun repo, hun teamgenoten en hun vak-context expliciet. Dat mag, want alleen de repo waar het
-domein bij past schakelt die plugin in — een Shopify-repo krijgt Ian/Onyx nooit te zien, en een
-life-hub-achtige repo krijgt Liam/Sandra/Steven nooit te zien.
+- **[`claude-specialists/`](claude-code-plugins/claude-specialists/README.md)** — het
+  Claude-Specialists-systeem: de gedeelde, repo-neutrale kern `specialists` (groep 1, voor elke
+  repo) plus de twee bewust domein-gekleurde groepen `specialists-lifehub` (groep 2) en
+  `specialists-shopify` (groep 3). Wélke specialisten in welke sub-plugin zitten, voor wie ze
+  bedoeld zijn en hoe je ze aanroept, staat in die README — dit bestand herhaalt dat niet.
 
 ## Wat hier wél en niet woont
 
@@ -79,15 +61,6 @@ plugin-verwijzing maar een **kopie** in `.claude/extensions/<group>-<id>-extensi
 zet die kopie neer; de [drift-lint](#onderhoud-drift-lint) bewaakt de draagbare body ervan tegen de
 canonieke bron. De agent-def↔manual-koppeling van de lint laat persona's bewust met rust (ze hebben
 geen agent-def).
-
-## Aanroep
-
-Zodra een repo deze marketplace toevoegt en een plugin inschakelt, worden de subagents daarin
-genamespaced aanroepbaar met het **plugin** als namespace, niet de groep:
-
-- groep 1 → `@specialists:<naam>` (bv. `@specialists:rebecca`)
-- groep 2 → `@specialists-lifehub:<naam>` (bv. `@specialists-lifehub:ian`)
-- groep 3 → `@specialists-shopify:<naam>` (bv. `@specialists-shopify:liam`)
 
 ## Consumptie
 
