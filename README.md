@@ -109,6 +109,11 @@ tweetraps:
 Elke plugin (`claude-code-plugins/claude-specialists/specialists/…`, `claude-code-plugins/claude-specialists/specialists-lifehub/…`, `claude-code-plugins/claude-specialists/specialists-shopify/…`) draagt een eigen
 `version` in zijn `plugin.json`. Bij een release bewegen die versies **in lockstep** — ze krijgen
 allemaal hetzelfde nummer en één repo-brede tag `vX.Y.Z` (zie [Een release snijden](#een-release-snijden)).
+**Dat versienummer is óók de update-poort**: `claude plugin update` vergelijkt uitsluitend
+versienummers, dus een consumerende repo (inclusief deze repo zelf, die zichzelf consumeert) haalt
+gemergde wijzigingen pas binnen nadat de `version` is gebumpt — een merge zonder release blijft voor
+consumenten onzichtbaar. Moet werk naar consumenten propageren, dan hoort daar dus een release bij
+(op Dave's expliciete verzoek, zoals altijd).
 Wijzigingen aan een gedeelde agent-def landen hier eerst, worden hier gecommit, en pas daarna door de
 consumerende repo's opgehaald — nooit andersom (geen repo mag een gedeelde agent-def lokaal
 overschrijven zonder dat hier terug te leggen).
