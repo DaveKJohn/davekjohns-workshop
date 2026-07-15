@@ -1,13 +1,13 @@
 {
   "extraKnownMarketplaces": {
-    "claude-specialists": {
+    "davekjohns-workshop": {
       "source": {
         "source": "github",
-        "repo": "DaveKJohn/claude-specialists"
+        "repo": "DaveKJohn/davekjohns-workshop"
       }
     }
   },
   "enabledPlugins": {
-    "specialists@claude-specialists": true
+    "specialists@davekjohns-workshop": true
   }
 }

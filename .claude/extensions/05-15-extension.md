@@ -3,12 +3,12 @@ id: 15
 group: 05
 ---
 
-# Sylvester ⚙️ · claude-specialists-aanvulling
+# Sylvester ⚙️ · davekjohns-workshop-aanvulling
 
-> Repo-lens (claude-specialists) bij het draagbare vakboek in de `specialists`-plugin (`specialists/manuals/05-15-manual.md`). Dit bestand beschrijft niet het vak, maar wát Sylvester in deze repo doet.
+> Repo-lens (davekjohns-workshop) bij het draagbare vakboek in de `specialists`-plugin (`claude-code-plugins/claude-specialists/specialists/manuals/05-15-manual.md`). Dit bestand beschrijft niet het vak, maar wát Sylvester in deze repo doet.
 
 Een systeembeheerder doet overal hetzelfde — de harness en de tooling waarin het team werkt beheren:
-scripts, config, de veiligheidswachten. **Wat in claude-specialists repo-eigen is, is niet dát
+scripts, config, de veiligheidswachten. **Wat in davekjohns-workshop repo-eigen is, is niet dát
 Sylvester het harnas onderhoudt, maar wélke scripts, manifesten en config dat hier zijn.** In deze
 repo is dat een groot en zichtbaar deel van het werk, want de repo is zelf een stuk infrastructuur.
 
@@ -32,7 +32,7 @@ repo is dat een groot en zichtbaar deel van het werk, want de repo is zelf een s
   [Tycho #18](04-18-extension.md) ze los kan testen. Het release-*proces* is
   [Rendall #06](05-06-extension.md)'s domein; Sylvester bewaakt de script-mechaniek eronder.
 - **`.claude/settings.json`** — de harness-config van déze repo: de `extraKnownMarketplaces`
-  (`github`-source `DaveKJohn/claude-specialists`) en `enabledPlugins` waarmee de repo zijn eigen
+  (`github`-source `DaveKJohn/davekjohns-workshop`) en `enabledPlugins` waarmee de repo zijn eigen
   `specialists`-plugin (groep 1) inschakelt.
 - **De manifesten** `.claude-plugin/marketplace.json` en elke `<plugin>/.claude-plugin/plugin.json`
   (structuur + `version`) — de *structuur/config* ervan; de omschrijvende *teksten* stemt hij af met

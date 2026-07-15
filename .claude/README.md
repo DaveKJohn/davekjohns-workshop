@@ -7,8 +7,9 @@ harnas waarin het draait. Dit document is zowel de plattegrond van deze map als 
 tweedeling van elke manual, en het stabiel-id-systeem; en (3) **hoe de specialisten hier onderling
 georganiseerd zijn**. Het is **geen vervanging** van de safety-rules of de routing.
 
-> **Deze repo is een buitenbeentje.** claude-specialists ís de marketplace die het hele
-> specialisten-systeem huisvest (zie [`../README.md`](../README.md)) — en consumeert dat systeem hier
+> **Deze repo is een buitenbeentje.** davekjohns-workshop is de werkplaats-marketplace van Dave;
+> het specialisten-systeem woont hier als eerste product-familie in `claude-code-plugins/claude-specialists/`
+> (zie [`../README.md`](../README.md)) — en de repo consumeert dat systeem hier
 > ook zélf, via de `specialists`-plugin (groep 1). Het team hier is daarom klein en toegespitst op het
 > onderhoud van dít product (agent-defs, manuals, docs, tooling), niet het brede team van een
 > content-repo.
@@ -29,7 +30,7 @@ georganiseerd zijn**. Het is **geen vervanging** van de safety-rules of de routi
     hoofdgesprek draaien i.p.v. als subagent. De main-loop leest geen plugin-bestanden, dus hier
     staat hun **volledige** manual en wordt Chris hiervandaan auto-geladen
     (`@.claude/extensions/01-01-extension.md` onderaan `../CLAUDE.md`). De **draagbare body** van elke
-    persona heeft wél een canonieke bron in de plugin — `specialists/personas/<group>-<id>-persona.md`
+    persona heeft wél een canonieke bron in de plugin — `claude-code-plugins/claude-specialists/specialists/personas/<group>-<id>-persona.md`
     — die de bootstrap-skill `specialists-init` bij adoptie naar `.claude/extensions/` kopieert; dit
     lokale bestand is dus een (met drift-lint bewaakte) kopie van die bron, aangevuld met de repo-lens.
 - **Subagent-definities — uit de eigen `specialists`-plugin, niet lokaal.** De compacte, uitvoerbare
@@ -37,8 +38,8 @@ georganiseerd zijn**. Het is **geen vervanging** van de safety-rules of de routi
   `.claude/agents/`-map: ze komen uit de `specialists`-plugin van deze marketplace zelf, ingeschakeld
   via [`settings.json`](settings.json) en aanroepbaar als `@specialists:<naam>`.
 - **`settings.json`** — de harness-config: `extraKnownMarketplaces` (de `github`-source
-  `DaveKJohn/claude-specialists` — de repo wijst naar zichzelf) + `enabledPlugins`
-  (`specialists@claude-specialists`). [Sylvester #15](extensions/05-15-extension.md)'s domein.
+  `DaveKJohn/davekjohns-workshop` — de repo wijst naar zichzelf) + `enabledPlugins`
+  (`specialists@davekjohns-workshop`). [Sylvester #15](extensions/05-15-extension.md)'s domein.
 
 ## Hoe een specialist is opgebouwd
 
@@ -66,7 +67,7 @@ Elk vakboek is in tweeën opgebouwd, en die twee helften wonen fysiek apart:
 
 1. **De body — het draagbare vak** (in de plugin-manual): het beroep generiek, zónder repo-termen
    ("hoofdbranch" i.p.v. `main`, geen concrete scriptnamen, geen `#id`-verwijzingen).
-2. **`## Eigen aan deze repo (claude-specialists)` — het repo-eigen slot** (de lens in `extensions/`):
+2. **`## Eigen aan deze repo (davekjohns-workshop)` — het repo-eigen slot** (de lens in `extensions/`):
    álles wat repo-specifiek is. Vaste opbouw: cursieve lens-regel → kernclaim → repo-secties → een
    "**hóé** (draagbaar) vs. **wát** (repo-eigen)"-slot.
 

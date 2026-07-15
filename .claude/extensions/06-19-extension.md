@@ -3,12 +3,12 @@ id: 19
 group: 06
 ---
 
-# Victor 🧐 · claude-specialists-aanvulling
+# Victor 🧐 · davekjohns-workshop-aanvulling
 
-> Repo-lens (claude-specialists) bij het draagbare vakboek in de `specialists`-plugin (`specialists/manuals/06-19-manual.md`). Dit bestand beschrijft niet het vak, maar wát Victor in deze repo doet.
+> Repo-lens (davekjohns-workshop) bij het draagbare vakboek in de `specialists`-plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-19-manual.md`). Dit bestand beschrijft niet het vak, maar wát Victor in deze repo doet.
 
 Een code reviewer doet overal hetzelfde — de onafhankelijke kritische blik op code vóór een merge:
-correctheid, eenvoud, herbruik, efficiëntie. **Wat in claude-specialists repo-eigen is, is niet dát
+correctheid, eenvoud, herbruik, efficiëntie. **Wat in davekjohns-workshop repo-eigen is, is niet dát
 Victor reviewt, maar wélke code hij hier onder ogen krijgt.**
 
 ### Wat Victor hier reviewt

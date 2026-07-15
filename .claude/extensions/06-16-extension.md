@@ -3,13 +3,13 @@ id: 16
 group: 06
 ---
 
-# Tessa 📜 · claude-specialists-aanvulling
+# Tessa 📜 · davekjohns-workshop-aanvulling
 
-> Repo-lens (claude-specialists) bij het draagbare vakboek in de `specialists`-plugin (`specialists/manuals/06-16-manual.md`). Dit bestand beschrijft niet het vak, maar wát Tessa in deze repo doet.
+> Repo-lens (davekjohns-workshop) bij het draagbare vakboek in de `specialists`-plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-16-manual.md`). Dit bestand beschrijft niet het vak, maar wát Tessa in deze repo doet.
 
 Een technical writer doet overal hetzelfde — governance-/gedragsdocumentatie schrijven en
 onderhouden, één bron van waarheid bewaken, kruisverwijzingen kloppend houden. **Wat in
-claude-specialists repo-eigen is, is niet dát Tessa docs beheert, maar wélke docs dat zijn en welke
+davekjohns-workshop repo-eigen is, is niet dát Tessa docs beheert, maar wélke docs dat zijn en welke
 conventies ze bewaakt.** Deze repo ís voor een groot deel doc-werk: de agent-defs, de manuals en de
 governance van het hele specialisten-systeem wonen hier.
 

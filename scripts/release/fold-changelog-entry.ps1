@@ -76,7 +76,7 @@ foreach ($file in $entryFiles) {
         $base = [System.IO.Path]::GetFileNameWithoutExtension($file)
         $branchForPr = $base -replace '^([^-]+)-', '$1/'
     }
-    $prJson = gh pr list --head $branchForPr --state all --json number,url --limit 1 --repo DaveKJohn/claude-specialists
+    $prJson = gh pr list --head $branchForPr --state all --json number,url --limit 1 --repo DaveKJohn/davekjohns-workshop
     $prs = if ($LASTEXITCODE -eq 0 -and $prJson) { @($prJson | ConvertFrom-Json) } else { @() }
     if ($prs.Count -ge 1) {
         $num = $prs[0].number

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Integriteitscheck voor de claude-specialists-marketplace: valideert de manifesten, de
+    Integriteitscheck voor de davekjohns-workshop-marketplace: valideert de manifesten, de
     agent-def-frontmatter en de interne links voordat een wijziging via een PR op main belandt.
 .DESCRIPTION
     De lint-poort van dit repo (aangeroepen door scripts/release/open-pr.ps1). Read-only -- wijzigt
@@ -223,7 +223,14 @@ foreach ($lf in $linkFiles) {
     # illustratie, geen echte link -- anders wordt bv. een `[..](#anchor)`-voorbeeld gevalideerd.
     $scan = [regex]::Replace($content, '(?s)```.*?```', '')
     $scan = [regex]::Replace($scan, '`[^`]*`', '')
-    $dir = Split-Path -Parent $lf
+    # Persona-sjablonen zijn bestemd voor .claude/extensions/ van een consumerende repo; hun
+    # relatieve links horen dáár te kloppen, niet op de bronlocatie in de plugin. Valideer ze daarom
+    # alsof het bestand al op die bestemming staat (deze repo spiegelt de consumer-lay-out).
+    if ($lf -match '\\personas\\.*-persona\.md$') {
+        $dir = Join-Path $RepoRoot '.claude\extensions'
+    } else {
+        $dir = Split-Path -Parent $lf
+    }
     $rel = $lf.Replace($RepoRoot, '.')
     foreach ($m in $linkRegex.Matches($scan)) {
         $target = $m.Groups[1].Value.Trim()

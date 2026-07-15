@@ -5,7 +5,7 @@
     canonieke bron in dit plugin-repo, en signaleert drift voordat zo'n kopie wordt opgeruimd.
 .DESCRIPTION
     Topologie: life-hub en swb wijzen via een remote `github`-marketplace-source
-    (`DaveKJohn/claude-specialists`) naar dit repo -- de Claude Code CLI clonet en cachet het zelf
+    (`DaveKJohn/davekjohns-workshop`) naar dit repo -- de Claude Code CLI clonet en cachet het zelf
     (zie README.md, sectie "Consumptie"). Er is dus GEEN fysieke kopie nodig zodra een consumerende
     repo is omgebouwd naar de gedeelde bron. Tijdens de overgang (Fase 3) kan een consumerende repo
     echter nog een eigen lokale kopie hebben van een
@@ -63,9 +63,9 @@ $PluginRoot = Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')
 # domein-groepen (specialists-lifehub, specialists-shopify). We scannen ze alle drie, zodat de
 # drift-check ook de domein-specialisten van een consumerende repo dekt.
 $SourceDirs = @(
-    (Join-Path $PluginRoot 'specialists\agents')
-    (Join-Path $PluginRoot 'specialists-lifehub\agents')
-    (Join-Path $PluginRoot 'specialists-shopify\agents')
+    (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists\agents')
+    (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists-lifehub\agents')
+    (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists-shopify\agents')
 ) | Where-Object { Test-Path -LiteralPath $_ }
 if ($SourceDirs.Count -eq 0) {
     Write-Host "Kan geen canonieke agent-defs vinden onder $PluginRoot -- stop." -ForegroundColor Red
@@ -185,9 +185,9 @@ Write-Host "Samenvatting agent-defs: $missingCount missing, $identicalCount iden
 
 # --- Persona-drift (informatief): draagbare body van de plugin-persona's vs. de consument-kopie -----
 $personaDirs = @(@(
-    (Join-Path $PluginRoot 'specialists\personas')
-    (Join-Path $PluginRoot 'specialists-lifehub\personas')
-    (Join-Path $PluginRoot 'specialists-shopify\personas')
+    (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists\personas')
+    (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists-lifehub\personas')
+    (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists-shopify\personas')
 ) | Where-Object { Test-Path -LiteralPath $_ })
 
 $personaResults = New-Object System.Collections.Generic.List[object]

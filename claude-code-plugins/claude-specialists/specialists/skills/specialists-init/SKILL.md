@@ -24,11 +24,11 @@ Stap 0 is daarom handmatig — controleer dat de consument dit al heeft in `.cla
 
 ```jsonc
 "extraKnownMarketplaces": {
-  "claude-specialists": { "source": { "source": "github", "repo": "DaveKJohn/claude-specialists" } }
+  "davekjohns-workshop": { "source": { "source": "github", "repo": "DaveKJohn/davekjohns-workshop" } }
 },
 "enabledPlugins": {
-  "specialists@claude-specialists": true
-  // plus een domein-plugin naar keuze, bv. "specialists-shopify@claude-specialists": true
+  "specialists@davekjohns-workshop": true
+  // plus een domein-plugin naar keuze, bv. "specialists-shopify@davekjohns-workshop": true
 }
 ```
 

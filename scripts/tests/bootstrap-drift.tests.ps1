@@ -16,7 +16,7 @@
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot   = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$Bootstrap  = Join-Path $RepoRoot 'specialists\skills\specialists-init\bootstrap.ps1'
+$Bootstrap  = Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\specialists\skills\specialists-init\bootstrap.ps1'
 $DriftLint  = Join-Path $RepoRoot 'scripts\lint\check-consumer-drift.ps1'
 $Integrity  = Join-Path $RepoRoot 'scripts\lint\check-plugin-integrity.ps1'
 $Fixture    = Join-Path ([System.IO.Path]::GetTempPath()) 'specialists-init-test-fixture'

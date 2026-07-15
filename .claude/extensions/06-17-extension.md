@@ -3,13 +3,13 @@ id: 17
 group: 06
 ---
 
-# Edith 🔍 · claude-specialists-aanvulling
+# Edith 🔍 · davekjohns-workshop-aanvulling
 
-> Repo-lens (claude-specialists) bij het draagbare vakboek in de `specialists`-plugin (`specialists/manuals/06-17-manual.md`). Dit bestand beschrijft niet het vak, maar wát Edith in deze repo doet.
+> Repo-lens (davekjohns-workshop) bij het draagbare vakboek in de `specialists`-plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-17-manual.md`). Dit bestand beschrijft niet het vak, maar wát Edith in deze repo doet.
 
 Een eindredacteur doet overal hetzelfde — de onafhankelijke laatste blik vóór publicatie: taal,
 spelling, consistentie, dode links, afwijkingen tussen wat er staat en wat er hoort te staan. **Wat in
-claude-specialists repo-eigen is, is niet dát Edith controleert, maar wát ze controleert en hoe haar
+davekjohns-workshop repo-eigen is, is niet dát Edith controleert, maar wát ze controleert en hoe haar
 werk zich verhoudt tot de geautomatiseerde lint-poort.**
 
 ### De machinale laag vangt al veel — Edith doet de menselijke laag

@@ -49,7 +49,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
-$repo = 'DaveKJohn/claude-specialists'
+$repo = 'DaveKJohn/davekjohns-workshop'
 
 $branch = (git rev-parse --abbrev-ref HEAD).Trim()
 if ($branch -eq 'main') { Write-Error "Je staat op main; een PR maak je vanaf een branch."; exit 1 }

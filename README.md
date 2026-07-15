@@ -1,40 +1,24 @@
-# claude-specialists
+# davekjohns-workshop
 
-Standalone marketplace-repo die het **Claude-Specialists-systeem** huisvest, opgedeeld in **drie
-plugins**: de gedeelde, draagbare kern plus twee domein-groepen. Deze repo is de **single source of
-truth** voor alle deelbare subagent-definities — elke consumerende repo wijst ernaar toe in plaats
-van eigen kopieën te onderhouden, en schakelt **per plugin aan of uit** welke groepen hij nodig
-heeft.
+De **werkplaats van Dave (DaveKJohn)**: de marketplace-repo waar al zijn Claude-Code-plugins worden
+gebouwd en onderhouden — ontworpen door een mens, uitgevoerd met zijn team van specialisten. De
+eerste product-familie is het **Claude-Specialists-systeem** in
+[`claude-code-plugins/claude-specialists/`](claude-code-plugins/claude-specialists/), opgedeeld in **drie plugins**: de gedeelde,
+draagbare kern plus twee domein-groepen. Deze repo is de **single source of truth** voor alle
+deelbare subagent-definities — elke consumerende repo wijst ernaar toe in plaats van eigen kopieën
+te onderhouden, en schakelt **per plugin aan of uit** welke groepen hij nodig heeft.
 
-## De drie groepen
+## De plugin-families
 
-Het systeem kent drie groepen specialisten, elk in een eigen plugin:
+Elke plugin-familie woont in een eigen map onder `claude-code-plugins/`, met een **eigen README** die
+uitlegt wat de familie doet en wat de verschillen tussen haar sub-plugins zijn. Vooralsnog is er één
+familie:
 
-| Plugin | Groep | Voor wie | Inhoud |
-|---|---|---|---|
-| `specialists` | **1 · globaal** | elke repo | Paula, Rebecca, Vera, Gwen, Cody, Tycho, Sylvester, Tessa, Edith, Victor |
-| `specialists-lifehub` | **2 · life-hub-achtig** | persoonlijke informatie-hub / brain-gebaseerde kennisrepo | Astrid, Fiona, Hugo, Ian, Onyx |
-| `specialists-shopify` | **3 · Shopify** | Shopify-store-repo (bv. smartwatchbanden) | Liam, Sandra, Steven + de domein-skill `start-task` |
-
-Een consumerende repo schakelt **groep 1 altijd in**, plus de domein-groep die bij hem past:
-
-- **life-hub** → `specialists` + `specialists-lifehub`
-- **smartwatchbanden** → `specialists` + `specialists-shopify`
-- **een nieuwe repo** → `specialists` + de passende domein-plugin (of alleen de kern, als geen domein past)
-
-### Groep 1 — repo-neutraal
-
-Groep 1 (`specialists/agents/*.md`) is **repo-neutraal** geschreven: geen repo-naam, geen
-teamgenoot-namen, geen repo-specifieke paden of scriptnamen. Het exacte platform/tech, de
-teamgenoten en de vak-conventies van een specialist staan in de manual van de consumerende repo
-(`.claude/manuals/<group>-<id>-manual.md`) — de agent-def verwijst daar zelf naar.
-
-### Groep 2 & 3 — bewust domein-gekleurd
-
-De domein-groepen (`specialists-lifehub/`, `specialists-shopify/`) zijn juist **niet** neutraal: ze
-noemen hun repo, hun teamgenoten en hun vak-context expliciet. Dat mag, want alleen de repo waar het
-domein bij past schakelt die plugin in — een Shopify-repo krijgt Ian/Onyx nooit te zien, en een
-life-hub-achtige repo krijgt Liam/Sandra/Steven nooit te zien.
+- **[`claude-specialists/`](claude-code-plugins/claude-specialists/README.md)** — het
+  Claude-Specialists-systeem: de gedeelde, repo-neutrale kern `specialists` (groep 1, voor elke
+  repo) plus de twee bewust domein-gekleurde groepen `specialists-lifehub` (groep 2) en
+  `specialists-shopify` (groep 3). Wélke specialisten in welke sub-plugin zitten, voor wie ze
+  bedoeld zijn en hoe je ze aanroept, staat in die README — dit bestand herhaalt dat niet.
 
 ## Wat hier wél en niet woont
 
@@ -62,15 +46,15 @@ lens in `.claude/extensions/<group>-<id>-extension.md`. De agent-def verwijst na
 **Alle drie de groepen zijn inmiddels gemigreerd** — elk vakboek woont hier in de `manuals/`-map van
 zijn plugin, en elke consumerende repo houdt daarvan enkel nog de repo-lens in `.claude/extensions/`:
 
-- **`specialists` (groep 1)** → `specialists/manuals/` (Paula, Rebecca, Vera, Gwen, Cody, Tycho,
+- **`specialists` (groep 1)** → `claude-code-plugins/claude-specialists/specialists/manuals/` (Paula, Rebecca, Vera, Gwen, Cody, Tycho,
   Sylvester, Tessa, Edith, Victor).
-- **`specialists-lifehub` (groep 2)** → `specialists-lifehub/manuals/` (Astrid, Fiona, Hugo, Ian, Onyx).
-- **`specialists-shopify` (groep 3)** → `specialists-shopify/manuals/` (Liam, Sandra, Steven).
+- **`specialists-lifehub` (groep 2)** → `claude-code-plugins/claude-specialists/specialists-lifehub/manuals/` (Astrid, Fiona, Hugo, Ian, Onyx).
+- **`specialists-shopify` (groep 3)** → `claude-code-plugins/claude-specialists/specialists-shopify/manuals/` (Liam, Sandra, Steven).
 
 **Persona-sjablonen — een derde artefact naast agent-def en manual.** De orchestrator en de
 hoofdloop-specialisten (Chris #01, Derek #05, Rendall #06) draaien in de **hoofdloop**, niet als
 subagent — een plugin kan geen altijd-aan-hoofdloop-context injecteren. Ze hebben daarom bewust
-**geen** agent-def; hun draagbare bron woont in `specialists/personas/<group>-<id>-persona.md` als
+**geen** agent-def; hun draagbare bron woont in `claude-code-plugins/claude-specialists/specialists/personas/<group>-<id>-persona.md` als
 **self-contained sjabloon** (draagbare body + een repo-lens-placeholder). De consument krijgt geen
 plugin-verwijzing maar een **kopie** in `.claude/extensions/<group>-<id>-extension.md`, die via een
 `@`-import in zijn `CLAUDE.md` wordt auto-geladen. De [bootstrap-skill](#adoptie-het-bootstrap-pad)
@@ -78,34 +62,25 @@ zet die kopie neer; de [drift-lint](#onderhoud-drift-lint) bewaakt de draagbare 
 canonieke bron. De agent-def↔manual-koppeling van de lint laat persona's bewust met rust (ze hebben
 geen agent-def).
 
-## Aanroep
-
-Zodra een repo deze marketplace toevoegt en een plugin inschakelt, worden de subagents daarin
-genamespaced aanroepbaar met het **plugin** als namespace, niet de groep:
-
-- groep 1 → `@specialists:<naam>` (bv. `@specialists:rebecca`)
-- groep 2 → `@specialists-lifehub:<naam>` (bv. `@specialists-lifehub:ian`)
-- groep 3 → `@specialists-shopify:<naam>` (bv. `@specialists-shopify:liam`)
-
 ## Consumptie
 
 Een consumerende repo voegt deze marketplace toe via `extraKnownMarketplaces` in
 `.claude/settings.json` en schakelt de gewenste plugins in via `enabledPlugins`. Beide huidige
 consumenten (life-hub en smartwatchbanden) gebruiken een remote **`github`-marketplace-source**
-(`"source": "github", "repo": "DaveKJohn/claude-specialists"`) — machine-onafhankelijk, want de
+(`"source": "github", "repo": "DaveKJohn/davekjohns-workshop"`) — machine-onafhankelijk, want de
 Claude Code CLI clonet en cachet dit repo zelf; een verse clone van de consumerende repo krijgt de
 plugins zonder handmatige lokale stap.
 
 ```jsonc
 // .claude/settings.json (consumerende repo)
 "extraKnownMarketplaces": {
-  "claude-specialists": {
-    "source": { "source": "github", "repo": "DaveKJohn/claude-specialists" }
+  "davekjohns-workshop": {
+    "source": { "source": "github", "repo": "DaveKJohn/davekjohns-workshop" }
   }
 },
 "enabledPlugins": {
-  "specialists@claude-specialists": true,          // groep 1 — altijd
-  "specialists-lifehub@claude-specialists": true   // óf specialists-shopify@… , naar keuze
+  "specialists@davekjohns-workshop": true,          // groep 1 — altijd
+  "specialists-lifehub@davekjohns-workshop": true   // óf specialists-shopify@… , naar keuze
 }
 ```
 
@@ -122,7 +97,7 @@ tweetraps:
 - **Stap 0 (handmatig).** Zet de marketplace-source + `enabledPlugins` in `.claude/settings.json`
   (zie [Consumptie](#consumptie)) en **herstart** de sessie — pas dán is de skill beschikbaar.
 - **Stap 1 (de skill).** Roep `specialists-init` aan. Het bijgeleverde
-  [`bootstrap.ps1`](specialists/skills/specialists-init/bootstrap.ps1) doet alleen **additieve**
+  [`bootstrap.ps1`](claude-code-plugins/claude-specialists/specialists/skills/specialists-init/bootstrap.ps1) doet alleen **additieve**
   handelingen: het kopieert de persona-sjablonen naar `.claude/extensions/<group>-<id>-extension.md`
   (nooit overschrijven), zet de `@.claude/extensions/01-01-extension.md`-import onderaan `CLAUDE.md`
   (of maakt een scaffold), en schrijft een `settings.suggested.jsonc` met een `permissions.deny` +
@@ -131,7 +106,7 @@ tweetraps:
 
 ## Versiebeheer
 
-Elke plugin (`specialists/…`, `specialists-lifehub/…`, `specialists-shopify/…`) draagt een eigen
+Elke plugin (`claude-code-plugins/claude-specialists/specialists/…`, `claude-code-plugins/claude-specialists/specialists-lifehub/…`, `claude-code-plugins/claude-specialists/specialists-shopify/…`) draagt een eigen
 `version` in zijn `plugin.json`. Bij een release bewegen die versies **in lockstep** — ze krijgen
 allemaal hetzelfde nummer en één repo-brede tag `vX.Y.Z` (zie [Een release snijden](#een-release-snijden)).
 Wijzigingen aan een gedeelde agent-def landen hier eerst, worden hier gecommit, en pas daarna door de

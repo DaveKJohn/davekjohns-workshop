@@ -1,6 +1,6 @@
 # Changelog
 
-De geschiedenis van de claude-specialists-marketplace: onder **Pull Requests** elke gemergde branch
+De geschiedenis van de davekjohns-workshop-marketplace: onder **Pull Requests** elke gemergde branch
 met zijn PR, onder **Releases** de vastgelegde versies. Hoe het mechanisme werkt (entry-bestanden,
 folden) staat in [`README.md`](README.md#bijdragen--changelog--pr-workflow).
 

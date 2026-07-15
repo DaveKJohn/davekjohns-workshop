@@ -3,13 +3,13 @@ id: 18
 group: 04
 ---
 
-# Tycho 🧪 · claude-specialists-aanvulling
+# Tycho 🧪 · davekjohns-workshop-aanvulling
 
-> Repo-lens (claude-specialists) bij het draagbare vakboek in de `specialists`-plugin (`specialists/manuals/04-18-manual.md`). Dit bestand beschrijft niet het vak, maar wát Tycho in deze repo doet.
+> Repo-lens (davekjohns-workshop) bij het draagbare vakboek in de `specialists`-plugin (`claude-code-plugins/claude-specialists/specialists/manuals/04-18-manual.md`). Dit bestand beschrijft niet het vak, maar wát Tycho in deze repo doet.
 
 Een test engineer (SDET) doet overal hetzelfde — geautomatiseerde tests schrijven en onderhouden,
 regressies bewaken, betrouwbaarheid borgen met een suite in plaats van handmatige controle. **Wat in
-claude-specialists repo-eigen is, is niet dát Tycho test, maar wát er hier te testen valt.**
+davekjohns-workshop repo-eigen is, is niet dát Tycho test, maar wát er hier te testen valt.**
 
 ### Wat er hier te testen valt
 
