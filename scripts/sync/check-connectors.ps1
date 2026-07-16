@@ -126,11 +126,14 @@ $matched = 0
 foreach ($mf in $manifestFiles) {
     $m = Get-Content -LiteralPath $mf.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
 
-    # Checkout bepalen, met guardrails op het manifest-veld.
+    # Checkout bepalen, met guardrails op het manifest-veld. Bij -OnlyConsumer worden manifesten
+    # van andere consumenten STIL overgeslagen -- ook hun guardrail-meldingen horen niet in de
+    # sessie van een ander te belanden (advies Sean, ronde 3).
     if ($ConsumerPathOverride) {
         $checkout = $ConsumerPathOverride
     } else {
         if ([System.IO.Path]::IsPathRooted($m.localCheckout)) {
+            if ($OnlyConsumer) { continue }
             Write-Fout "absoluut localCheckout-pad '$($m.localCheckout)' in $($mf.Name) -- geweigerd (alleen relatieve sibling-paden)."
             continue
         }
@@ -144,6 +147,10 @@ foreach ($mf in $manifestFiles) {
         continue
     }
     $checkout = (Resolve-Path -LiteralPath $checkout).Path
+
+    # Scoping vroeg: alleen het manifest van de gevraagde consument komt hierdoorheen.
+    if ($onlyPath -and $checkout -ne $onlyPath) { continue }
+
     if (-not $ConsumerPathOverride) {
         $scopeRoot = (Resolve-Path -LiteralPath (Join-Path $RepoRoot '..\..')).Path
         if (-not $checkout.StartsWith($scopeRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
@@ -151,9 +158,6 @@ foreach ($mf in $manifestFiles) {
             continue
         }
     }
-
-    # Scoping: alleen het manifest van de gevraagde consument (stil overslaan van de rest).
-    if ($onlyPath -and $checkout -ne $onlyPath) { continue }
     $matched++
 
     Write-Host "`n== connector: $($m.repo)" -ForegroundColor Cyan
