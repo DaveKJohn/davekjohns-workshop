@@ -27,7 +27,7 @@ domein-groep ook het **draagbare vakboek** (`manuals/<group>-<id>-manual.md`) da
 `${CLAUDE_PLUGIN_ROOT}/manuals/` inleest. Groep 1 draagt daarnaast twee dingen die de
 **hoofdloop-laag** dekken (zie [Adoptie: het bootstrap-pad](#adoptie-het-bootstrap-pad)): de
 **persona-sjablonen** (`personas/<group>-<id>-persona.md`) van de orchestrator + hoofdloop-specialisten
-(Chris, Derek, Rendall), en de **repo-neutrale bootstrap-skill** `specialists-init`.
+(Chris, Bianca, Derek, Rendall), en de **repo-neutrale bootstrap-skill** `specialists-init`.
 
 **Niet:** governance (`CLAUDE.md`, de workflow-regels), safety-hooks of MCP-config. Die blijven
 bewust op repo-niveau, want ze zijn per repo verschillend (of veiligheidskritisch). De plugins
@@ -52,8 +52,9 @@ zijn plugin, en elke consumerende repo houdt daarvan enkel nog de repo-lens in `
 - **`specialists-shopify` (groep 3)** → `claude-code-plugins/claude-specialists/specialists-shopify/manuals/` (Liam, Sandra, Steven).
 
 **Persona-sjablonen — een derde artefact naast agent-def en manual.** De orchestrator en de
-hoofdloop-specialisten (Chris #01, Derek #05, Rendall #06) draaien in de **hoofdloop**, niet als
-subagent — een plugin kan geen altijd-aan-hoofdloop-context injecteren. Ze hebben daarom bewust
+hoofdloop-specialisten (Chris #01, Bianca #02, Derek #05, Rendall #06) draaien in de **hoofdloop**, niet als
+subagent — een plugin kan geen altijd-aan-hoofdloop-context injecteren, en een intake-gesprek vergt
+bovendien directe heen-en-weer met de opdrachtgever. Ze hebben daarom bewust
 **geen** agent-def; hun draagbare bron woont in `claude-code-plugins/claude-specialists/specialists/personas/<group>-<id>-persona.md` als
 **self-contained sjabloon** (draagbare body + een repo-lens-placeholder). De consument krijgt geen
 plugin-verwijzing maar een **kopie** in `.claude/extensions/<group>-<id>-extension.md`, die via een

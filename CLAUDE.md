@@ -178,7 +178,7 @@ verzonnen — alleen in overleg met Dave (zie
   (`specialists/`, `specialists-lifehub/`, `specialists-shopify/`), elk met een
   eigen `.claude-plugin/plugin.json` (`version`), `agents/` en — voor een gemigreerde groep —
   `manuals/`. `specialists` draagt daarnaast `personas/` (de draagbare sjablonen van de
-  hoofdloop-specialisten Chris/Derek/Rendall) en `skills/specialists-init/` (het repo-neutrale
+  hoofdloop-specialisten Chris/Bianca/Derek/Rendall) en `skills/specialists-init/` (het repo-neutrale
   bootstrap-adoptiepad, zie [`README.md`](README.md#adoptie-het-bootstrap-pad)); `specialists-shopify`
   draagt een domein-`skills/`-map.
 - **`scripts/lib/`, `scripts/lint/`, `scripts/release/`, `scripts/tests/`** — de gedeelde helpers
