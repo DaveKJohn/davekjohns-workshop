@@ -9,6 +9,18 @@ folden) staat in [`README.md`](README.md#bijdragen--changelog--pr-workflow).
 Alles wat sinds de laatste release naar `main` is gemergd — nieuwste bovenaan, één blok per pull
 request.
 
+### #43 · Copilot-dossier geparkeerd: geen betaald plan, geen upgrade · Docs · 2026-07-16
+
+Uitkomst van de Copilot-proef vastgelegd: de coding-agent-testcase (issue #42) strandde op de
+licentie-check — beide accounts hebben Copilot Free en Dave besloot niet te upgraden. Werkplan-
+stappen 8–10 in `research/plugin-sharing/vervolgstappen.md` zijn geparkeerd en de uitkomst is
+(incl. de beantwoorde open punten b en c) toegevoegd aan `research/copilot/bevindingen.md`. De
+"merget"-fix (stap 6) loopt gewoon via de eigen specialist-keten.
+
+[PR #43](https://github.com/DaveKJohn/davekjohns-workshop/pull/43)
+
+---
+
 ### #41 · Taalfix in de quote-les na eindredactie · Fix · 2026-07-16
 
 Twee taalpunten van Edith in de quote-les (`.claude/extensions/05-05-extension.md`) hersteld, die
