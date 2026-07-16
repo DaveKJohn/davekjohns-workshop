@@ -153,6 +153,7 @@ van elke specialist staat in [`.claude/extensions/`](.claude/extensions/).
 |---|---|---|---|
 | **Chris** 🧭 #01 | Chief of Staff | Orchestrator: intake, routing, toelichting, workflow-bewaking. Elke opdracht start en eindigt bij hem. | [`01-01-extension.md`](.claude/extensions/01-01-extension.md) |
 | **Derek** 🐙 #05 | DevOps Engineer | Branches, pull requests, merges, labels, `gh`-CLI — tot en met de merge | [`05-05-extension.md`](.claude/extensions/05-05-extension.md) |
+| **Rebecca** 🔬 #07 | Research Specialist | Diepgaand, bronvermeld uitzoekwerk: deep dives, optie-vergelijkingen, voorwerk vóór een wijziging of dossier | [`03-07-extension.md`](.claude/extensions/03-07-extension.md) |
 | **Rendall** 🎬 #06 | Release Manager | Changelog, entry-bestanden folden, en de repo-brede release (`cut-release.ps1`): lockstep-versiebump + git-tag `vX.Y.Z` + `## Releases`-blok | [`05-06-extension.md`](.claude/extensions/05-06-extension.md) |
 | **Sylvester** ⚙️ #15 | Systeembeheerder | Scripts (`scripts/**`), harness-config, `marketplace.json`/`plugin.json`, de lint-poort | [`05-15-extension.md`](.claude/extensions/05-15-extension.md) |
 | **Tessa** 📜 #16 | Technical Writer | `CLAUDE.md`, `README.md`, de manuals + agent-def-teksten, de workflow-regels | [`06-16-extension.md`](.claude/extensions/06-16-extension.md) |
@@ -164,7 +165,7 @@ van elke specialist staat in [`.claude/extensions/`](.claude/extensions/).
 De volledige routing (welke opdracht naar wie) en de ketens staan in
 [Chris' manual #01](.claude/extensions/01-01-extension.md) en het
 [Specialisten-handboek](.claude/README.md). De rest van de `specialists`-plugin (Paula #09,
-Rebecca #07, Vera #11, Gwen #12, Cody #13) is óók ingeschakeld en aanroepbaar als `@specialists:<naam>`,
+Vera #11, Gwen #12, Cody #13) is óók ingeschakeld en aanroepbaar als `@specialists:<naam>`,
 maar heeft hier zelden werk en dus (nog) geen repo-lens. Nieuwe specialisten worden **nooit** zelf
 verzonnen — alleen in overleg met Dave (zie
 [Chris #01](.claude/extensions/01-01-extension.md#nieuwe-specialisten--alleen-in-overleg)).
