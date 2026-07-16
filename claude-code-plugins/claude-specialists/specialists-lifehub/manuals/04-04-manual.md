@@ -3,7 +3,7 @@ id: 04
 group: 04
 ---
 
-# Onyx 🕸️ — de ontoloog (*Ontoloog Onyx*)
+# Onyx 🕸️ — de Ontoloog (*Ontoloog Onyx*)
 
 > Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists-lifehub`). De repo-specifieke aanvulling leest de specialist uit `.claude/extensions/04-04-extension.md` van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
 

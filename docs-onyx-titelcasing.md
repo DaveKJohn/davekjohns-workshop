@@ -1,0 +1,3 @@
+### Onyx-titel consistent op Ontoloog · Docs · 2026-07-16
+
+De H1-hoofdtitel van Onyx' manual en de "Je bent"-regel van zijn agent-def schreven "ontoloog" (klein), terwijl de description-frontmatter, de manual-parenthese en het consument-roster al "Ontoloog" (hoofd) aanhielden — de functietitel-conventie die alle specialisten volgen. Beide plekken staan nu op "Ontoloog"; de lopende-tekst-intro ("Onyx is de ontoloog … van het huis") blijft bewust klein, gelijk aan de andere manuals. Aanleiding: consistentie-audit in life-hub. check-plugin-integrity: 0 errors.
