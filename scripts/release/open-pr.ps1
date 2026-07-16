@@ -82,7 +82,11 @@ if (-not $SkipTests) {
     if (Test-Path $testsDir) {
         Write-Host "test-poort: alle testsuites draaien voor de PR..." -ForegroundColor Cyan
         $testFailed = $false
-        Get-ChildItem -Path $testsDir -Filter '*.tests.ps1' -File | ForEach-Object {
+        $suites = @(Get-ChildItem -Path $testsDir -Filter '*.tests.ps1' -File)
+        if ($suites.Count -eq 0) {
+            Write-Warning "geen *.tests.ps1-suites gevonden in scripts/tests - test-poort had niets te draaien."
+        }
+        $suites | ForEach-Object {
             Write-Host "== $($_.Name) ==" -ForegroundColor Cyan
             & powershell -NoProfile -ExecutionPolicy Bypass -File $_.FullName
             if ($LASTEXITCODE -ne 0) { $testFailed = $true }

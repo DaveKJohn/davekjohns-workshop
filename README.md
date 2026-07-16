@@ -159,8 +159,9 @@ changelog-entry — dezelfde workflow als de consumerende repo's. De stappen:
 3. **Werk + commit** op de branch (entry-bestand meecommitten).
 4. **PR openen:** [`scripts/release/open-pr.ps1`](scripts/release/open-pr.ps1)`-Title "…"` draait eerst
    de **lint-poort** [`scripts/lint/check-plugin-integrity.ps1`](scripts/lint/check-plugin-integrity.ps1)
-   (geldige manifesten, agent-def-frontmatter, geen dode links); bij een error wordt er niet gepusht en
-   geen PR geopend. Slaagt de poort, dan pusht het script en opent de PR met label + auto-ingevulde body.
+   (geldige manifesten, agent-def-frontmatter, geen dode links) en daarna de **test-poort** (alle
+   `scripts/tests/*.tests.ps1`, exact zoals CI); bij een error of falende suite wordt er niet gepusht en
+   geen PR geopend. Slagen beide poorten, dan pusht het script en opent de PR met label + auto-ingevulde body.
    Dezelfde poort draait óók als **CI** op GitHub ([`.github/workflows/ci.yml`](.github/workflows/ci.yml):
    lint + alle testsuites, bij elke PR en elke push naar `main`) — een PR die buiten de scripts om
    ontstaat, komt er dus evengoed langs.
