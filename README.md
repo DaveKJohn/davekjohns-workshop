@@ -103,7 +103,9 @@ tweetraps:
 - **Stap 1 (de skill).** Roep `specialists-init` aan. Het bijgeleverde
   [`bootstrap.ps1`](claude-code-plugins/claude-specialists/specialists/skills/specialists-init/bootstrap.ps1) doet alleen **additieve**
   handelingen: het kopieert de persona-sjablonen naar `.claude/extensions/<group>-<id>-extension.md`
-  (nooit overschrijven), zet de `@.claude/extensions/01-01-extension.md`-import onderaan `CLAUDE.md`
+  (nooit overschrijven), zet voor elke subagent van de ingeschakelde plugin(s) een **leeg
+  lens-scaffold** neer (`VUL-IN` — de plek waar repo-specifieke taken per specialist worden
+  aangevuld), zet de `@.claude/extensions/01-01-extension.md`-import onderaan `CLAUDE.md`
   (of maakt een scaffold), en schrijft een `settings.suggested.jsonc` met een `permissions.deny` +
   hooks-**stub**. Het raakt `settings.json` niet aan — die merge en de repo-lens invullen zijn
   daarna handwerk (repo-specifiek), waarna nog één **herstart** de nieuwe context activeert.

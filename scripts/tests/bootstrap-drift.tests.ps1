@@ -65,6 +65,11 @@ try {
     foreach ($f in '01-01-extension.md', '05-05-extension.md', '05-06-extension.md') {
         Assert-True (Test-Path -LiteralPath (Join-Path $Fixture ".claude\extensions\$f")) "persona-kopie $f aangemaakt"
     }
+    foreach ($f in '06-16-extension.md', '06-23-extension.md') {
+        Assert-True (Test-Path -LiteralPath (Join-Path $Fixture ".claude\extensions\$f")) "lens-scaffold $f aangemaakt"
+    }
+    $lensText = [System.IO.File]::ReadAllText((Join-Path $Fixture '.claude\extensions\06-16-extension.md'), [System.Text.Encoding]::UTF8)
+    Assert-True ($lensText -match 'VUL-IN') 'lens-scaffold draagt de VUL-IN-markering'
     $claudeMd = Join-Path $Fixture 'CLAUDE.md'
     Assert-True (Test-Path -LiteralPath $claudeMd) 'CLAUDE.md-scaffold aangemaakt'
     $mdText = [System.IO.File]::ReadAllText($claudeMd, [System.Text.Encoding]::UTF8)
@@ -76,6 +81,7 @@ try {
     $r2 = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $Fixture)
     Assert-Equal 0 $r2.Code 'tweede bootstrap exit 0'
     Assert-True ($r2.Out -match '0 persona') 'tweede run kopieert 0 persona (alles al aanwezig)'
+    Assert-True ($r2.Out -match '0 lens-scaffold') 'tweede run zet 0 lens-scaffolds (alles al aanwezig)'
     Assert-True ($r2.Out -match 'bestaat al') 'tweede run laat bestaande kopie met rust'
 
     # --- 3. Drift op een verse kopie: IDENTICAL ------------------------------------------------------

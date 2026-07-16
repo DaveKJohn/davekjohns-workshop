@@ -48,6 +48,10 @@ Het script doet alleen **veilige, additieve** handelingen — het overschrijft n
 1. **Persona-sjablonen** — kopieert `${CLAUDE_PLUGIN_ROOT}/personas/<g>-<id>-persona.md` naar
    `.claude/extensions/<g>-<id>-extension.md` van de consument (Chris `01-01`, Derek `05-05`,
    Rendall `05-06`), alleen als die er nog niet staat.
+1b. **Lege lens-scaffolds** — zet voor elke subagent van de **ingeschakelde** plugin(s) een leeg
+   `VUL-IN`-sjabloon neer in `.claude/extensions/<g>-<id>-extension.md` (nooit overschrijven). Zo
+   staat vanaf de eerste install klaar wáár de repo-specifieke taken per specialist worden
+   aangevuld; de agent-def leest de lens automatisch mee zodra hij gevuld is.
 2. **De `@`-import** — zorgt dat `CLAUDE.md` onderaan `@.claude/extensions/01-01-extension.md`
    draagt; maakt een minimale `CLAUDE.md`-scaffold als die ontbreekt.
 3. **Settings-voorstel** — schrijft `.claude/settings.suggested.jsonc` met de aanbevolen
