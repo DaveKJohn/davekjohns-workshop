@@ -9,6 +9,20 @@ folden) staat in [`README.md`](README.md#bijdragen--changelog--pr-workflow).
 Alles wat sinds de laatste release naar `main` is gemergd — nieuwste bovenaan, één blok per pull
 request.
 
+### #49 · Parallel-les geborgd: pull voor de fold, fold met -Branch, nooit dezelfde branch op twee machines · Docs · 2026-07-16
+
+Geleerde les van 16 juli (PR #46 en #47 kruisten elkaar: Dave mergde parallel vanaf een andere
+machine) vastgelegd in twee lenzen. Bij Derek (`05-05-extension.md`, branch- & repo-hygiëne):
+verschillende branches parallel mergen is veilig, maar nooit dezelfde branch op twee machines en
+verse `git pull` vóór elke nieuwe branch en fold. Bij Rendall (`05-06-extension.md`,
+fold-levenscyclus stap 2): bij parallel werken folden mét `-Branch <naam>` — zonder die parameter
+vouwt het script óók entries van de andere machine mee — en een geweigerde fold-push is onschuldig:
+pull en opnieuw.
+
+[PR #49](https://github.com/DaveKJohn/davekjohns-workshop/pull/49)
+
+---
+
 ### #48 · Onyx-titel consistent op Ontoloog · Docs · 2026-07-16
 
 De H1-hoofdtitel van Onyx' manual en de "Je bent"-regel van zijn agent-def schreven "ontoloog" (klein), terwijl de description-frontmatter, de manual-parenthese en het consument-roster al "Ontoloog" (hoofd) aanhielden — de functietitel-conventie die alle specialisten volgen. Beide plekken staan nu op "Ontoloog"; de lopende-tekst-intro ("Onyx is de ontoloog … van het huis") blijft bewust klein, gelijk aan de andere manuals. Aanleiding: consistentie-audit in life-hub. check-plugin-integrity: 0 errors.
