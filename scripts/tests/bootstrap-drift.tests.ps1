@@ -84,6 +84,28 @@ try {
     Assert-True ($r2.Out -match '0 lens-scaffold') 'tweede run zet 0 lens-scaffolds (alles al aanwezig)'
     Assert-True ($r2.Out -match 'bestaat al') 'tweede run laat bestaande kopie met rust'
 
+    # --- 2b. Cache-layout: de semantisch hoogste versie wint (vondst Victor) -------------------------
+    # Nagebootste plugin-cache: de echte specialists-plugin als 1.4.0, plus een sibling-domein-plugin
+    # met 1.9.0 EN 1.10.0 naast elkaar -- een string-sort zou 1.9.0 kiezen, [version]-sort 1.10.0.
+    Write-Host "bootstrap.ps1 -- cache-layout kiest semantisch de hoogste versie" -ForegroundColor Cyan
+    $cacheRoot = Join-Path $Fixture 'cache\davekjohns-workshop'
+    $ownCache  = Join-Path $cacheRoot 'specialists\1.4.0'
+    New-Item -ItemType Directory -Path $ownCache -Force | Out-Null
+    Copy-Item -Path (Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\specialists\*') -Destination $ownCache -Recurse
+    foreach ($v in '1.9.0', '1.10.0') {
+        New-Item -ItemType Directory -Path (Join-Path $cacheRoot "specialists-lifehub\$v\agents") -Force | Out-Null
+    }
+    [System.IO.File]::WriteAllText((Join-Path $cacheRoot 'specialists-lifehub\1.9.0\agents\04-88-agent.md'), "---`nname: oudje`nid: 88`ngroup: 04`n---`nfixture")
+    [System.IO.File]::WriteAllText((Join-Path $cacheRoot 'specialists-lifehub\1.10.0\agents\04-99-agent.md'), "---`nname: nieuwste`nid: 99`ngroup: 04`n---`nfixture")
+    $cacheConsumer = Join-Path $Fixture 'cache-consumer'
+    New-Item -ItemType Directory -Path (Join-Path $cacheConsumer '.claude') -Force | Out-Null
+    [System.IO.File]::WriteAllText((Join-Path $cacheConsumer '.claude\settings.json'), '{ "enabledPlugins": { "specialists@davekjohns-workshop": true, "specialists-lifehub@davekjohns-workshop": true } }')
+    $cachedBootstrap = Join-Path $ownCache 'skills\specialists-init\bootstrap.ps1'
+    $rc = Invoke-Script -Path $cachedBootstrap -ScriptArgs @('-ConsumerRoot', $cacheConsumer)
+    Assert-Equal 0 $rc.Code 'cache-layout: bootstrap exit 0'
+    Assert-True (Test-Path -LiteralPath (Join-Path $cacheConsumer '.claude\extensions\04-99-extension.md')) 'cache-layout: scaffold uit de hoogste versie (1.10.0)'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $cacheConsumer '.claude\extensions\04-88-extension.md'))) 'cache-layout: oudere versie (1.9.0) niet gebruikt'
+
     # --- 3. Drift op een verse kopie: IDENTICAL ------------------------------------------------------
     Write-Host "check-consumer-drift.ps1 -- verse kopie = IDENTICAL" -ForegroundColor Cyan
     $d1 = Invoke-Script -Path $DriftLint -ScriptArgs @('-ConsumerPath', $Fixture, '-Quiet')
