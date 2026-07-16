@@ -190,8 +190,11 @@ In één beweging, op een schone `main`:
 2. genereert de volledige release-notes in `releases/development/<X.Y>/<X.Y.Z>.md` (uit de gevouwen
    `## Pull Requests`-entries, per branch-type), voegt een rij toe aan `releases/README.md`, en zet in
    `CHANGELOG.md` een verwijzing onder `## Releases` (de Pull-Requests-sectie wordt geleegd tot zijn intro);
-3. commit dat rechtstreeks op `main` (`release: vX.Y.Z`) en zet een annotated tag `vX.Y.Z`;
-4. pusht `main` + de tag (tenzij `-NoPush` voor inspectie vooraf).
+3. schrijft per plugin de entries die díe plugin raakten (de `Plugins:`-regel die de fold uit de
+   PR-bestanden afleidt) bij in de **per-plugin `CHANGELOG.md`** — de consument-gerichte
+   geschiedenis die met de plugin-cache meereist;
+4. commit dat rechtstreeks op `main` (`release: vX.Y.Z`) en zet een annotated tag `vX.Y.Z`;
+5. pusht `main` + de tag (tenzij `-NoPush` voor inspectie vooraf).
 
 Vangrails: schone `main`, geen ongevouwen entry-bestanden, lint-poort groen, tag bestaat nog niet.
 De pure logica (versie-bump, CHANGELOG-transformatie, notes-opbouw) woont in

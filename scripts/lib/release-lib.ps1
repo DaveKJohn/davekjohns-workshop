@@ -9,8 +9,10 @@
         . (Join-Path $PSScriptRoot '..\lib\release-lib.ps1')
 
     Levert Get-NextVersion, Get-BumpType, Get-LockstepVersion, Get-PluginManifestPaths,
-    Get-PullRequestEntries, Convert-ChangelogForRelease en Build-ReleaseNotes. Deze functies zijn bewust puur (string/waarde
-    in, string/waarde uit) zodat ze los te testen zijn zonder een release te draaien --
+    Get-PullRequestEntries, Convert-ChangelogForRelease, Build-ReleaseNotes, en voor de
+    per-plugin CHANGELOGs: Get-EntryPlugins, Convert-EntryLinksForPluginChangelog,
+    Build-PluginChangelogSection en Add-PluginChangelogSection. Deze functies zijn bewust puur
+    (string/waarde in, string/waarde uit) zodat ze los te testen zijn zonder een release te draaien --
     scripts/release/cut-release.ps1 gebruikt ze, en de tests dekken ze af.
 
     Model: de release-inhoud verhuist naar releases/development/<X.Y>/<X.Y.Z>.md; het ## Releases-blok
@@ -235,6 +237,73 @@ function Convert-ChangelogForRelease {
     }
 
     return (($out -join $nl).TrimEnd() + $nl)
+}
+
+function Get-EntryPlugins {
+    <#
+        Leest de optionele 'Plugins: a, b'-regel uit een entry-blok (door fold-changelog-entry.ps1
+        afgeleid uit de PR-bestanden). Retourneert een array van plugin-namen; leeg = de entry raakt
+        geen plugin-content (werkplaats-intern).
+    #>
+    param([Parameter(Mandatory)][string]$EntryText)
+    $m = [regex]::Match($EntryText, '(?m)^Plugins:\s*(.+?)\s*$')
+    if (-not $m.Success) { return @() }
+    return @($m.Groups[1].Value -split '\s*,\s*' | Where-Object { $_ })
+}
+
+function Convert-EntryLinksForPluginChangelog {
+    <#
+        Herschrijft repo-root-relatieve markdown-links naar absolute GitHub-blob-URLs, zodat een
+        entry ook leesbaar is in de plugin-cache van een consument (waar de repo-bestanden niet
+        bestaan). Externe (http/mailto), anker- (#), absolute (/) en ../-links blijven ongemoeid.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$EntryText,
+        [string]$RepoBlobUrl = 'https://github.com/DaveKJohn/davekjohns-workshop/blob/main/'
+    )
+    return [regex]::Replace($EntryText, '\]\((?!https?:|mailto:|#|/|\.\./)([^)]+)\)', "](${RepoBlobUrl}`$1)")
+}
+
+function Build-PluginChangelogSection {
+    <#
+        Bouwt het '## v<Version> <emDash> <Date>'-blok voor een plugin-CHANGELOG uit de entries die
+        die plugin raken. Pure string-uit (LF-newlines).
+    #>
+    param(
+        [Parameter(Mandatory)][string[]]$Entries,
+        [Parameter(Mandatory)][string]$Version,
+        [Parameter(Mandatory)][string]$Date
+    )
+    $emDash = [char]0x2014
+    $body = (@($Entries | ForEach-Object { $_.Trim() }) -join "`n`n---`n`n")
+    return "## v$Version $emDash $Date`n`n$body`n"
+}
+
+function Add-PluginChangelogSection {
+    <#
+        Voegt een release-sectie bovenaan een plugin-CHANGELOG toe (na de intro, voor de eerste
+        '## '-kop, nieuwste eerst); bestaat er nog geen inhoud, dan wordt de volledige CHANGELOG
+        inclusief intro-header opgebouwd. Pure string-in/uit.
+    #>
+    param(
+        [string]$Existing = '',
+        [Parameter(Mandatory)][string]$Section,
+        [Parameter(Mandatory)][string]$PluginName
+    )
+    $emDash = [char]0x2014
+    if (-not $Existing) {
+        $intro = "# Changelog $emDash $PluginName`n`n" +
+            "Consument-gerichte geschiedenis van deze plugin: per release de wijzigingen die deze plugin`n" +
+            "raakten. Automatisch bijgeschreven door ``cut-release.ps1`` van de marketplace-repo`n" +
+            "(davekjohns-workshop); de volledige werkplaats-geschiedenis staat daar in ``CHANGELOG.md`` en`n" +
+            "``releases/``.`n`n"
+        return ($intro + $Section.TrimEnd() + "`n")
+    }
+    $m = [regex]::Match($Existing, '(?m)^## ')
+    if ($m.Success) {
+        return $Existing.Substring(0, $m.Index) + $Section.TrimEnd() + "`n`n---`n`n" + $Existing.Substring($m.Index)
+    }
+    return ($Existing.TrimEnd() + "`n`n" + $Section.TrimEnd() + "`n")
 }
 
 function Build-ReleaseNotes {

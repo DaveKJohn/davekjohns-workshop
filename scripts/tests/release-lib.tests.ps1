@@ -137,6 +137,31 @@ Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"
 Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"name": "leeg"}' } 'ontbrekende plugins-lijst gooit'
 Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson 'geen json' } 'corrupte JSON gooit'
 
+Write-Host "Get-EntryPlugins" -ForegroundColor Cyan
+$entryMetPlugins = @("### #4 $midDot Iets $midDot Feat $midDot 2026-01-04", '', 'Body vier.', '', 'Plugins: specialists, specialists-lifehub', '', '[PR #4](https://example.com/4)') -join "`n"
+$plugs = @(Get-EntryPlugins -EntryText $entryMetPlugins)
+Assert-Equal 2 $plugs.Count 'twee plugins uit de Plugins-regel'
+Assert-Equal 'specialists' $plugs[0] 'eerste plugin-naam correct'
+Assert-Equal 0 (@(Get-EntryPlugins -EntryText "### #5 x`n`nBody.")).Count 'geen Plugins-regel -> lege lijst'
+
+Write-Host "Convert-EntryLinksForPluginChangelog" -ForegroundColor Cyan
+$conv = Convert-EntryLinksForPluginChangelog -EntryText 'Zie [de lint](scripts/lint/x.ps1) en [site](https://example.com) en [#kop](#kop).' -RepoBlobUrl 'https://gh.test/blob/main/'
+Assert-Match $conv '\[de lint\]\(https://gh\.test/blob/main/scripts/lint/x\.ps1\)' 'root-relatieve link wordt GitHub-URL'
+Assert-Match $conv '\[site\]\(https://example\.com\)' 'externe link ongemoeid (plugin-variant)'
+Assert-Match $conv '\[#kop\]\(#kop\)' 'anker-link ongemoeid (plugin-variant)'
+
+Write-Host "Build-PluginChangelogSection + Add-PluginChangelogSection" -ForegroundColor Cyan
+$section = Build-PluginChangelogSection -Entries @($entryMetPlugins) -Version '1.5.0' -Date '2026-07-17'
+Assert-Match $section '^## v1\.5\.0 ' 'sectiekop met versie'
+Assert-Match $section '### #4 ' 'entry opgenomen in de sectie'
+$fresh = Add-PluginChangelogSection -Existing '' -Section $section -PluginName 'specialists'
+Assert-Match $fresh '^# Changelog .* specialists' 'nieuwe CHANGELOG krijgt intro-header'
+Assert-Match $fresh '(?s)# Changelog.*## v1\.5\.0' 'sectie staat na de intro'
+$section2 = Build-PluginChangelogSection -Entries @($entryMetPlugins) -Version '1.6.0' -Date '2026-07-18'
+$appended = Add-PluginChangelogSection -Existing $fresh -Section $section2 -PluginName 'specialists'
+Assert-Match $appended '(?s)## v1\.6\.0.*## v1\.5\.0' 'nieuwste release staat bovenaan'
+Assert-Equal 1 (@([regex]::Matches($appended, '(?m)^# Changelog')).Count) 'intro-header niet gedupliceerd'
+
 Write-Host ""
 if ($script:fail -gt 0) {
     Write-Host "FAALT: $($script:fail) fout, $($script:pass) goed." -ForegroundColor Red

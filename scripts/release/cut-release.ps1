@@ -22,6 +22,10 @@
       3. Genereert releases/development/<X.Y>/<X.Y.Z>.md uit de ## Pull Requests-entries (per
          branch-type gegroepeerd), voegt een rij toe aan releases/README.md, zet in CHANGELOG.md een
          verwijzing onder ## Releases en leegt de Pull-Requests-sectie, en bumpt alle plugin.json's.
+      3b. Schrijft per plugin de entries met een passende 'Plugins:'-regel (door de fold afgeleid
+          uit de PR-bestanden) bij in <plugin>/CHANGELOG.md -- de consument-gerichte geschiedenis
+          die met de plugin-cache meereist. Root-relatieve links worden daarbij herschreven naar
+          absolute GitHub-URLs.
       4. Commit dat rechtstreeks op main (release: vX.Y.Z) en zet een annotated tag vX.Y.Z.
       5. Pusht main + de tag (tenzij -NoPush).
 
@@ -177,6 +181,20 @@ if (Test-Path $relReadme) {
 }
 
 Write-Utf8NoBom -Path $changelogPath -Content $changelogNew
+
+# --- Per-plugin CHANGELOGs bijschrijven (consument-gericht; reist mee met de plugin-cache) --------
+foreach ($m in $manifests) {
+    $pluginDir = Split-Path (Split-Path $m -Parent) -Parent
+    $pluginName = Split-Path $pluginDir -Leaf
+    $pluginEntries = @($entries | Where-Object { @(Get-EntryPlugins -EntryText $_) -contains $pluginName })
+    if ($pluginEntries.Count -eq 0) { continue }
+    $pluginEntries = @($pluginEntries | ForEach-Object { Convert-EntryLinksForPluginChangelog -EntryText $_ })
+    $section = Build-PluginChangelogSection -Entries $pluginEntries -Version $new -Date $today
+    $plChangelogPath = Join-Path $pluginDir 'CHANGELOG.md'
+    $existing = if (Test-Path -LiteralPath $plChangelogPath) { Get-Content -Path $plChangelogPath -Raw -Encoding UTF8 } else { '' }
+    Write-Utf8NoBom -Path $plChangelogPath -Content (Add-PluginChangelogSection -Existing $existing -Section $section -PluginName $pluginName)
+    Write-Host "  bijgewerkt: $pluginName/CHANGELOG.md ($($pluginEntries.Count) entries)" -ForegroundColor DarkGray
+}
 
 # --- Plugin-versies bumpen (regex op de version-regel -- behoudt de JSON-opmaak) -----------------
 foreach ($m in $manifests) {

@@ -65,8 +65,12 @@ entry-bestand, dat Rendall na de merge invouwt.
   de compacte CHANGELOG-vorm — een kop `### #NN · titel · type · datum` (metadata ín de kop, met
   middot-scheiding), daaronder de beschrijving en als laatste regel een `PR #NN`-link naar de PR-url —
   en voegt dat toe in de `## Pull Requests`-sectie. Het PR-nummer + url worden opgehaald via
-  `gh pr list` op de branch-naam uit de entry (kan pas na de merge). Deze commit gaat direct op
-  `main` (de enige toegestane uitzondering — zie [de safety rules](../../CLAUDE.md#safety-rules)).
+  `gh pr list` op de branch-naam uit de entry (kan pas na de merge). De fold leidt daarbij ook
+  automatisch een **`Plugins:`-regel** af uit de PR-bestanden (paden onder
+  `claude-code-plugins/claude-specialists/<plugin>/`, de `connectors/`-map telt niet mee) — daarmee
+  weet `cut-release.ps1` later welke entries in welke per-plugin CHANGELOG horen. Deze commit gaat
+  direct op `main` (de enige toegestane uitzondering — zie
+  [de safety rules](../../CLAUDE.md#safety-rules)).
 
 #### Entry-format
 
@@ -142,8 +146,12 @@ in één beweging:
 2. genereert `releases/development/<X.Y>/<X.Y.Z>.md`, voegt een rij toe aan `releases/README.md`, en zet
    in `CHANGELOG.md` een verwijzing onder `## Releases` (de Pull-Requests-sectie wordt geleegd tot zijn
    intro);
-3. commit dat rechtstreeks op `main` (`release: vX.Y.Z`) en zet een annotated tag `vX.Y.Z`;
-4. pusht `main` + de tag (tenzij `-NoPush` voor inspectie vooraf).
+3. schrijft per plugin de entries met een passende `Plugins:`-regel bij in de **per-plugin
+   `CHANGELOG.md`** (`<plugin>/CHANGELOG.md`) — de consument-gerichte geschiedenis die met de
+   plugin-cache meereist; root-relatieve links worden daarbij herschreven naar absolute
+   GitHub-URLs, zodat ze ook in een consument-cache kloppen;
+4. commit dat rechtstreeks op `main` (`release: vX.Y.Z`) en zet een annotated tag `vX.Y.Z`;
+5. pusht `main` + de tag (tenzij `-NoPush` voor inspectie vooraf).
 
 Vangrails: op een schone `main`, geen ongevouwen entry-bestanden in de root, lint-poort groen, en de
 tag mag nog niet bestaan. Er is bewust **geen release-branch en geen `release`-prefix** — de release

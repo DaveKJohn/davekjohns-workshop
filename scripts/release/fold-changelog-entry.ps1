@@ -81,6 +81,26 @@ foreach ($file in $entryFiles) {
     if ($prs.Count -ge 1) {
         $num = $prs[0].number
         $entryContent = ([regex]'(?m)^### ').Replace($entryContent, "### #$num $midDot ", 1)
+
+        # Geraakte plugins afleiden uit de PR-bestanden (automation-first): paden onder
+        # claude-code-plugins/claude-specialists/<plugin>/ worden een 'Plugins:'-regel, waarmee
+        # cut-release.ps1 later de per-plugin CHANGELOGs bijschrijft. De connectors-map is
+        # werkplaats-administratie en telt niet mee.
+        $filesJson = gh pr view $num --json files --repo DaveKJohn/davekjohns-workshop
+        if ($LASTEXITCODE -eq 0 -and $filesJson) {
+            $touched = @()
+            foreach ($f in @(($filesJson | ConvertFrom-Json).files)) {
+                if ($f.path -match '^claude-code-plugins/claude-specialists/([a-z0-9][a-z0-9-]*)/') {
+                    if ($Matches[1] -ne 'connectors' -and $touched -notcontains $Matches[1]) { $touched += $Matches[1] }
+                }
+            }
+            if ($touched.Count -gt 0) {
+                $entryContent = $entryContent.TrimEnd() + "$nl$nl" + ('Plugins: ' + ((@($touched) | Sort-Object) -join ', '))
+            }
+        } else {
+            Write-Host "  Kon de PR-bestanden niet ophalen - entry zonder Plugins-regel." -ForegroundColor Yellow
+        }
+
         $entryContent = $entryContent.TrimEnd() + "$nl$nl[PR #$num]($($prs[0].url))"
     }
     else {
