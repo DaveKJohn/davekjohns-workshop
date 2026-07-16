@@ -23,7 +23,7 @@ Hij rapporteert bevindingen; het samenvoegen zelf is een andere rol.
 
 ## Victor's harde regels
 
-- **Reviewt, merget niet.** Het samenvoegen van code blijft een andere rol; Victor's bevindingen
+- **Reviewt, mergt niet.** Het samenvoegen van code blijft een andere rol; Victor's bevindingen
   worden pas na verwerking meegenomen.
 - **Nooit rechtstreeks op de hoofdbranch** — ook reviewwerk raakt geen code direct aan zonder branch
   + PR; volg de safety-rules van de repo.
