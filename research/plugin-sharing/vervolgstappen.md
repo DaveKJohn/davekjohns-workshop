@@ -62,6 +62,10 @@ bijwerken, dan de opruim- en fix-klusjes, en afsluiten met een hercheck.
    ververst de draagbare persona-bodies vanaf de bron (alleen boven de
    `## Eigen aan deze repo`-marker; de life-hub-lens eronder blijft staan). Die uitvoering is
    doc-werk ín life-hub — dit plugin-repo schrijft niet cross-repo in consumenten.
+   **Uitbreiding (her-hercheck, 16 juli):** ook **Bianca (03-02)** drift inmiddels — life-hub's
+   kopie draagt een repo-specifieke toewijzings-regel ("Toegewezen door [Chris #01](…)") waar de
+   bron repo-neutraal is ("toegewezen door de Chief of Staff", conform de tweedeling-conventie).
+   Zelfde besluit: verversen vanaf de bron, dus drie bodies in totaal (01-01, 05-05, 03-02).
 4. **Beide machines — oude `claude-specialists`-marketplace-kloon verwijderen.** Vervolgstap 1
    hierboven: `/plugin marketplace remove claude-specialists` — handmatige actie van Dave.
 5. ✳️ **smartwatchbanden — borging + oude records opruimen — opruimdeel afgerond (16 juli 2026):**
@@ -76,8 +80,12 @@ bijwerken, dan de opruim- en fix-klusjes, en afsluiten met een hercheck.
    `06-19-manual.md` (de derde kwam boven bij het opzetten van issue #42, dat bij de merge
    automatisch is gesloten). Let op: deze gedeelde agent-defs bereiken de consumenten pas ná een
    release-bump.
-7. **Sluitstuk — hercheck vanuit de werkplaats.** Drift-check tegen beide consumenten en
-   `claude plugin list --json` — alles hoort dan op v1.1.1 te staan zonder drift.
+7. ✅ **Sluitstuk — hercheck vanuit de werkplaats — werkplaats-kant afgerond (16 juli 2026):**
+   tweemaal gedraaid (zie de standen hieronder). Einduitslag her-hercheck: administratie volledig
+   groen — precies vijf records, alle v1.1.1, oude records en cache weg; drift-checks beide exit 0
+   (19× MISSING, nul agent-def-drift); smartwatchbanden volledig IDENTICAL. Enige restpunt is de
+   informatieve persona-drift van drie bodies in life-hub (zie stap 3) — extern werk, geen
+   werkplaats-werk.
 
 ### Stand na de eind-hercheck van 16 juli 2026
 
@@ -111,6 +119,15 @@ inderdaad een kijk-artefact van buitenaf — vanuit swb toonde `specialists-shop
 `enabled=true`, en life-hub's `settings.json` heeft beide plugins op `true`. Resterend vóór de
 her-hercheck: stap 3 (persona-drift-besluit), stap 4 op de tweede machine, en het borgingsdeel van
 stap 5 (swb-sessie).
+
+**Her-hercheck (16 juli 2026, eind van de dag):** stap 7 opnieuw gedraaid — de werkplaats-kant is
+af. Administratie: precies vijf records, alle v1.1.1, oude v0.1.0-records en cache weg.
+Drift-checks: beide exit 0, swb-persona's alle drie IDENTICAL. Enige restpunten, allemaal buiten
+deze repo/machine: (1) de persona-verversing van drie bodies in life-hub — 01-01, 05-05 én de bij
+deze her-hercheck nieuw gesignaleerde 03-02 (Bianca), zie het uitgebreide stap-3-besluit; (2) het
+borgingsdeel van stap 5 (swb-sessie); (3) stap 4 op de tweede machine. Werkafspraak daarbij
+(16 juli): consumenten-werk zoals life-hub gebeurt op Dave's andere machine — vanaf de
+werkplaats-machine blijven de checks read-only.
 
 Toegevoegd 16 juli, na het Copilot-onderzoek van Rebecca #07 (volledige bevindingen + bronnen in
 [`research/copilot/bevindingen.md`](../copilot/bevindingen.md)) — en **diezelfde dag geparkeerd**:
