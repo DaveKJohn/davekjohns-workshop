@@ -1,0 +1,14 @@
+{
+  "repo": "davekokbwj/smartwatchbanden",
+  "visibility": "private",
+  "localCheckout": "../../davekokbwj/smartwatchbanden",
+  "plugin": "specialists@davekjohns-workshop",
+  "syncedVersion": "1.1.1",
+  "lastChecked": "2026-07-16",
+  "status": "in-sync",
+  "extensions": [
+    "01-01", "02-09", "03-07", "04-11", "04-12", "04-13", "04-18",
+    "05-05", "05-06", "05-15", "06-16", "06-17", "06-19"
+  ],
+  "notes": "06-23 (Sean) en 03-02 (Bianca) hebben in swb nog geen repo-lens; niet verplicht, wel het vermelden waard."
+}

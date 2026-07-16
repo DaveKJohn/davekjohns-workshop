@@ -176,14 +176,18 @@ verzonnen — alleen in overleg met Dave (zie
 - **`claude-code-plugins/`** — het thuis van alle plugin-families van de werkplaats. De eerste (en
   vooralsnog enige) familie is **`claude-specialists/`**: de drie plugins
   (`specialists/`, `specialists-lifehub/`, `specialists-shopify/`), elk met een
-  eigen `.claude-plugin/plugin.json` (`version`), `agents/` en — voor een gemigreerde groep —
-  `manuals/`. `specialists` draagt daarnaast `personas/` (de draagbare sjablonen van de
+  eigen `.claude-plugin/plugin.json` (`version`), `agents/`, — voor een gemigreerde groep —
+  `manuals/`, en een `connectors/`-map: het register van welke repo's de plugin geïnstalleerd
+  hebben en of ze in sync zijn (doctrine + format in het
+  [connectors-README](claude-code-plugins/claude-specialists/specialists/connectors/README.md)).
+  `specialists` draagt daarnaast `personas/` (de draagbare sjablonen van de
   hoofdloop-specialisten Chris/Bianca/Derek/Rendall) en `skills/specialists-init/` (het repo-neutrale
   bootstrap-adoptiepad, zie [`README.md`](README.md#adoptie-het-bootstrap-pad)); `specialists-shopify`
   draagt een domein-`skills/`-map.
-- **`scripts/lib/`, `scripts/lint/`, `scripts/release/`, `scripts/tests/`** — de gedeelde helpers
-  (`branch-info.ps1`, `release-lib.ps1`), de lint-poort + drift-check, de changelog/PR/release-scripts
-  (incl. `cut-release.ps1`), en de tests.
+- **`scripts/lib/`, `scripts/lint/`, `scripts/release/`, `scripts/sync/`, `scripts/tests/`** — de
+  gedeelde helpers (`branch-info.ps1`, `release-lib.ps1`), de lint-poort + drift-check, de
+  changelog/PR/release-scripts (incl. `cut-release.ps1`), de connectors-check
+  (`check-connectors.ps1`), en de tests.
 - **`releases/`** — de release-historie: `development/<X.Y>/<X.Y.Z>.md` (volledige notes per versie) +
   `README.md` (overzichtstabel). `CHANGELOG.md`'s `## Releases`-sectie verwijst hiernaartoe.
 - **`.claude/`** — de repo-laag: `extensions/` (de repo-lenzen + persona-manuals), `settings.json`

@@ -1,0 +1,13 @@
+{
+  "repo": "davekokbwj/smartwatchbanden",
+  "visibility": "private",
+  "localCheckout": "../../davekokbwj/smartwatchbanden",
+  "plugin": "specialists-shopify@davekjohns-workshop",
+  "syncedVersion": "1.1.1",
+  "lastChecked": "2026-07-16",
+  "status": "in-sync",
+  "extensions": [
+    "04-20", "05-21", "05-22"
+  ],
+  "notes": ""
+}
