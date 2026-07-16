@@ -2,7 +2,7 @@
 
 > Logboek van de afronding van het marketplace-migratie-traject
 > (claude-specialists → davekjohns-workshop). Spiegelt de traject-documentatie in
-> smartwatchbanden (`research/plugin-sharing/`). Laatst bijgewerkt: **15 juli 2026**.
+> smartwatchbanden (`research/plugin-sharing/`). Laatst bijgewerkt: **16 juli 2026**.
 
 ## Stand van zaken (geverifieerd 15 juli 2026)
 
@@ -68,6 +68,24 @@ bijwerken, dan de opruim- en fix-klusjes, en afsluiten met een hercheck.
    van Edith, 15 juli): kleine `fix/`-branch + PR.
 7. **Sluitstuk — hercheck vanuit de werkplaats.** Drift-check tegen beide consumenten en
    `claude plugin list --json` — alles hoort dan op v1.1.1 te staan zonder drift.
+
+Toegevoegd 16 juli, na het Copilot-onderzoek van Rebecca #07 (volledige bevindingen + bronnen in
+[`research/copilot/bevindingen.md`](../copilot/bevindingen.md)):
+
+8. **`.github/copilot-instructions.md` opstellen** — korte, repo-neutrale spiegeling van de
+   kernregels uit `CLAUDE.md` (branch + PR alléén op Dave's woord, lint-poort vóór elke PR, publieke
+   repo → geen secrets), zodat elke Copilot-functie die ooit aangaat dezelfde grondwet leest. Laag
+   risico; werk voor Tessa. Kanttekening: de coding agent leest `CLAUDE.md` zelf óók al als
+   instructiebron.
+9. **Proef Copilot code review overwegen** — niet meteen structureel aanzetten, maar éénmalig op een
+   kleine, al geplande PR (bv. de "merget"-fix, stap 6) via de ruleset-optie "Automatically request
+   Copilot code review" toetsen of het meerwaarde biedt naast Victor/Edith/Sean en wat het aan
+   quotum/credits kost. Vereist een betaald Copilot-plan; Actions-minuten zijn op deze publieke repo
+   gratis. Besluit ná de proef.
+10. **Coding agent — beslissing van Dave.** De agent opent per ontwerp zélf meteen een draft-PR
+    zodra een issue wordt toegewezen, wat botst met de harde PR-regel. Vraag aan Dave: geldt "issue
+    aan Copilot toewijzen" als zíjn expliciete PR-akkoord voor die ene afgebakende taak, of blijft de
+    coding agent hier voorlopig uit? Tot dat besluit wordt er geen issue aan Copilot toegewezen.
 
 ## Geleerde lessen
 

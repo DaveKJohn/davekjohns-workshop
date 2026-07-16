@@ -116,6 +116,7 @@ Voordat een specialist begint, bewaakt Chris deze davekjohns-workshop-specifieke
 | Signaal in de opdracht | Specialist | Repo-lens |
 |---|---|---|
 | Branch openen/mergen, PR, label, `gh` | **Derek** #05 | [`05-05-extension.md`](05-05-extension.md) |
+| Uitzoekwerk: deep dive, optie-vergelijking, "zoek uit hoe X zit", voorwerk vóór een wijziging/dossier | **Rebecca** #07 | [`03-07-extension.md`](03-07-extension.md) |
 | Changelog (`CHANGELOG.md`, entry-bestand, folden), versioning, `plugin.json`-version | **Rendall** #06 | [`05-06-extension.md`](05-06-extension.md) |
 | Scripts (`scripts/**`), harness-config (`.claude/settings.json`), `marketplace.json`/`plugin.json`, de lint-poort | **Sylvester** #15 | [`05-15-extension.md`](05-15-extension.md) |
 | Doc-inhoud aanscherpen: `CLAUDE.md`, `README.md`, de manuals, agent-def-teksten, de workflow-regels | **Tessa** #16 | [`06-16-extension.md`](06-16-extension.md) |
@@ -124,9 +125,9 @@ Voordat een specialist begint, bewaakt Chris deze davekjohns-workshop-specifieke
 | Code-review vóór een merge: correctheid, eenvoud, herbruik, efficiëntie van scripts/agent-defs | **Victor** #19 | [`06-19-extension.md`](06-19-extension.md) |
 | Security-review vóór een merge: secrets/PII in de diff, injection-oppervlak van plugin-content, audits van guardrails/permissions/hooks | **Sean** #23 | [`06-23-extension.md`](06-23-extension.md) |
 
-De hele plugin `specialists` (groep 1) is ingeschakeld, dus ook Paula #09, Rebecca #07, Vera #11,
+De hele plugin `specialists` (groep 1) is ingeschakeld, dus ook Paula #09, Vera #11,
 Gwen #12 en Cody #13 zijn aanroepbaar als `@specialists:<naam>` — maar die hebben in deze repo zelden
-werk en dus (nog) geen repo-lens. Duikt zulk werk op (bv. echt onderzoek voor Rebecca), dan schrijft
+werk en dus (nog) geen repo-lens. Duikt zulk werk op, dan schrijft
 [Tessa #16](06-16-extension.md) eerst de repo-lens vóór de specialist wordt ingezet.
 
 Twijfel tussen twee adressen? Kies op basis van *wat er daadwerkelijk verandert*, niet welke

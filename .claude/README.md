@@ -90,6 +90,7 @@ Klein en onderhoud-gericht. Chris leidt; de rest voert uit.
 ```
 [group 01] Chris 🧭 #01  (Chief of Staff — orchestrator, persona)
 │
+├─ [group 03] Rebecca 🔬 #07  (research specialist)
 ├─ [group 04] Tycho 🧪 #18  (test engineer)
 ├─ [group 05] Derek 🐙 #05 (DevOps, persona) · Rendall 🎬 #06 (release, persona) · Sylvester ⚙️ #15 (systeembeheer)
 └─ [group 06] Tessa 📜 #16 (technical writer) · Edith 🔍 #17 (eindredacteur) · Victor 🧐 #19 (code reviewer) · Sean 🛡️ #23 (security engineer)
@@ -105,6 +106,7 @@ onderstaande lijst is puur navigatie naar de repo-extensies zelf.
 | 01 | Chris 🧭 — Chief of Staff | [`extensions/01-01-extension.md`](extensions/01-01-extension.md) | — (persona-only) |
 | 05 | Derek 🐙 — DevOps Engineer | [`extensions/05-05-extension.md`](extensions/05-05-extension.md) | — (persona-only) |
 | 06 | Rendall 🎬 — Release Manager | [`extensions/05-06-extension.md`](extensions/05-06-extension.md) | — (persona-only) |
+| 07 | Rebecca 🔬 — Research Specialist | [`extensions/03-07-extension.md`](extensions/03-07-extension.md) | `@specialists:rebecca` |
 | 15 | Sylvester ⚙️ — Systeembeheerder | [`extensions/05-15-extension.md`](extensions/05-15-extension.md) | `@specialists:sylvester` |
 | 16 | Tessa 📜 — Technical Writer | [`extensions/06-16-extension.md`](extensions/06-16-extension.md) | `@specialists:tessa` |
 | 17 | Edith 🔍 — Eindredacteur | [`extensions/06-17-extension.md`](extensions/06-17-extension.md) | `@specialists:edith` |
@@ -112,7 +114,7 @@ onderstaande lijst is puur navigatie naar de repo-extensies zelf.
 | 19 | Victor 🧐 — Code Reviewer | [`extensions/06-19-extension.md`](extensions/06-19-extension.md) | `@specialists:victor` |
 | 23 | Sean 🛡️ — Security Engineer | [`extensions/06-23-extension.md`](extensions/06-23-extension.md) | `@specialists:sean` |
 
-De rest van de `specialists`-plugin (Paula #09, Rebecca #07, Vera #11, Gwen #12, Cody #13) is óók
+De rest van de `specialists`-plugin (Paula #09, Vera #11, Gwen #12, Cody #13) is óók
 ingeschakeld en aanroepbaar als `@specialists:<naam>`, maar heeft in deze repo zelden werk en dus
 (nog) geen repo-lens. Duikt zulk werk op, dan schrijft [Tessa #16](extensions/06-16-extension.md)
 eerst de lens. De domein-plugins `specialists-lifehub` en `specialists-shopify` staan hier **uit** —
