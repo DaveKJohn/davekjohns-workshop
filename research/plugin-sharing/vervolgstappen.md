@@ -44,25 +44,29 @@ maar de domein-plugins staan nog op v1.0.0 tegenover de v1.1.1-bron (geverifieer
 `claude plugin list --json`). Volgorde: eerst de consumenten
 bijwerken, dan de opruim- en fix-klusjes, en afsluiten met een hercheck.
 
-1. **smartwatchbanden — `specialists-shopify` naar v1.1.1.** Vanuit de swb-repo (scope-les!):
-   vooraf én achteraf `claude plugin list --json` (het `projectPath`-veld), bijwerken via
-   `claude plugin install -s project`, daarna sessie-herstart en `git status` checken
-   (de install kan line-endings van `.claude/settings.json` herschrijven).
-2. **life-hub — kern-record verifiëren + `specialists-lifehub` naar v1.1.1.** Eerst vanuit
-   life-hub met `claude plugin list --json` checken of er een record voor de
-   `specialists`-kern bestaat (op de werkplaats-machine is er alleen een record van de
-   domein-plugin zichtbaar); daarna dezelfde update-werkwijze als bij swb.
+1. ✅ **smartwatchbanden — `specialists-shopify` naar v1.1.1 — afgerond (16 juli 2026):** vanuit
+   de swb-repo bijgewerkt van v1.0.0 naar v1.1.1 (bestond het record al, dan is
+   `claude plugin update -s project` de route — `install` weigert dan; dat was hier eenduidig
+   veilig omdat er maar één project-record voor de plugin bestond). Achteraf geverifieerd; swb's
+   working tree bleef schoon. Laadt pas na een sessie-herstart in swb.
+2. ✅ **life-hub — kern-record + `specialists-lifehub` naar v1.1.1 — afgerond (16 juli 2026):**
+   het kern-record ontbrak inderdaad en is vanuit life-hub aangemaakt met
+   `claude plugin install -s project` (v1.1.1); de domein-plugin is bijgewerkt naar v1.1.1. De
+   install herschreef life-hub's `.claude/settings.json` (blok-volgorde + line-endings, inhoudelijk
+   identiek) — teruggezet, working tree schoon. Laadt pas na een sessie-herstart in life-hub.
 3. **life-hub — persona-drift bekijken.** De extensions van Chris (01-01) en Derek (05-05)
    wijken daar af van de canonieke persona-bodies (drift-check 15 juli, informatief). Bepalen:
    lokale verbetering die eerst terug naar de bron moet (wijzigingen landen altijd eerst in
    davekjohns-workshop), of bewuste repo-eigen afwijking die de bron niet raakt.
 4. **Beide machines — oude `claude-specialists`-marketplace-kloon verwijderen.** Vervolgstap 1
    hierboven: `/plugin marketplace remove claude-specialists` — handmatige actie van Dave.
-5. **smartwatchbanden — borging + oude records opruimen.** Vervolgstap 2 hierboven: de
-   migratie-afronding vastleggen in swb's `research/plugin-sharing/README.md`, en daarnaast
-   de twee uitgeschakelde v0.1.0-records van swb's oude eigen marketplace
-   (`specialists@smartwatchbanden`, `swb-specialists@smartwatchbanden`) + de bijbehorende
-   cache-map opruimen volgens de record-les-werkwijze hieronder.
+5. ✳️ **smartwatchbanden — borging + oude records opruimen — opruimdeel afgerond (16 juli 2026):**
+   de twee v0.1.0-records van swb's oude eigen marketplace zijn volgens de record-les-werkwijze
+   verwijderd (markers gecheckt: geen `.in_use`; backup `installed_plugins.json.bak-2026-07-16`
+   gemaakt; JSON gevalideerd; alle vijf resterende records v1.1.1) en de oude
+   `cache\smartwatchbanden`-map is opgeruimd (de `swb-specialists`-cache bleek al weg). **Open
+   blijft het borging-deel:** de migratie-afronding vastleggen in swb's
+   `research/plugin-sharing/README.md` — doc-werk ín de swb-repo, voor een sessie dáár.
 6. ✅ **davekjohns-workshop — de "merget"-fix in de gedeelde agent-defs — afgerond (16 juli 2026):**
    via PR #44 hersteld op alle **drie** de vindplaatsen — `06-19-agent.md`, `06-23-agent.md` én
    `06-19-manual.md` (de derde kwam boven bij het opzetten van issue #42, dat bij de merge
@@ -94,6 +98,15 @@ Het structurele werk blijkt gezond; wat rest is uitsluitend het geplande consume
   de domein-plugins daar echt nog aanstaan.
 
 Na het uitvoeren van stappen 1, 2, 3 en 5 wordt de hercheck herhaald als échte eindstreep.
+
+**Aanvulling (16 juli 2026, later op de dag):** stappen 1, 2 en het opruimdeel van 5 zijn
+uitgevoerd — de administratie op de werkplaats-machine bevat nu uitsluitend de drie
+workshop-plugins, alle vijf records op v1.1.1. De ⚠️-observatie hierboven is daarbij opgehelderd:
+`enabled` in `claude plugin list` toont of de plugin in het *huidige* project aanstaat en is dus
+inderdaad een kijk-artefact van buitenaf — vanuit swb toonde `specialists-shopify` na de update
+`enabled=True`, en life-hub's `settings.json` heeft beide plugins op `true`. Resterend vóór de
+her-hercheck: stap 3 (persona-drift-besluit), stap 4 op de tweede machine, en het borging-deel van
+stap 5 (swb-sessie).
 
 Toegevoegd 16 juli, na het Copilot-onderzoek van Rebecca #07 (volledige bevindingen + bronnen in
 [`research/copilot/bevindingen.md`](../copilot/bevindingen.md)) — en **diezelfde dag geparkeerd**:
