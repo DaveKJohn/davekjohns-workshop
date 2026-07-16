@@ -9,6 +9,14 @@ folden) staat in [`README.md`](README.md#bijdragen--changelog--pr-workflow).
 Alles wat sinds de laatste release naar `main` is gemergd — nieuwste bovenaan, één blok per pull
 request.
 
+### #46 · Persona-sjabloon voor Bianca (Biograaf, #02) · Feat · 2026-07-16
+
+De vier persona-only hoofdloop-rollen zijn nu compleet gespiegeld in de `specialists`-plugin: naast Chris/Derek/Rendall krijgt ook Bianca haar draagbare persona-sjabloon (`personas/03-02-persona.md`). De body is letterlijk overgenomen uit haar consument-manual, zodat bron en kopie in lijn zijn; de index-blockquote en het repo-lens-slot volgen het draagbare sjabloon-format. De drie sjabloon-opsommingen in `README.md` + `CLAUDE.md` noemen Bianca nu mee — de workshop-roster bewust niet, want zij is geen marketplace-onderhouder maar puur een sjabloon-bron voor consumenten. Aanleiding: een consistentie-audit in life-hub vond dat Bianca als enige van de vier persona-only rollen geen plugin-spiegel had. check-plugin-integrity: 0 errors.
+
+[PR #46](https://github.com/DaveKJohn/davekjohns-workshop/pull/46)
+
+---
+
 ### #45 · Slotwoord toegevoegd aan het Copilot-dossier · Docs · 2026-07-16
 
 Slotwoord toegevoegd aan `research/copilot/bevindingen.md`: waarom Copilot deze repo weinig
