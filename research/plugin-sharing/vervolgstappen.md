@@ -47,25 +47,29 @@ bijwerken, dan de opruim- en fix-klusjes, en afsluiten met een hercheck.
 1. ✅ **smartwatchbanden — `specialists-shopify` naar v1.1.1 — afgerond (16 juli 2026):** vanuit
    de swb-repo bijgewerkt van v1.0.0 naar v1.1.1 (bestond het record al, dan is
    `claude plugin update -s project` de route — `install` weigert dan; dat was hier eenduidig
-   veilig omdat er maar één project-record voor de plugin bestond). Achteraf geverifieerd; swb's
-   working tree bleef schoon. Laadt pas na een sessie-herstart in swb.
+   veilig omdat er maar één project-record voor de plugin bestond). Vooraf én achteraf geverifieerd
+   via de administratie; swb's working tree bleef schoon. Laadt pas na een sessie-herstart in swb.
 2. ✅ **life-hub — kern-record + `specialists-lifehub` naar v1.1.1 — afgerond (16 juli 2026):**
    het kern-record ontbrak inderdaad en is vanuit life-hub aangemaakt met
    `claude plugin install -s project` (v1.1.1); de domein-plugin is bijgewerkt naar v1.1.1. De
    install herschreef life-hub's `.claude/settings.json` (blok-volgorde + line-endings, inhoudelijk
    identiek) — teruggezet, working tree schoon. Laadt pas na een sessie-herstart in life-hub.
-3. **life-hub — persona-drift bekijken.** De extensions van Chris (01-01) en Derek (05-05)
-   wijken daar af van de canonieke persona-bodies (drift-check 15 juli, informatief). Bepalen:
-   lokale verbetering die eerst terug naar de bron moet (wijzigingen landen altijd eerst in
-   davekjohns-workshop), of bewuste repo-eigen afwijking die de bron niet raakt.
+3. ✳️ **life-hub — persona-drift bekijken — besloten (16 juli 2026), uitvoering in life-hub:**
+   de body-diffs zijn geanalyseerd en beide driften blijken **verouderde kopieën**, geen
+   life-hub-verbeteringen die terug naar de bron moeten. Life-hub mist twee lessen die de bron al
+   draagt: bij Chris (01-01) de sectie "Parallel werk uitzetten — verse agents, geen forks", bij
+   Derek (05-05) de harde regel "De PR-body is nooit leeg". Besluit: de bron is leidend; life-hub
+   ververst de draagbare persona-bodies vanaf de bron (alleen boven de
+   `## Eigen aan deze repo`-marker; de life-hub-lens eronder blijft staan). Die uitvoering is
+   doc-werk ín life-hub — dit plugin-repo schrijft niet cross-repo in consumenten.
 4. **Beide machines — oude `claude-specialists`-marketplace-kloon verwijderen.** Vervolgstap 1
    hierboven: `/plugin marketplace remove claude-specialists` — handmatige actie van Dave.
 5. ✳️ **smartwatchbanden — borging + oude records opruimen — opruimdeel afgerond (16 juli 2026):**
    de twee v0.1.0-records van swb's oude eigen marketplace zijn volgens de record-les-werkwijze
    verwijderd (markers gecheckt: geen `.in_use`; backup `installed_plugins.json.bak-2026-07-16`
    gemaakt; JSON gevalideerd; alle vijf resterende records v1.1.1) en de oude
-   `cache\smartwatchbanden`-map is opgeruimd (de `swb-specialists`-cache bleek al weg). **Open
-   blijft het borging-deel:** de migratie-afronding vastleggen in swb's
+   `cache/smartwatchbanden`-map is opgeruimd (de `swb-specialists`-cache bleek al weg). **Open
+   blijft het borgingsdeel:** de migratie-afronding vastleggen in swb's
    `research/plugin-sharing/README.md` — doc-werk ín de swb-repo, voor een sessie dáár.
 6. ✅ **davekjohns-workshop — de "merget"-fix in de gedeelde agent-defs — afgerond (16 juli 2026):**
    via PR #44 hersteld op alle **drie** de vindplaatsen — `06-19-agent.md`, `06-23-agent.md` én
@@ -104,8 +108,8 @@ uitgevoerd — de administratie op de werkplaats-machine bevat nu uitsluitend de
 workshop-plugins, alle vijf records op v1.1.1. De ⚠️-observatie hierboven is daarbij opgehelderd:
 `enabled` in `claude plugin list` toont of de plugin in het *huidige* project aanstaat en is dus
 inderdaad een kijk-artefact van buitenaf — vanuit swb toonde `specialists-shopify` na de update
-`enabled=True`, en life-hub's `settings.json` heeft beide plugins op `true`. Resterend vóór de
-her-hercheck: stap 3 (persona-drift-besluit), stap 4 op de tweede machine, en het borging-deel van
+`enabled=true`, en life-hub's `settings.json` heeft beide plugins op `true`. Resterend vóór de
+her-hercheck: stap 3 (persona-drift-besluit), stap 4 op de tweede machine, en het borgingsdeel van
 stap 5 (swb-sessie).
 
 Toegevoegd 16 juli, na het Copilot-onderzoek van Rebecca #07 (volledige bevindingen + bronnen in
