@@ -63,11 +63,37 @@ bijwerken, dan de opruim- en fix-klusjes, en afsluiten met een hercheck.
    de twee uitgeschakelde v0.1.0-records van swb's oude eigen marketplace
    (`specialists@smartwatchbanden`, `swb-specialists@smartwatchbanden`) + de bijbehorende
    cache-map opruimen volgens de record-les-werkwijze hieronder.
-6. **davekjohns-workshop — de "merget"-fix in de gedeelde agent-defs.** In `06-19-agent.md`
-   en `06-23-agent.md` staat de foutieve vervoeging "merget" in plaats van "mergt" (vondst
-   van Edith, 15 juli): kleine `fix/`-branch + PR.
+6. ✅ **davekjohns-workshop — de "merget"-fix in de gedeelde agent-defs — afgerond (16 juli 2026):**
+   via PR #44 hersteld op alle **drie** de vindplaatsen — `06-19-agent.md`, `06-23-agent.md` én
+   `06-19-manual.md` (de derde kwam boven bij het opzetten van issue #42, dat bij de merge
+   automatisch is gesloten). Let op: deze gedeelde agent-defs bereiken de consumenten pas ná een
+   release-bump.
 7. **Sluitstuk — hercheck vanuit de werkplaats.** Drift-check tegen beide consumenten en
    `claude plugin list --json` — alles hoort dan op v1.1.1 te staan zonder drift.
+
+### Stand na de eind-hercheck van 16 juli 2026
+
+Stap 7 is op 16 juli een eerste keer gedraaid vanuit de werkplaats (drift-checks + plugin-lijst).
+Het structurele werk blijkt gezond; wat rest is uitsluitend het geplande consumenten-handwerk:
+
+- ✅ **Drift-checks beide exit 0**: alle 19 agent-defs MISSING (= gemigreerd) in life-hub én
+  smartwatchbanden, nul drift, nul dode kopieën; bij swb zijn ook alle drie de persona's IDENTICAL.
+- ✅ **`specialists`-kern op v1.1.1** bij smartwatchbanden en de werkplaats zelf.
+- ⏳ **Stap 1 en 2 blijven open**: `specialists-shopify` (swb) en `specialists-lifehub` (life-hub)
+  staan nog op v1.0.0, en er is nog steeds geen record van de `specialists`-kern voor life-hub.
+- ⏳ **Stap 3 blijft open**: de persona-drift in life-hub is er nog — Chris (01-01) en Derek (05-05)
+  DRIFTED (informatief), Rendall (05-06) gelijk aan de bron.
+- ⏳ **Stap 5 blijft open**: de twee oude v0.1.0-records van swb's eigen marketplace staan nog in de
+  administratie.
+- ✳️ **Stap 4 is op de werkplaats-machine al (deels) gebeurd**: de oude
+  `claude-specialists`-kloon staat daar niet meer in de plugin-cache; de tweede machine is vanaf
+  hier niet controleerbaar en moet Dave zelf nalopen.
+- ⚠️ **Observatie voor bij stappen 1–2**: beide domein-plugin-records tonen vanuit de werkplaats
+  `enabled: false`. Mogelijk een kijk-artefact (zie de scope-les hieronder: de project-context van
+  de plugin-commando's is van buitenaf onbetrouwbaar) — dubbelcheck vanuit de doel-repo's zelf of
+  de domein-plugins daar echt nog aanstaan.
+
+Na het uitvoeren van stappen 1, 2, 3 en 5 wordt de hercheck herhaald als échte eindstreep.
 
 Toegevoegd 16 juli, na het Copilot-onderzoek van Rebecca #07 (volledige bevindingen + bronnen in
 [`research/copilot/bevindingen.md`](../copilot/bevindingen.md)) — en **diezelfde dag geparkeerd**:
