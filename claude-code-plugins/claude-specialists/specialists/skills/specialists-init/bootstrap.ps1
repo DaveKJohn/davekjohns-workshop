@@ -14,6 +14,10 @@
     Het doet alleen VEILIGE, additieve handelingen -- het overschrijft nooit bestaande inhoud:
       1. Kopieert <plugin>/personas/<g>-<id>-persona.md naar
          <ConsumerRoot>/.claude/extensions/<g>-<id>-extension.md -- alleen als die nog niet bestaat.
+      1b. Zet voor elke subagent van de INGESCHAKELDE plugin(s) (enabledPlugins in de settings van
+          de consument; zonder settings alleen de eigen plugin) een leeg lens-sjabloon neer in
+          .claude/extensions/<g>-<id>-extension.md, duidelijk gemarkeerd als VUL-IN -- zo is
+          zichtbaar waar repo-specifieke taken per specialist worden aangevuld.
       2. Zorgt dat <ConsumerRoot>/CLAUDE.md onderaan de @-import van de orchestrator draagt
          (@.claude/extensions/01-01-extension.md). Ontbreekt CLAUDE.md, dan schrijft het een minimale
          scaffold; bestaat de import al, dan doet het niets.
@@ -71,6 +75,103 @@ Get-ChildItem -Path $personaDir -Filter '*-persona.md' -File | Sort-Object Name 
         Copy-Item -LiteralPath $_.FullName -Destination $dest
         Write-Host "  [kopie] $($_.Name) -> .claude/extensions/$(Split-Path $dest -Leaf)" -ForegroundColor Green
         $script:copied++
+    }
+}
+
+# --- 1b. Lege lens-scaffolds voor de subagent-specialisten (nooit overschrijven) --------------------
+# De agent-defs komen uit de plugin(s); de repo-lens per specialist woont in de consument. Voor elke
+# agent van de ingeschakelde plugin(s) zetten we een leeg, duidelijk gemarkeerd sjabloon neer.
+
+# Eigen plugin-naam: in de bron-layout is de mapnaam de plugin-naam; in de plugin-cache is dat de
+# map boven de versie-map (...\<plugin>\<x.y.z>\).
+function Get-OwnPluginName([string]$PluginRoot) {
+    $leaf = Split-Path $PluginRoot -Leaf
+    if ($leaf -match '^\d+\.\d+\.\d+') { return (Split-Path (Split-Path $PluginRoot -Parent) -Leaf) }
+    return $leaf
+}
+
+# agents/-map van een plugin, in beide layouts (bron: sibling-map; cache: <naam>\<versie>\agents).
+function Get-PluginAgentsDir([string]$PluginName, [string]$OwnPluginRoot) {
+    $parent = Split-Path $OwnPluginRoot -Parent
+    $src = Join-Path $parent (Join-Path $PluginName 'agents')
+    if (Test-Path -LiteralPath $src -PathType Container) { return (Resolve-Path -LiteralPath $src).Path }
+    $market = Split-Path $parent -Parent
+    $nameDir = Join-Path $market $PluginName
+    if (Test-Path -LiteralPath $nameDir -PathType Container) {
+        $versions = Get-ChildItem -LiteralPath $nameDir -Directory | Sort-Object Name -Descending
+        foreach ($v in $versions) {
+            $a = Join-Path $v.FullName 'agents'
+            if (Test-Path -LiteralPath $a -PathType Container) { return (Resolve-Path -LiteralPath $a).Path }
+        }
+    }
+    return $null
+}
+
+$ownPluginRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
+$ownPluginName = Get-OwnPluginName $ownPluginRoot
+
+# Ingeschakelde plugins uit de settings van de consument; zonder (leesbare) settings alleen de
+# eigen plugin. Plugin-namen worden als slug gevalideerd voor ze een pad worden.
+$pluginNames = @($ownPluginName)
+$consumerSettings = Join-Path $ConsumerRoot '.claude\settings.json'
+if (Test-Path -LiteralPath $consumerSettings -PathType Leaf) {
+    try {
+        $cs = Get-Content -LiteralPath $consumerSettings -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ($cs.PSObject.Properties.Name -contains 'enabledPlugins') {
+            $enabledNames = @($cs.enabledPlugins.PSObject.Properties |
+                Where-Object { $_.Value -eq $true } |
+                ForEach-Object { $_.Name.Split('@')[0] })
+            if ($enabledNames.Count -gt 0) { $pluginNames = $enabledNames }
+        }
+    } catch {
+        Write-Host "  [let op] .claude/settings.json onleesbaar -- lens-scaffolds alleen voor '$ownPluginName'." -ForegroundColor Yellow
+    }
+}
+
+$scaffolded = 0; $lensKept = 0
+foreach ($pluginName in ($pluginNames | Sort-Object -Unique)) {
+    if ($pluginName -notmatch '^[a-z0-9][a-z0-9-]*$') { continue }
+    $agentsDir = Get-PluginAgentsDir -PluginName $pluginName -OwnPluginRoot $ownPluginRoot
+    if ($null -eq $agentsDir) {
+        Write-Host "  [let op] agents-map van plugin '$pluginName' niet gevonden -- overgeslagen." -ForegroundColor Yellow
+        continue
+    }
+    Get-ChildItem -Path $agentsDir -Filter '*-agent.md' -File | Sort-Object Name | ForEach-Object {
+        if ($_.BaseName -notmatch '^(\d{2})-(\d{2})-agent$') { return }
+        $group = $Matches[1]; $id = $Matches[2]
+        $dest = Join-Path $extDir "$group-$id-extension.md"
+        if (Test-Path -LiteralPath $dest -PathType Leaf) { $script:lensKept++; return }
+        $agentName = ''
+        foreach ($line in (Get-Content -LiteralPath $_.FullName -TotalCount 10)) {
+            if ($line -match '^name:\s*(\S+)') { $agentName = $Matches[1]; break }
+        }
+        # Defense-in-depth (advies Sean): de naam belandt in het geschreven sjabloon -- beperk hem
+        # tot een veilige tekenset, ook al is de bron een plugin uit dezelfde vertrouwensgrens.
+        $agentName = $agentName -replace '[^A-Za-z0-9_-]', ''
+        if ($agentName) { $displayName = $agentName.Substring(0,1).ToUpper() + $agentName.Substring(1) } else { $displayName = "$group-$id" }
+        $template = @"
+---
+id: $id
+group: $group
+---
+
+# $displayName (VUL-IN) -- repo-lens
+
+> Repo-lens bij het draagbare vakboek van $displayName in de ``$pluginName``-plugin. Dit bestand is
+> door ``specialists-init`` als leeg sjabloon neergezet; de agent-def leest het automatisch mee.
+> Vul hieronder de repo-specifieke taken en context aan die $displayName in deze repo nodig heeft.
+
+## Eigen aan deze repo (VUL-IN)
+
+<!-- TODO: beschrijf hier wat deze specialist in DEZE repo doet:
+     - welke bestanden/mappen zijn of haar domein zijn;
+     - de repo-specifieke taken, conventies en afspraken;
+     - verwijzingen naar de safety-rules/poortwachters van deze repo.
+     Het draagbare vak blijft in de plugin-manual; alleen repo-eigen zaken horen hier. -->
+"@
+        [System.IO.File]::WriteAllText($dest, $template, (New-Object System.Text.UTF8Encoding($false)))
+        Write-Host "  [maak]  lens-scaffold .claude/extensions/$group-$id-extension.md ($displayName, $pluginName)" -ForegroundColor Green
+        $script:scaffolded++
     }
 }
 
@@ -143,9 +244,9 @@ Write-Host "  [maak]  .claude/settings.suggested.jsonc neergezet (voorstel -- ni
 
 # --- Rapport ----------------------------------------------------------------------------------------
 Write-Host ""
-Write-Host "Klaar: $copied persona('s) gekopieerd, $kept al aanwezig." -ForegroundColor Cyan
+Write-Host "Klaar: $copied persona('s) gekopieerd, $kept al aanwezig; $scaffolded lens-scaffold(s) neergezet, $lensKept al aanwezig." -ForegroundColor Cyan
 Write-Host "Volgende stappen (handmatig -- dit script raakt settings.json/hooks bewust niet aan):" -ForegroundColor Cyan
-Write-Host "  1. Vul in elk gekopieerd .claude/extensions/*-extension.md het '## Eigen aan deze repo'-slot met de repo-lens." -ForegroundColor Gray
+Write-Host "  1. Vul in elk .claude/extensions/*-extension.md het '## Eigen aan deze repo'-slot met de repo-lens (de VUL-IN-scaffolds mogen leeg blijven tot een specialist hier echt werk krijgt)." -ForegroundColor Gray
 Write-Host "  2. Neem uit .claude/settings.suggested.jsonc over wat je wilt in settings.json en verwijder het voorstel." -ForegroundColor Gray
 Write-Host "  3. Herstart de Claude Code-sessie zodat de nieuwe @-import + config actief worden." -ForegroundColor Gray
 exit 0
