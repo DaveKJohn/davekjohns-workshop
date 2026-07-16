@@ -31,9 +31,12 @@ domein-groep ook het **draagbare vakboek** (`manuals/<group>-<id>-manual.md`) da
 
 **Niet:** governance (`CLAUDE.md`, de workflow-regels), safety-hooks of MCP-config. Die blijven
 bewust op repo-niveau, want ze zijn per repo verschillend (of veiligheidskritisch). De plugins
-dragen bewust **geen hooks** en **geen repo-specifieke skills** — de enige skill hier (`specialists-init`)
-is repo-neutraal (het adoptiepad zelf), een bewuste uitzondering; domein-groep 2/3 mogen wél
-domein-skills meedragen als een repo die deelt.
+dragen bewust **geen safety-/guardrail-hooks** en **geen repo-specifieke skills** — met twee
+benoemde, repo-neutrale uitzonderingen: de skill `specialists-init` (het adoptiepad zelf) en de
+informatieve SessionStart-hook `connector-sessioncheck` (read-only sync-signalering, blokkeert
+nooit — zie het
+[connectors-README](claude-code-plugins/claude-specialists/connectors/README.md)); domein-groep
+2/3 mogen wél domein-skills meedragen als een repo die deelt.
 
 ### Manuals — het gesplitste model
 

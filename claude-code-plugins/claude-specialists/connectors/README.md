@@ -1,8 +1,9 @@
 # connectors/ — het register van aangesloten repo's
 
 Dit is het register van **welke repo's de plugins van deze familie geïnstalleerd hebben en of ze
-nog in sync zijn met deze repo** — één submap per plugin, met daarin een `<repo>.json`-manifest
-per aangesloten repo. Dit README is de doctrine; de manifesten zijn de data.
+nog in sync zijn met deze repo** — één `<repo>.json`-manifest per aangesloten repo, direct in
+deze map, met daarin per plugin de gesyncte versie en de extension-inventaris. De connector ís de
+repo. Dit README is de doctrine; de manifesten zijn de data.
 
 **Het register woont bewust op familie-niveau, náást de plugin-mappen — niet erin.** De
 marketplace-sources wijzen naar de plugin-mappen zelf, dus dit register reist *niet* mee met de
@@ -46,11 +47,15 @@ lokale checkouts; dat is een bewust geaccepteerde mate van transparantie (securi
   "repo": "DaveKJohn/life-hub",
   "visibility": "private",
   "localCheckout": "../life-hub",
-  "plugin": "specialists@davekjohns-workshop",
-  "syncedVersion": "1.1.1",
   "lastChecked": "2026-07-16",
   "status": "in-sync",
-  "extensions": ["01-01", "05-05"],
+  "plugins": [
+    {
+      "id": "specialists@davekjohns-workshop",
+      "syncedVersion": "1.1.1",
+      "extensions": ["01-01", "05-05"]
+    }
+  ],
   "notes": ""
 }
 ```
@@ -58,8 +63,9 @@ lokale checkouts; dat is een bewust geaccepteerde mate van transparantie (securi
 - `localCheckout` is **relatief aan de root van deze repo** (de werkplaats-checkout); staat de
   checkout niet op de machine, dan slaat de check hem over. Absolute paden en paden buiten de
   scope-root worden door de check geweigerd.
-- `syncedVersion` is de bronversie waarop deze connector het laatst is gesynct; loopt de bron
-  vooruit, dan signaleert de check dat.
+- `plugins` bevat per geïnstalleerde plugin de `syncedVersion` (de bronversie waarop deze
+  connector het laatst is gesynct; loopt de bron vooruit, dan signaleert de check dat) en de
+  `extensions`-inventaris van die plugin.
 - `status`/`notes` zijn de menselijke samenvatting (`in-sync` of `attentie` + toelichting); ze
   worden bijgewerkt wanneer er daadwerkelijk gesynct is, niet bij elke check.
 
@@ -87,8 +93,14 @@ De `specialists`-plugin draagt een **SessionStart-hook**
 ([`hooks/hooks.json`](../specialists/hooks/hooks.json) +
 [`connector-sessioncheck.ps1`](../specialists/hooks/connector-sessioncheck.ps1)) die bij het
 starten van een sessie — in élke repo die de plugin heeft, dus ook life-hub en smartwatchbanden —
-de workshop-checkout zoekt en daar de connectors-check draait. De hook is bewust zacht: geen
-workshop-checkout op de machine betekent een melding en verder niets, signalen komen als compacte
-samenvatting in de sessie-context, en de hook blokkeert nooit een sessiestart (altijd exit 0,
-read-only). Let op de **versie-poort**: consumenten ontvangen de hook pas na een release-bump én
-een `claude plugin update` + sessie-herstart aan hun kant.
+de workshop-checkout zoekt en daar de connectors-check draait. Twee guardrails uit de
+security-review: het gevonden pad wordt eerst **geverifieerd** (marker-check op de
+marketplace-naam in `.claude-plugin/marketplace.json` — nooit code draaien op een padgok), en
+buiten de workshop is de check **gescoped** tot het manifest van de eigen repo, zodat een sessie
+nooit de registerdata van een andere consument in zijn context krijgt. De hook is verder bewust
+zacht: geen geverifieerde workshop-checkout betekent een melding en verder niets, signalen komen
+als compacte samenvatting in de sessie-context, en de hook blokkeert nooit een sessiestart
+(altijd exit 0, read-only). Deze hook is — naast de skill `specialists-init` — de tweede
+benoemde, repo-neutrale uitzondering op de regel dat plugins geen hooks/skills dragen (zie de
+root-README). Let op de **versie-poort**: consumenten ontvangen de hook pas na een release-bump
+én een `claude plugin update` + sessie-herstart aan hun kant.
