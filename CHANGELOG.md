@@ -9,6 +9,17 @@ folden) staat in [`README.md`](README.md#bijdragen--changelog--pr-workflow).
 Alles wat sinds de laatste release naar `main` is gemergd — nieuwste bovenaan, één blok per pull
 request.
 
+### #39 · Fold-les geborgd: check `git branch --show-current` vóór het folden · Docs · 2026-07-16
+
+Geleerde les van 16 juli vastgelegd in Rendalls lens (`.claude/extensions/05-06-extension.md`,
+fold-levenscyclus stap 2): `gh pr merge --delete-branch` belooft ook de lokale branch op te ruimen,
+maar kan de lokale checkout op de gemergde branch laten staan — check daarom vóór de fold met
+`git branch --show-current` dat je écht op `main` staat.
+
+[PR #39](https://github.com/DaveKJohn/davekjohns-workshop/pull/39)
+
+---
+
 ### #38 · Copilot-onderzoek in het werkplan + repo-lens voor Rebecca · Docs · 2026-07-16
 
 Copilot-onderzoek van Rebecca #07 vastgelegd in `research/copilot/bevindingen.md` (productpalet
