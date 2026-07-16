@@ -80,3 +80,15 @@ het begin van een werkdag of sessie:
 Synchroniseren zelf blijft **pull-based per consument**: elke aangesloten repo haalt wijzigingen
 op in zijn eigen sessie, onder zijn eigen governance — dit register signaleert, het schrijft
 nooit cross-repo.
+
+## De sessie-check (automatisch)
+
+De `specialists`-plugin draagt een **SessionStart-hook**
+([`hooks/hooks.json`](../specialists/hooks/hooks.json) +
+[`connector-sessioncheck.ps1`](../specialists/hooks/connector-sessioncheck.ps1)) die bij het
+starten van een sessie — in élke repo die de plugin heeft, dus ook life-hub en smartwatchbanden —
+de workshop-checkout zoekt en daar de connectors-check draait. De hook is bewust zacht: geen
+workshop-checkout op de machine betekent een melding en verder niets, signalen komen als compacte
+samenvatting in de sessie-context, en de hook blokkeert nooit een sessiestart (altijd exit 0,
+read-only). Let op de **versie-poort**: consumenten ontvangen de hook pas na een release-bump én
+een `claude plugin update` + sessie-herstart aan hun kant.

@@ -176,6 +176,19 @@ try {
     } finally {
         $env:USERPROFILE = $oldProfile
     }
+
+    # --- 9. SessionStart-hook (connector-sessioncheck.ps1) ---------------------------------------
+    $Hook = Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\specialists\hooks\connector-sessioncheck.ps1'
+
+    # 9a. Geen workshop-checkout vindbaar -> zachte melding, exit 0 (sessie nooit blokkeren).
+    $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Hook -WorkshopPathOverride (Join-Path $Fixture 'bestaat-niet')
+    Assert-Equal 0 $LASTEXITCODE 'hook zonder workshop: exit-code 0'
+    Assert-Match 'overgeslagen' ($out -join "`n") 'hook zonder workshop: overgeslagen-melding'
+
+    # 9b. Met de echte workshop (registerchecks) -> exit 0 en een sessiecheck-regel.
+    $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Hook -WorkshopPathOverride $RepoRoot -SkipDrift
+    Assert-Equal 0 $LASTEXITCODE 'hook met workshop: exit-code 0'
+    Assert-Match 'connectors-sessiecheck' ($out -join "`n") 'hook met workshop: sessiecheck-uitvoer'
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
 }
