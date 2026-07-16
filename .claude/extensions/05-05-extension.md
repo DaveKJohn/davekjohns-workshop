@@ -142,8 +142,8 @@ Het folden van de changelog-entry op `main` (`fold-changelog-entry.ps1`) is daar
 PowerShell 5.1 verminkt dubbele aanhalingstekens in argumenten voor native commando's (`git`, `gh`)
 — óók binnen een here-string: een `"` in bv. een commit-message breekt de argument-grenzen, waardoor
 `git commit -m` de rest van de message als pathspec probeert te lezen en de commit afketst (les van
-16 juli 2026). Werkwijze: hou commit-messages en andere inline argumenten vrij van `"` (parafraseer,
-of gebruik enkele aanhalingstekens), en geef tekst die ze écht nodig heeft door via een bestand —
+16 juli 2026). Werkwijze: houd commit-messages en andere inline argumenten vrij van `"` (parafraseer,
+of gebruik enkele aanhalingstekens), en geef tekst die ze écht nodig hebben door via een bestand —
 `git commit -F <bestand>`, `gh … --body-file` — precies zoals `open-pr.ps1` de PR-body al via een
 tijdelijk bestand aanlevert.
 
