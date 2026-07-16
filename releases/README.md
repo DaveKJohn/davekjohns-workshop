@@ -11,6 +11,7 @@ gesneden via [`scripts/release/cut-release.ps1`](../scripts/release/cut-release.
 
 | Versie | Datum | Type | Titel |
 |---|---|---|---|
+| [1.4.1](development/1.4/1.4.1.md) | 2026-07-16 | Patch | Versie-sortering-fix en scaffold-nacorrecties |
 | [1.4.0](development/1.4/1.4.0.md) | 2026-07-16 | Minor | Lens-scaffolds bij adoptie en poort-nacorrecties |
 | [1.3.0](development/1.3/1.3.0.md) | 2026-07-16 | Minor | Inbound-route en register-sync |
 | [1.2.0](development/1.2/1.2.0.md) | 2026-07-16 | Minor | Connectors-register en sessie-check |
