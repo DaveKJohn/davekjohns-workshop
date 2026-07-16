@@ -3,6 +3,15 @@
 > Onderzoek van Rebecca 🔬 #07, 16 juli 2026, in opdracht van Dave: wat is GitHub Copilot anno nu,
 > en hoe is het inzetbaar op deze repo? De concrete vervolgstappen staan in het
 > [werkplan van 16 juli](../plugin-sharing/vervolgstappen.md#werkplan-16-juli-2026) (stappen 8–10).
+>
+> **Uitkomst (16 juli 2026): geparkeerd.** De door Dave goedgekeurde proef met de coding agent
+> (de "merget"-fix als testcase, issue #42) strandde op de licentie-check: beide accounts
+> (`DaveKJohn` en `davekokbwj`) hebben **Copilot Free**, en de coding agent + automatische code
+> review vereisen een betaald plan. Daarmee zijn ook de open punten (b) en (c) hieronder
+> beantwoord: het toewijzende account heeft inderdaad zelf een plan nodig (de CLI-toewijzing als
+> `davekokbwj` faalde met *"Copilot agent is not enabled in this repository"* en de Copilot-bot
+> ontbrak in de assignable actors), en Dave heeft geen betaald plan — en besloot niet te upgraden.
+> Dit dossier blijft liggen tot dat besluit ooit wijzigt.
 
 ## Het productpalet (juli 2026)
 

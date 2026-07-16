@@ -70,22 +70,22 @@ bijwerken, dan de opruim- en fix-klusjes, en afsluiten met een hercheck.
    `claude plugin list --json` — alles hoort dan op v1.1.1 te staan zonder drift.
 
 Toegevoegd 16 juli, na het Copilot-onderzoek van Rebecca #07 (volledige bevindingen + bronnen in
-[`research/copilot/bevindingen.md`](../copilot/bevindingen.md)):
+[`research/copilot/bevindingen.md`](../copilot/bevindingen.md)) — en **diezelfde dag geparkeerd**:
+de proef met de coding agent (stap 10, door Dave goedgekeurd met de "merget"-fix als testcase,
+issue #42) strandde op de licentie-check — beide accounts (`DaveKJohn` én `davekokbwj`) blijken
+**Copilot Free** te hebben, en de coding agent en automatische code review vereisen een betaald
+plan. Dave besloot niet te upgraden; Copilot blijft voorlopig liggen. De uitkomst per stap:
 
-8. **`.github/copilot-instructions.md` opstellen** — korte, repo-neutrale spiegeling van de
-   kernregels uit `CLAUDE.md` (branch + PR alléén op Dave's woord, lint-poort vóór elke PR, publieke
-   repo → geen secrets), zodat elke Copilot-functie die ooit aangaat dezelfde grondwet leest. Laag
-   risico; werk voor Tessa. Kanttekening: de coding agent leest `CLAUDE.md` zelf óók al als
-   instructiebron.
-9. **Proef Copilot code review overwegen** — niet meteen structureel aanzetten, maar éénmalig op een
-   kleine, al geplande PR (bv. de "merget"-fix, stap 6) via de ruleset-optie "Automatically request
-   Copilot code review" toetsen of het meerwaarde biedt naast Victor/Edith/Sean en wat het aan
-   quotum/credits kost. Vereist een betaald Copilot-plan; Actions-minuten zijn op deze publieke repo
-   gratis. Besluit ná de proef.
-10. **Coding agent — beslissing van Dave.** De agent opent per ontwerp zélf meteen een draft-PR
-    zodra een issue wordt toegewezen, wat botst met de harde PR-regel. Vraag aan Dave: geldt "issue
-    aan Copilot toewijzen" als zíjn expliciete PR-akkoord voor die ene afgebakende taak, of blijft de
-    coding agent hier voorlopig uit? Tot dat besluit wordt er geen issue aan Copilot toegewezen.
+8. ⏸️ **`.github/copilot-instructions.md` opstellen** — geparkeerd samen met de rest: zonder
+   Copilot-gebruik is er niets dat het bestand leest. Wordt Copilot ooit alsnog geactiveerd, dan is
+   dit de eerste stap (laag risico; werk voor Tessa; de coding agent leest `CLAUDE.md` zelf óók al
+   als instructiebron).
+9. ⏸️ **Proef Copilot code review** — geparkeerd: vereist een betaald plan (Actions-minuten zouden
+   op deze publieke repo wél gratis zijn). Pas relevant ná een eventuele upgrade.
+10. ⏸️ **Coding agent** — besloten én geparkeerd (16 juli 2026): Dave keurde de proef goed
+    ("issue toewijzen aan Copilot" geldt als zijn PR-akkoord voor die ene taak) en issue #42 stond
+    klaar, maar de toewijzing faalt zonder betaald plan op het toewijzende account. Dave upgradet
+    niet; de "merget"-fix (stap 6) loopt gewoon via de eigen specialist-keten.
 
 ## Geleerde lessen
 
