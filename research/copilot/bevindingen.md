@@ -88,3 +88,28 @@ GitHub Copilot is een familie van producten, niet meer alleen code completion:
 4. **Copilot-PR's lopen buiten het specialists-systeem** — wordt de coding agent ooit ingezet, dan
    moet de specialist-review (Victor/Edith/Sean) als expliciete extra stap op de Copilot-PR worden
    toegevoegd, niet stilzwijgend overgeslagen.
+
+## Slotwoord — waarom Copilot deze repo weinig toevoegt
+
+De kern: **de Claude Specialists zijn een werkwijze, Copilot is een platform-actor** — en voor deze
+repo weegt de werkwijze zwaarder dan de actor.
+
+Het specialisten-systeem is een governance- en vaklaag bovenop Claude Code: manuals, een grondwet,
+branch-discipline en een vaste reviewketen, synchroon in het gesprek met Dave, die elke stap ziet en
+wiens woord de poort is voor elke PR. Het kent deze repo door en door, omdat hij er zelf voor
+ontworpen is. Copilot draait daarentegen op GitHub zelf en reageert op platform-events; de huisregels
+kent het alleen oppervlakkig, via instructiebestanden — als richtlijn, niet als geleefde werkwijze.
+
+Wat Copilot concreet zou toevoegen is daarmee beperkt tot drie dingen: **asynchrone uitvoercapaciteit**
+(een issue toewijzen en weglopen — het enige dat de specialisten écht niet kunnen, want die vereisen
+een open sessie), een **leveranciers-onafhankelijke second opinion** op PR's (Victor, Edith en Sean
+zijn allemaal Claude; een blik uit een andere stal kan blinde vlekken vangen), en
+**platform-integratie** (reviews/agents die automatisch afgaan op repo-events). Wat het níét
+toevoegt: beter vakwerk of betere governance — daarin is het eigen systeem juist sterker, en de
+coding agent botste per ontwerp zelfs met de PR-regel. Daar komt bij dat de zinvolle Copilot-functies
+een betaald plan vereisen, terwijl het specialisten-systeem binnen het bestaande Claude-abonnement
+valt.
+
+Conclusie (16 juli 2026): met het besluit om niet te upgraden mist deze repo vooral **gemak, geen
+kwaliteit**. Het dossier blijft liggen; mocht er ooit behoefte ontstaan aan onbeheerd draaiende
+klusjes of een externe reviewstem, dan zijn de inzet-opties hierboven het startpunt.
