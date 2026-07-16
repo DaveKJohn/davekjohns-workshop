@@ -97,7 +97,11 @@ mechanisme is Rendall's.
 2. **Merge naar `main`** ([Derek #05](05-05-extension.md#mergen-naar-main)) → het entry-bestand
    reist mee. Rendall draait `fold-changelog-entry.ps1 [-Branch <naam>]` op `main`, commit direct
    (`chore: fold changelog entry <branch>`), pusht. Laat je `-Branch` weg, dan worden alle aanwezige
-   entry-bestanden in één keer gevouwen.
+   entry-bestanden in één keer gevouwen. **Check vóór de fold dat je écht op `main` staat**
+   (`git branch --show-current`): `gh pr merge --delete-branch` verwijdert de remote branch, maar
+   wisselt de lokale checkout níét naar `main` — les van 16 juli 2026, toen de fold daardoor op de
+   al gemergde lokale branch draaide en de wijzigingen handmatig naar `main` moesten worden
+   overgezet.
 3. **Meer branches mergen** → elk brengt zijn entry-bestand; elk wordt gevouwen. `## Pull Requests`
    stapelt op.
 
