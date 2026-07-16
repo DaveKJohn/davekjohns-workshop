@@ -19,6 +19,16 @@ repo-[`CLAUDE.md`](../../../CLAUDE.md)). Ontstaat er tóch een verbetering in ee
 is dat een **inbound-signaal**: de wijziging wordt eerst hierheen teruggelegd en daarna opnieuw
 uitgesynct.
 
+**De vaste inbound-route** (afspraak Dave, 16 juli 2026): ontdekt een sessie in een consumerende
+repo kern-verbeterpunten (iets voor de gedeelde agent-defs, manuals, persona-bodies of skills —
+géén lens-werk), dan bouwt die sessie niet zelf, maar opent een **issue op deze repo** met het
+label **`inbound`** — sjabloon:
+[`inbound-verbeterpunt`](../../../.github/ISSUE_TEMPLATE/inbound-verbeterpunt.md). Zo gaat niets
+verloren en heeft elke workshop-sessie een zichtbare werkvoorraad; de workshop verwerkt het via
+de normale keten (branch → reviews → PR op Dave's woord → release-bump), waarna de consument het
+via de plugin-update terugkrijgt. De enige legitieme overbrugging aan consument-zijde is een
+bewust tijdelijke notitie in de eigen repo-lens, die na de sync weer verdwijnt.
+
 Belangrijke nuance — **wat synct en wat niet**:
 
 - **Wél gesynchroniseerd (bron hier):** de draagbare persona-bodies (alles boven de

@@ -212,10 +212,13 @@ try {
     Assert-Equal 0 $r.Code 'hook zonder workshop: exit-code 0'
     Assert-Match 'overgeslagen' $r.Out 'hook zonder workshop: overgeslagen-melding'
 
-    # 9b. Met de echte workshop (registerchecks, deterministisch) -> in-sync-tak.
+    # 9b. Met de echte workshop: integratie-smoke. Welke tak (in-sync of signalen) hangt af van
+    #     de actuele register-staat van de repo (bv. manifesten die na een release-bump nog niet
+    #     bijgewerkt zijn) -- die is hier bewust niet ge-assert; de takken zelf worden
+    #     deterministisch gedekt door de stub-tests 9c en 9d (les van CI-run PR #54).
     $r = Invoke-Ps $Hook @('-WorkshopPathOverride', $RepoRoot, '-SkipDrift', '-SkipVersions')
     Assert-Equal 0 $r.Code 'hook met workshop: exit-code 0'
-    Assert-Match 'alle connectors in sync' $r.Out 'hook met workshop: in-sync-tak'
+    Assert-Match 'connectors-sessiecheck:' $r.Out 'hook met workshop: sessiecheck-uitvoer'
 
     # 9c. Stub-workshop met schone uitvoer incl. boilerplate-drifted-regels (vondst Victor):
     #     de kale samenvattingsregels mogen NIET als signaal tellen.
