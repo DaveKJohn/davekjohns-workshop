@@ -115,8 +115,8 @@ tussentijdse vraag door met [Mergen naar main](#mergen-naar-main) en het
 juiste "Type wijziging"-vakje aan (uit het branch-prefix), vult "Wat doet deze wijziging?" met de
 beschrijving uit het changelog entry-bestand (`<branch>.md`), en vinkt de twee altijd-ware
 checklist-items aan ("Changelog entry-bestand aangemaakt" + "Aangevraagd door Dave"). Geef `-Body`
-alleen mee als je de auto-fill wilt overrulen; doe dat dan via `--body-file`, nooit inline
-(PowerShell 5.1 verminkt embedded quotes).
+alleen mee als je de auto-fill wilt overrulen; doe dat dan via `--body-file`, nooit inline — zie
+[de quote-les](#de-quote-les-powershell-51-en-dubbele-aanhalingstekens).
 
 ### Mergen naar main
 
@@ -136,6 +136,16 @@ Synchroniseer daarna: `git checkout main && git pull --ff-only`.
 Het folden van de changelog-entry op `main` (`fold-changelog-entry.ps1`) is daarna
 [Rendall #06](05-06-extension.md#changelog)'s werk. `main` houdt zo een groeiende
 `## Pull Requests`-sectie bij van alles wat gemergd is.
+
+### De quote-les: PowerShell 5.1 en dubbele aanhalingstekens
+
+PowerShell 5.1 verminkt dubbele aanhalingstekens in argumenten voor native commando's (`git`, `gh`)
+— óók binnen een here-string: een `"` in bv. een commit-message breekt de argument-grenzen, waardoor
+`git commit -m` de rest van de message als pathspec probeert te lezen en de commit afketst (les van
+16 juli 2026). Werkwijze: hou commit-messages en andere inline argumenten vrij van `"` (parafraseer,
+of gebruik enkele aanhalingstekens), en geef tekst die ze écht nodig heeft door via een bestand —
+`git commit -F <bestand>`, `gh … --body-file` — precies zoals `open-pr.ps1` de PR-body al via een
+tijdelijk bestand aanlevert.
 
 ### Branch- & repo-hygiëne
 
