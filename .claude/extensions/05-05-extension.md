@@ -156,6 +156,12 @@ tijdelijk bestand aanlevert.
 - **Nooit "final" in een branchnaam.** Gebruik `-v2`, `-v3` enz. voor een tweede poging.
 - Na een merge is de branch al opgeruimd via `gh pr merge --delete-branch`; prune zo nodig de lokale
   kopie met `git branch -d <branch>`.
+- **Parallel werken vanaf meerdere machines** (les van 16 juli 2026, toen PR #46 en #47 elkaar
+  kruisten): verschillende branches parallel mergen is veilig — de lint-poort en CI beschermen
+  `main` onafhankelijk van welke machine mergt. Twee regels houden het zo: **nooit dezelfde branch
+  op twee machines** (push/pull-races), en **verse `git pull` vóór elke nieuwe branch en vóór elke
+  fold**. Het fold-botspunt zelf is [Rendall #06](05-06-extension.md#levenscyclus)'s deel van deze
+  les.
 
 ### Tooling & account
 

@@ -102,7 +102,12 @@ mechanisme is Rendall's.
    branch op te ruimen, maar bleek in de praktijk de lokale checkout gewoon op de gemergde branch
    te kunnen laten staan — les van 16 juli 2026, toen de fold daardoor op die al gemergde lokale
    branch draaide en de wijzigingen handmatig naar `main` moesten worden overgezet. Vertrouw dus
-   niet op de flag, maar op de check.
+   niet op de flag, maar op de check. **Bij parallel werken vanaf meerdere machines** (les van
+   16 juli 2026, PR #46/#47): eerst `git pull`, en fold **mét `-Branch <naam>`** — zonder die
+   parameter vouwt het script álle aanwezige entry-bestanden, dus ook dat van een merge van de
+   andere machine die daar zelf nog gevouwen wordt. Wordt je fold-push geweigerd (achterlopen op
+   origin), dan is dat onschuldig: `git pull` en opnieuw. Het branch-deel van deze les staat bij
+   [Derek #05](05-05-extension.md#branch---repo-hygiëne).
 3. **Meer branches mergen** → elk brengt zijn entry-bestand; elk wordt gevouwen. `## Pull Requests`
    stapelt op.
 
