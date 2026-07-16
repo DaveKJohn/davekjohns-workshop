@@ -15,7 +15,7 @@
       1. Kopieert <plugin>/personas/<g>-<id>-persona.md naar
          <ConsumerRoot>/.claude/extensions/<g>-<id>-extension.md -- alleen als die nog niet bestaat.
       1b. Zet voor elke subagent van de INGESCHAKELDE plugin(s) (enabledPlugins in de settings van
-          de consument; zonder settings alleen de eigen plugin) een leeg lens-sjabloon neer in
+          de consument; zonder settings alleen de eigen plugin) een lege lens-scaffold neer in
           .claude/extensions/<g>-<id>-extension.md, duidelijk gemarkeerd als VUL-IN -- zo is
           zichtbaar waar repo-specifieke taken per specialist worden aangevuld.
       2. Zorgt dat <ConsumerRoot>/CLAUDE.md onderaan de @-import van de orchestrator draagt
@@ -80,7 +80,7 @@ Get-ChildItem -Path $personaDir -Filter '*-persona.md' -File | Sort-Object Name 
 
 # --- 1b. Lege lens-scaffolds voor de subagent-specialisten (nooit overschrijven) --------------------
 # De agent-defs komen uit de plugin(s); de repo-lens per specialist woont in de consument. Voor elke
-# agent van de ingeschakelde plugin(s) zetten we een leeg, duidelijk gemarkeerd sjabloon neer.
+# agent van de ingeschakelde plugin(s) zetten we een lege, duidelijk gemarkeerde scaffold neer.
 
 # Eigen plugin-naam: in de bron-layout is de mapnaam de plugin-naam; in de plugin-cache is dat de
 # map boven de versie-map (...\<plugin>\<x.y.z>\).
@@ -91,6 +91,9 @@ function Get-OwnPluginName([string]$PluginRoot) {
 }
 
 # agents/-map van een plugin, in beide layouts (bron: sibling-map; cache: <naam>\<versie>\agents).
+# Let op de dubbele rol van $parent (vondst Victor): in de bron-layout is dat de familie-map, in de
+# cache-layout de plugin-naam-map (boven de versie-mappen) -- $market komt in beide gevallen op de
+# juiste bovenliggende root uit.
 function Get-PluginAgentsDir([string]$PluginName, [string]$OwnPluginRoot) {
     $parent = Split-Path $OwnPluginRoot -Parent
     $src = Join-Path $parent (Join-Path $PluginName 'agents')
@@ -98,7 +101,11 @@ function Get-PluginAgentsDir([string]$PluginName, [string]$OwnPluginRoot) {
     $market = Split-Path $parent -Parent
     $nameDir = Join-Path $market $PluginName
     if (Test-Path -LiteralPath $nameDir -PathType Container) {
-        $versions = Get-ChildItem -LiteralPath $nameDir -Directory | Sort-Object Name -Descending
+        # Semantisch sorteren via [version] (vondst Victor): een kale string-sort zet 1.9.0 boven
+        # 1.10.0 zodra een versie-segment twee cijfers krijgt.
+        $versions = Get-ChildItem -LiteralPath $nameDir -Directory |
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+$' } |
+            Sort-Object { [version]$_.Name } -Descending
         foreach ($v in $versions) {
             $a = Join-Path $v.FullName 'agents'
             if (Test-Path -LiteralPath $a -PathType Container) { return (Resolve-Path -LiteralPath $a).Path }
@@ -130,7 +137,10 @@ if (Test-Path -LiteralPath $consumerSettings -PathType Leaf) {
 
 $scaffolded = 0; $lensKept = 0
 foreach ($pluginName in ($pluginNames | Sort-Object -Unique)) {
-    if ($pluginName -notmatch '^[a-z0-9][a-z0-9-]*$') { continue }
+    if ($pluginName -notmatch '^[a-z0-9][a-z0-9-]*$') {
+        Write-Host "  [let op] plugin-naam '$pluginName' is geen geldige slug -- overgeslagen." -ForegroundColor Yellow
+        continue
+    }
     $agentsDir = Get-PluginAgentsDir -PluginName $pluginName -OwnPluginRoot $ownPluginRoot
     if ($null -eq $agentsDir) {
         Write-Host "  [let op] agents-map van plugin '$pluginName' niet gevonden -- overgeslagen." -ForegroundColor Yellow
@@ -145,6 +155,7 @@ foreach ($pluginName in ($pluginNames | Sort-Object -Unique)) {
         foreach ($line in (Get-Content -LiteralPath $_.FullName -TotalCount 10)) {
             if ($line -match '^name:\s*(\S+)') { $agentName = $Matches[1]; break }
         }
+        $midDot = [char]0x00B7
         # Defense-in-depth (advies Sean): de naam belandt in het geschreven sjabloon -- beperk hem
         # tot een veilige tekenset, ook al is de bron een plugin uit dezelfde vertrouwensgrens.
         $agentName = $agentName -replace '[^A-Za-z0-9_-]', ''
@@ -155,7 +166,7 @@ id: $id
 group: $group
 ---
 
-# $displayName (VUL-IN) -- repo-lens
+# $displayName $midDot repo-lens (VUL-IN)
 
 > Repo-lens bij het draagbare vakboek van $displayName in de ``$pluginName``-plugin. Dit bestand is
 > door ``specialists-init`` als leeg sjabloon neergezet; de agent-def leest het automatisch mee.
