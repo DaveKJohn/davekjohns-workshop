@@ -108,8 +108,9 @@ bodies, één echte achterstand, en zes vals-positieven door één structureel p
   wijziging aan het draagbare deel gaat via de inbound-route hierboven — nooit als blijvende
   lokale afwijking. De check hoeft bewuste drift dus niet te faciliteren of te markeren.
 - **Technisch noodzakelijke padverschillen zijn geen drift.** De index-link in de blockquote onder
-  de titel wijst relatief naar de repo-`CLAUDE.md` en is dieper op het plugin-pad
-  (`.claude/plugins/claude-specialists/<plugin>/`) dan op het legacy-pad (`.claude/extensions/`).
+  de titel wijst relatief naar de repo-`CLAUDE.md` en ligt op het plugin-pad
+  (`.claude/plugins/claude-specialists/<plugin>/`) dieper dan op het legacy-pad
+  (`.claude/extensions/`).
   `check-consumer-drift.ps1` normaliseert dat link-doel vóór de vergelijking; een correct
   gesyncte consument leest dus gewoon `IDENTICAL`, op welk pad hij ook zit.
 - **Een `DRIFTED`-persona betekent daarmee altijd een werkpunt**: óf achterstand (de bron is
