@@ -2,12 +2,12 @@
   "repo": "DaveKJohn/life-hub",
   "visibility": "private",
   "localCheckout": "../life-hub",
-  "lastChecked": "2026-07-16",
-  "status": "attentie",
+  "lastChecked": "2026-07-17",
+  "status": "in-sync",
   "plugins": [
     {
       "id": "specialists@davekjohns-workshop",
-      "syncedVersion": "1.4.1",
+      "syncedVersion": "1.5.0",
       "extensions": [
         "01-01", "02-09", "03-02", "03-07", "04-11", "04-12", "04-13", "04-18",
         "05-05", "05-06", "05-15", "06-16", "06-17", "06-19", "06-23"
@@ -15,11 +15,11 @@
     },
     {
       "id": "specialists-lifehub@davekjohns-workshop",
-      "syncedVersion": "1.4.1",
+      "syncedVersion": "1.5.0",
       "extensions": [
         "02-10", "03-08", "03-14", "04-03", "04-04"
       ]
     }
   ],
-  "notes": "Persona-bodies 01-01, 05-05 en 03-02 verversen vanaf de bron (stap-3-besluit, 16 juli 2026); uitvoering in een life-hub-sessie."
+  "notes": "Gesynct op v1.5.0 (17 juli 2026). life-hub hanteert het lens-only-model voor de vier persona's (01-01, 03-02, 05-05, 05-06): geen body-kopie in de consument. De vier persona-DRIFTED-meldingen van de drift-check zijn daardoor bekende vals-positieven tot inbound-issue #69 is verwerkt."
 }
