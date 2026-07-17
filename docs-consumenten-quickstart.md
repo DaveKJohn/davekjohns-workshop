@@ -1,0 +1,3 @@
+### Dossier: consumenten-quickstart voor collega-repos · Docs · 2026-07-17
+
+Werkdossier toegevoegd (`dossiers/consumenten-quickstart.md`) voor één deelbare "zo sluit je jouw repo aan"-pagina gericht op collega's die het systeem niet gebouwd hebben: wat je krijgt, aansluiten in drie stappen (settings.json + `specialists-init`), hoe je bijblijft via releases, en de inbound-route voor terugmeldingen. De quickstart zelf landt ook op deze branch.
