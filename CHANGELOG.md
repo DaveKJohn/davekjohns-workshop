@@ -9,6 +9,14 @@ folden) staat in [`README.md`](README.md#bijdragen--changelog--pr-workflow).
 Alles wat sinds de laatste release naar `main` is gemergd — nieuwste bovenaan, één blok per pull
 request.
 
+### #67 · Dossier: consumenten-quickstart voor collega-repos · Docs · 2026-07-17
+
+Nieuwe deelbare quickstart-pagina (`claude-code-plugins/claude-specialists/QUICKSTART.md`) voor collega's die hun eigen repo willen aansluiten zonder het systeem gebouwd te hebben: wat je krijgt, aansluiten in drie stappen (settings.json → `specialists-init` → herstart + check), hoe je bijblijft via releases en de per-plugin CHANGELOGs, en de inbound-route voor terugmeldingen. Root-README en familie-README verwijzen ernaar; het werkdossier `dossiers/consumenten-quickstart.md` documenteert de afwegingen.
+
+[PR #67](https://github.com/DaveKJohn/davekjohns-workshop/pull/67)
+
+---
+
 ### #66 · Chris sluit af zonder vaste slotformule · Docs · 2026-07-17
 
 Op verzoek van Dave: de vaste afsluitvraag ("hoe kan ik verder van dienst zijn?") is uit stap 6 van Chris' ritueel gehaald — die werd eentonig. Chris vat nog steeds samen en mag een concrete volgende stap noemen, maar sluit af zonder standaard slotformule. Aangepast in beide bronnen: de repo-lens (`.claude/extensions/01-01-extension.md`) en het canonieke persona-sjabloon in de plugin (`personas/01-01-persona.md`).
