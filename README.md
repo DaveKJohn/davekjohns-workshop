@@ -171,7 +171,9 @@ changelog-entry — dezelfde workflow als de consumerende repo's. De stappen:
 6. **Folden:** op `main`, direct na de merge,
    [`scripts/release/fold-changelog-entry.ps1`](scripts/release/fold-changelog-entry.ps1)`-Branch <naam>`
    vouwt het entry-bestand in de `## Pull Requests`-sectie van [`CHANGELOG.md`](CHANGELOG.md) (met
-   `#NN` + PR-link) en verwijdert het entry-bestand; commit dat rechtstreeks op `main`.
+   `#NN` + PR-link), leidt daarbij een `Plugins:`-regel af uit de PR-bestanden (voor de per-plugin
+   CHANGELOGs — zie [Een release snijden](#een-release-snijden)) en verwijdert het entry-bestand;
+   commit dat rechtstreeks op `main`.
 
 ### Een release snijden
 
@@ -190,9 +192,10 @@ In één beweging, op een schone `main`:
 2. genereert de volledige release-notes in `releases/development/<X.Y>/<X.Y.Z>.md` (uit de gevouwen
    `## Pull Requests`-entries, per branch-type), voegt een rij toe aan `releases/README.md`, en zet in
    `CHANGELOG.md` een verwijzing onder `## Releases` (de Pull-Requests-sectie wordt geleegd tot zijn intro);
-3. schrijft per plugin de entries die díe plugin raakten (de `Plugins:`-regel die de fold uit de
-   PR-bestanden afleidt) bij in de **per-plugin `CHANGELOG.md`** — de consument-gerichte
-   geschiedenis die met de plugin-cache meereist;
+3. schrijft per plugin de entries die díe plugin raakten (geselecteerd via de `Plugins:`-regel die
+   de fold uit de PR-bestanden afleidt; de regel zelf reist als interne administratie niet mee) bij
+   in de **per-plugin `CHANGELOG.md`** — de consument-gerichte geschiedenis die met de
+   plugin-cache meereist;
 4. commit dat rechtstreeks op `main` (`release: vX.Y.Z`) en zet een annotated tag `vX.Y.Z`;
 5. pusht `main` + de tag (tenzij `-NoPush` voor inspectie vooraf).
 

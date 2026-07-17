@@ -188,7 +188,9 @@ foreach ($m in $manifests) {
     $pluginName = Split-Path $pluginDir -Leaf
     $pluginEntries = @($entries | Where-Object { @(Get-EntryPlugins -EntryText $_) -contains $pluginName })
     if ($pluginEntries.Count -eq 0) { continue }
-    $pluginEntries = @($pluginEntries | ForEach-Object { Convert-EntryLinksForPluginChangelog -EntryText $_ })
+    # De Plugins:-regel is interne administratie (stuurde de selectie hierboven) -- strip hem
+    # voordat de entry in de consument-gerichte CHANGELOG belandt.
+    $pluginEntries = @($pluginEntries | ForEach-Object { Convert-EntryLinksForPluginChangelog -EntryText (Remove-EntryPluginsLine -EntryText $_) })
     $section = Build-PluginChangelogSection -Entries $pluginEntries -Version $new -Date $today
     $plChangelogPath = Join-Path $pluginDir 'CHANGELOG.md'
     $existing = if (Test-Path -LiteralPath $plChangelogPath) { Get-Content -Path $plChangelogPath -Raw -Encoding UTF8 } else { '' }
