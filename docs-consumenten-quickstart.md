@@ -1,0 +1,3 @@
+### Dossier: consumenten-quickstart voor collega-repos · Docs · 2026-07-17
+
+Nieuwe deelbare quickstart-pagina (`claude-code-plugins/claude-specialists/QUICKSTART.md`) voor collega's die hun eigen repo willen aansluiten zonder het systeem gebouwd te hebben: wat je krijgt, aansluiten in drie stappen (settings.json → `specialists-init` → herstart + check), hoe je bijblijft via releases en de per-plugin CHANGELOGs, en de inbound-route voor terugmeldingen. Root-README en familie-README verwijzen ernaar; het werkdossier `dossiers/consumenten-quickstart.md` documenteert de afwegingen.
