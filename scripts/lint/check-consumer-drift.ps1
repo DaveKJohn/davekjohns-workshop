@@ -27,7 +27,9 @@
     Naast de agent-def-kopieen vergelijkt dit script ook de PERSONA'S (de orchestrator +
     hoofdloop-specialisten zoals Chris/Derek/Rendall). Die hebben bewust geen agent-def; hun
     draagbare bron woont in <plugin>/personas/<g>-<id>-persona.md en wordt bij het bootstrappen naar
-    de repo-laag van een consument gekopieerd (.claude/extensions/<g>-<id>-extension.md). Voor elke
+    de repo-laag van een consument gekopieerd: .claude/plugins/claude-specialists/<plugin>/
+    <g>-<id>-extension.md (sinds de life-hub-pariteit) of het legacy-pad
+    .claude/extensions/<g>-<id>-extension.md. Voor elke
     plugin-persona vergelijkt dit script de DRAAGBARE BODY (alles boven de '## Eigen aan deze
     repo'-marker; de repo-lens eronder is per repo verschillend en wordt niet vergeleken) met de
     body van de consument-kopie. Deze persona-bevindingen zijn INFORMATIEF: ze tellen niet mee in de
@@ -196,8 +198,17 @@ if ($personaDirs.Count -gt 0) {
         if ($_.BaseName -notmatch '^(\d{2})-(\d{2})-persona$') { return }
         $g = $Matches[1]; $id = $Matches[2]
         $srcBody = Get-PortableBody $_.FullName
-        $consumerExt = Join-Path $ConsumerRoot ".claude\extensions\$g-$id-extension.md"
-        if (-not (Test-Path -LiteralPath $consumerExt -PathType Leaf)) {
+        # De consument-kopie kan op het plugin-pad wonen (.claude/plugins/claude-specialists/
+        # <plugin>/, sinds de life-hub-pariteit) of op het legacy-pad (.claude/extensions/).
+        $pluginName = Split-Path (Split-Path $_.DirectoryName -Parent) -Leaf
+        $consumerExt = $null
+        foreach ($candidate in @(
+            (Join-Path $ConsumerRoot ".claude\plugins\claude-specialists\$pluginName\$g-$id-extension.md")
+            (Join-Path $ConsumerRoot ".claude\extensions\$g-$id-extension.md")
+        )) {
+            if (Test-Path -LiteralPath $candidate -PathType Leaf) { $consumerExt = $candidate; break }
+        }
+        if ($null -eq $consumerExt) {
             $personaResults.Add([pscustomobject]@{ Name = $_.Name; Status = 'MISSING'; Path = $null })
         } else {
             $localBody = Get-PortableBody $consumerExt
@@ -209,7 +220,7 @@ if ($personaDirs.Count -gt 0) {
 
 if ($personaResults.Count -gt 0) {
     Write-Host ""
-    Write-Host "-- Persona's (draagbare body vs. .claude/extensions/<g>-<id>-extension.md) --" -ForegroundColor Cyan
+    Write-Host "-- Persona's (draagbare body vs. de <g>-<id>-extension.md-kopie in de consument) --" -ForegroundColor Cyan
     $pDrift = 0
     foreach ($r in $personaResults) {
         switch ($r.Status) {

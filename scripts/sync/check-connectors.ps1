@@ -170,7 +170,6 @@ foreach ($mf in $manifestFiles) {
     } else {
         Write-Fout ".claude/settings.json niet gevonden in '$checkout'"
     }
-    $extDir = Join-Path $checkout '.claude\extensions'
 
     foreach ($p in @($m.plugins)) {
         Write-Host "  -- plugin: $($p.id)" -ForegroundColor Cyan
@@ -193,21 +192,34 @@ foreach ($mf in $manifestFiles) {
         }
 
         # 3. Geregistreerde extensions aanwezig? + niet-geregistreerde extensions van deze plugin.
+        # Lenzen kunnen op twee plekken wonen: het plugin-pad (.claude/plugins/claude-specialists/
+        # <plugin>/, sinds de life-hub-pariteit) of het legacy-pad (.claude/extensions/). Beide
+        # tellen; het plugin-pad is afgeleid van het al gevalideerde plugin-id (zie Get-PluginDir).
+        $extDirs = @(@(
+            (Join-Path $checkout (Join-Path '.claude\plugins\claude-specialists' $p.id.Split('@')[0]))
+            (Join-Path $checkout '.claude\extensions')
+        ) | Where-Object { Test-Path -LiteralPath $_ })
+
         $missing = @()
         foreach ($id in $p.extensions) {
-            if (-not (Test-Path -LiteralPath (Join-Path $extDir "$id-extension.md"))) { $missing += $id }
+            $hit = $false
+            foreach ($dir in $extDirs) {
+                if (Test-Path -LiteralPath (Join-Path $dir "$id-extension.md")) { $hit = $true; break }
+            }
+            if (-not $hit) { $missing += $id }
         }
         if ($missing.Count -gt 0) { Write-Fout ("geregistreerde extension(s) ontbreken: " + ($missing -join ', ')) }
         else                      { Write-Ok  "alle $(@($p.extensions).Count) geregistreerde extensions aanwezig" }
 
         $ownedIds = Get-PluginIds $pluginDir
-        if (Test-Path -LiteralPath $extDir) {
-            $present = Get-ChildItem -LiteralPath $extDir -Filter '*-extension.md' -File |
+        $present = @()
+        foreach ($dir in $extDirs) {
+            $present += Get-ChildItem -LiteralPath $dir -Filter '*-extension.md' -File |
                 ForEach-Object { $_.BaseName -replace '-extension$', '' }
-            $unregistered = $present | Where-Object { ($ownedIds -contains $_) -and ($p.extensions -notcontains $_) }
-            foreach ($id in @($unregistered)) {
-                Write-Info "extension '$id' bestaat in de consument maar staat niet in het register -- register bijwerken of wijziging beoordelen."
-            }
+        }
+        $unregistered = @($present | Sort-Object -Unique | Where-Object { ($ownedIds -contains $_) -and ($p.extensions -notcontains $_) })
+        foreach ($id in $unregistered) {
+            Write-Info "extension '$id' bestaat in de consument maar staat niet in het register -- register bijwerken of wijziging beoordelen."
         }
 
         # 4. Manifest-versie vs. bron.

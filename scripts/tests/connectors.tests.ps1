@@ -56,16 +56,23 @@ function Invoke-Ps {
     return [pscustomobject]@{ Code = $LASTEXITCODE; Out = ($out -join "`n") }
 }
 
-# Bouwt een fixture-consument met settings.json + opgegeven extensions.
+# Bouwt een fixture-consument met settings.json + opgegeven extensions. -Layout kiest waar de
+# lenzen wonen: 'legacy' (.claude/extensions/) of 'plugins'
+# (.claude/plugins/claude-specialists/specialists/, sinds de life-hub-pariteit).
 function New-FixtureConsumer {
-    param([string[]]$ExtensionIds, [bool]$PluginEnabled = $true)
+    param([string[]]$ExtensionIds, [bool]$PluginEnabled = $true, [string]$Layout = 'legacy')
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
-    New-Item -ItemType Directory -Path (Join-Path $Fixture '.claude\extensions') -Force | Out-Null
+    $extDir = if ($Layout -eq 'plugins') {
+        Join-Path $Fixture '.claude\plugins\claude-specialists\specialists'
+    } else {
+        Join-Path $Fixture '.claude\extensions'
+    }
+    New-Item -ItemType Directory -Path $extDir -Force | Out-Null
     $enabled = if ($PluginEnabled) { '{ "specialists@davekjohns-workshop": true }' } else { '{ }' }
     $settings = '{ "enabledPlugins": ' + $enabled + ' }'
     [System.IO.File]::WriteAllText((Join-Path $Fixture '.claude\settings.json'), $settings)
     foreach ($id in $ExtensionIds) {
-        $p = Join-Path $Fixture ".claude\extensions\$id-extension.md"
+        $p = Join-Path $extDir "$id-extension.md"
         [System.IO.File]::WriteAllText($p, "---`nid: $($id.Split('-')[1])`ngroup: $($id.Split('-')[0])`n---`nfixture")
     }
 }
@@ -122,6 +129,13 @@ try {
     Assert-Match '\[OK\]\s+plugin staat aan' $r.Out 'happy path: enabled-check OK'
     Assert-Match 'alle 2 geregistreerde extensions aanwezig' $r.Out 'happy path: extensions OK'
 
+    # --- 1b. Nieuwe lay-out: lenzen op het plugin-pad -> zelfde happy path -----------------------
+    New-FixtureConsumer -ExtensionIds @('06-16', '06-17') -Layout 'plugins'
+    $mf = New-FixtureManifest -Extensions @('06-16', '06-17')
+    $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
+    Assert-Equal 0 $r.Code 'plugin-pad: exit-code 0'
+    Assert-Match 'alle 2 geregistreerde extensions aanwezig' $r.Out 'plugin-pad: extensions OK'
+
     # --- 2. Geregistreerde extension ontbreekt -> exit 1 ----------------------------------------
     New-FixtureConsumer -ExtensionIds @('06-16')
     $mf = New-FixtureManifest -Extensions @('06-16', '06-19')
@@ -149,6 +163,13 @@ try {
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
     Assert-Equal 0 $r.Code 'niet-geregistreerd: exit-code 0 (INFO, geen fout)'
     Assert-Match "\[INFO\].*'06-23'" $r.Out 'niet-geregistreerd: INFO noemt het id'
+
+    # --- 5b. Zelfde INFO-signaal vanaf het plugin-pad --------------------------------------------
+    New-FixtureConsumer -ExtensionIds @('06-16', '06-23') -Layout 'plugins'
+    $mf = New-FixtureManifest -Extensions @('06-16')
+    $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
+    Assert-Equal 0 $r.Code 'niet-geregistreerd op plugin-pad: exit-code 0'
+    Assert-Match "\[INFO\].*'06-23'" $r.Out 'niet-geregistreerd op plugin-pad: INFO noemt het id'
 
     # --- 6. Echte manifesten van deze repo: het self-manifest checkt altijd ----------------------
     $selfManifest = Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\connectors\davekjohns-workshop.json'

@@ -1,0 +1,3 @@
+### Connectors-check kent het plugin-pad van repo-lenzen · Fix · 2026-07-17
+
+`check-connectors.ps1` en `check-consumer-drift.ps1` zochten repo-lenzen alleen op het legacy-pad (`.claude/extensions/`), terwijl life-hub en smartwatchbanden hun lenzen inmiddels in `.claude/plugins/claude-specialists/<plugin>/` hebben staan — dat gaf valse "extension(s) ontbreken"-fouten en een persona-drift-check die stil in het luchtledige draaide. Beide scripts kennen nu beide locaties (plugin-pad eerst, legacy als terugval). Daarnaast: `06-23` (Sean) geregistreerd in het smartwatchbanden-manifest, en twee testgevallen toegevoegd voor de nieuwe lay-out (happy path + INFO-signaal vanaf het plugin-pad).
