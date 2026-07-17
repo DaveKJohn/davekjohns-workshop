@@ -40,7 +40,17 @@ pagina na (vooral: klopt elke link, en is hij te volgen zónder voorkennis?).
 
 ## Klaar wanneer
 
-- [ ] De quickstart-pagina bestaat, op één vindbare plek, en is te volgen zonder voorkennis.
-- [ ] Root-README en familie-README verwijzen ernaar (zonder inhoud te dupliceren).
-- [ ] Edith heeft hem nagelezen (links, taal, volgbaarheid).
-- [ ] Dit dossier is opgeruimd.
+- [x] De quickstart-pagina bestaat, op één vindbare plek, en is te volgen zonder voorkennis —
+      geworden: [`QUICKSTART.md`](../claude-code-plugins/claude-specialists/QUICKSTART.md) naast de
+      familie-README (één deelbare URL).
+- [x] Root-README en familie-README verwijzen ernaar (zonder inhoud te dupliceren).
+- [x] Edith heeft hem nagelezen (links, taal, volgbaarheid) — drie punten gevonden en verwerkt
+      (accent-typo, rolomschrijving PR/merge, stappen-telling t.o.v. de root-README); alle links
+      handmatig geverifieerd en kloppend.
+- [ ] Dit dossier is opgeruimd (na de merge).
+
+**Doorgegeven observatie (Edith, voor Sylvester):** de dode-links-scan van
+`check-plugin-integrity.ps1` dekt de familie-README en `QUICKSTART.md` niet — zelfde dekkingsgat
+als eerder genoteerd voor de per-plugin CHANGELOGs in
+[`review-herkansing-61.md`](review-herkansing-61.md) (geparkeerd punt Edith #5); bij het dichten
+graag in één beweging meenemen.
