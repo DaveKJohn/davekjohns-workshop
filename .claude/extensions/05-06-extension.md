@@ -146,10 +146,11 @@ in één beweging:
 2. genereert `releases/development/<X.Y>/<X.Y.Z>.md`, voegt een rij toe aan `releases/README.md`, en zet
    in `CHANGELOG.md` een verwijzing onder `## Releases` (de Pull-Requests-sectie wordt geleegd tot zijn
    intro);
-3. schrijft per plugin de entries met een passende `Plugins:`-regel bij in de **per-plugin
-   `CHANGELOG.md`** (`<plugin>/CHANGELOG.md`) — de consument-gerichte geschiedenis die met de
-   plugin-cache meereist; root-relatieve links worden daarbij herschreven naar absolute
-   GitHub-URLs, zodat ze ook in een consument-cache kloppen;
+3. schrijft per plugin de rakende entries bij in de **per-plugin `CHANGELOG.md`**
+   (`<plugin>/CHANGELOG.md`) — de consument-gerichte geschiedenis die met de plugin-cache
+   meereist. De selectie loopt via de `Plugins:`-regel, die zelf als interne administratie wordt
+   weggelaten; root-relatieve links worden herschreven naar absolute GitHub-URLs, zodat ze ook in
+   een consument-cache kloppen;
 4. commit dat rechtstreeks op `main` (`release: vX.Y.Z`) en zet een annotated tag `vX.Y.Z`;
 5. pusht `main` + de tag (tenzij `-NoPush` voor inspectie vooraf).
 
@@ -165,8 +166,8 @@ gecommit, en pas daarna door de consumerende repo's opgehaald.
   op `main` na een merge.
 - `scripts/release/cut-release.ps1 (-Version <X.Y.Z> | -Bump <major|minor|patch>) [-Title "…"] [-NoPush]`
   — een repo-brede release snijden, rechtstreeks op `main`: lockstep-bump + release-notes in
-  `releases/development/` + `releases/README.md`-rij + `## Releases`-verwijzing + commit + tag `vX.Y.Z`
-  + push. De pure logica (versie-bump, CHANGELOG-transformatie, notes-opbouw) woont in
+  `releases/development/` + `releases/README.md`-rij + `## Releases`-verwijzing + per-plugin
+  `CHANGELOG.md`'s bijgewerkt + commit + tag `vX.Y.Z` + push. De pure logica (versie-bump, CHANGELOG-transformatie, notes-opbouw) woont in
   [`scripts/lib/release-lib.ps1`](../../scripts/lib/release-lib.ps1), afgedekt door
   [`scripts/tests/release-lib.tests.ps1`](../../scripts/tests/release-lib.tests.ps1).
 

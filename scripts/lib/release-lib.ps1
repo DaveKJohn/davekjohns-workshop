@@ -251,17 +251,42 @@ function Get-EntryPlugins {
     return @($m.Groups[1].Value -split '\s*,\s*' | Where-Object { $_ })
 }
 
+function Remove-EntryPluginsLine {
+    <#
+        Verwijdert de 'Plugins: ...'-metadataregel (plus de lege regel die erdoor overblijft) uit
+        een entry-blok. Die regel stuurt de per-plugin-selectie in cut-release.ps1, maar is
+        werkplaats-administratie en hoort niet zichtbaar te zijn in de consument-gerichte
+        per-plugin CHANGELOG; de root-CHANGELOG en de release-notes tonen hem wel.
+    #>
+    param([Parameter(Mandatory)][string]$EntryText)
+    $t = [regex]::Replace($EntryText, '(?m)^Plugins:[^\r\n]*(\r?\n)?', '')
+    return [regex]::Replace($t, '(\r?\n)\1\1+', '$1$1')
+}
+
+function Convert-RootRelativeLinks {
+    <#
+        Herschrijft repo-root-relatieve markdown-links met het gegeven prefix; externe (http/mailto),
+        anker- (#), absolute (/) en ../-links blijven ongemoeid. De gedeelde motor achter
+        Build-ReleaseNotes en Convert-EntryLinksForPluginChangelog.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$EntryText,
+        [Parameter(Mandatory)][string]$Prefix
+    )
+    return [regex]::Replace($EntryText, '\]\((?!https?:|mailto:|#|/|\.\./)([^)]+)\)', "](${Prefix}`$1)")
+}
+
 function Convert-EntryLinksForPluginChangelog {
     <#
         Herschrijft repo-root-relatieve markdown-links naar absolute GitHub-blob-URLs, zodat een
         entry ook leesbaar is in de plugin-cache van een consument (waar de repo-bestanden niet
-        bestaan). Externe (http/mailto), anker- (#), absolute (/) en ../-links blijven ongemoeid.
+        bestaan).
     #>
     param(
         [Parameter(Mandatory)][string]$EntryText,
         [string]$RepoBlobUrl = 'https://github.com/DaveKJohn/davekjohns-workshop/blob/main/'
     )
-    return [regex]::Replace($EntryText, '\]\((?!https?:|mailto:|#|/|\.\./)([^)]+)\)', "](${RepoBlobUrl}`$1)")
+    return Convert-RootRelativeLinks -EntryText $EntryText -Prefix $RepoBlobUrl
 }
 
 function Build-PluginChangelogSection {
@@ -327,7 +352,7 @@ function Build-ReleaseNotes {
     # notes-bestand kloppen. Externe (http/mailto), anker- (#) en absolute (/) links blijven ongemoeid,
     # net als links die al met ../ beginnen.
     $Entries = @($Entries | ForEach-Object {
-        [regex]::Replace($_, '\]\((?!https?:|mailto:|#|/|\.\./)([^)]+)\)', "](${LinkPrefix}`$1)")
+        Convert-RootRelativeLinks -EntryText $_ -Prefix $LinkPrefix
     })
     $catOrder = @('Feat', 'Fix', 'Docs', 'Chore', 'Overig')
     $catTitle = @{

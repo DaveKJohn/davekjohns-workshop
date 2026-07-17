@@ -36,7 +36,7 @@ een `Plugins:`-regel af uit de PR-bestanden (`gh pr view --json files`; de `conn
 niet mee), en `cut-release.ps1` schrijft bij elke release per plugin de rakende entries bij —
 nieuwste bovenaan, met root-relatieve links herschreven naar absolute GitHub-URLs zodat ze in een
 consument-cache blijven werken. Vier nieuwe pure functies in `release-lib.ps1` met twaalf nieuwe
-asserts (50 totaal); drie seed-CHANGELOGs; Rendalls lens en het root-README beschrijven het
+asserts (50 totaal); drie seed-CHANGELOGs; Rendall's lens en het root-README beschrijven het
 mechaniek. De root-`CHANGELOG.md` en `releases/` blijven de volledige werkplaats-geschiedenis.
 
 Plugins: specialists, specialists-lifehub, specialists-shopify

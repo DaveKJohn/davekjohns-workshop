@@ -144,6 +144,12 @@ Assert-Equal 2 $plugs.Count 'twee plugins uit de Plugins-regel'
 Assert-Equal 'specialists' $plugs[0] 'eerste plugin-naam correct'
 Assert-Equal 0 (@(Get-EntryPlugins -EntryText "### #5 x`n`nBody.")).Count 'geen Plugins-regel -> lege lijst'
 
+Write-Host "Remove-EntryPluginsLine" -ForegroundColor Cyan
+$schoon = Remove-EntryPluginsLine -EntryText $entryMetPlugins
+Assert-Equal $false ([bool]($schoon -match '(?m)^Plugins:')) 'Plugins-regel verwijderd'
+Assert-Match $schoon '(?s)Body vier\.\n\n\[PR #4\]' 'geen dubbele lege regel achtergebleven'
+Assert-Equal "### #5 x`n`nBody." (Remove-EntryPluginsLine -EntryText "### #5 x`n`nBody.") 'entry zonder Plugins-regel blijft ongewijzigd'
+
 Write-Host "Convert-EntryLinksForPluginChangelog" -ForegroundColor Cyan
 $conv = Convert-EntryLinksForPluginChangelog -EntryText 'Zie [de lint](scripts/lint/x.ps1) en [site](https://example.com) en [#kop](#kop).' -RepoBlobUrl 'https://gh.test/blob/main/'
 Assert-Match $conv '\[de lint\]\(https://gh\.test/blob/main/scripts/lint/x\.ps1\)' 'root-relatieve link wordt GitHub-URL'
@@ -154,6 +160,8 @@ Write-Host "Build-PluginChangelogSection + Add-PluginChangelogSection" -Foregrou
 $section = Build-PluginChangelogSection -Entries @($entryMetPlugins) -Version '1.5.0' -Date '2026-07-17'
 Assert-Match $section '^## v1\.5\.0 ' 'sectiekop met versie'
 Assert-Match $section '### #4 ' 'entry opgenomen in de sectie'
+$sectionSchoon = Build-PluginChangelogSection -Entries @(Remove-EntryPluginsLine -EntryText $entryMetPlugins) -Version '1.5.0' -Date '2026-07-17'
+Assert-Equal $false ([bool]($sectionSchoon -match '(?m)^Plugins:')) 'sectie via het cut-release-pad bevat geen Plugins-regel'
 $fresh = Add-PluginChangelogSection -Existing '' -Section $section -PluginName 'specialists'
 Assert-Match $fresh '^# Changelog .* specialists' 'nieuwe CHANGELOG krijgt intro-header'
 Assert-Match $fresh '(?s)# Changelog.*## v1\.5\.0' 'sectie staat na de intro'
