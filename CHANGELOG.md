@@ -9,6 +9,14 @@ folden) staat in [`README.md`](README.md#bijdragen--changelog--pr-workflow).
 Alles wat sinds de laatste release naar `main` is gemergd — nieuwste bovenaan, één blok per pull
 request.
 
+### #68 · Persona-drift-ruis gedood: index-link telt niet meer als drift · Fix · 2026-07-17
+
+Rebecca's drift-onderzoek wees uit dat zes van de zeven persona-`DRIFTED`-meldingen vals-positief waren: de index-link onder de titel is op het plugin-pad noodzakelijkerwijs dieper (`../../../../CLAUDE.md`) dan in het sjabloon (`../../CLAUDE.md`), en de check telde dat als drift. `check-consumer-drift.ps1` normaliseert dat link-doel nu vóór de body-vergelijking — bewust beperkt tot de twee geldige diepten (2 en 4 niveaus, advies Victor), zodat alleen echte afwijkingen nog als drift worden gemeld (+ drie asserts, 26 totaal). De bijbehorende doctrine staat in het connectors-README ("Persona-drift: hoe je een DRIFTED-melding leest"): geen "bewust afwijkend"-status — een `DRIFTED`-persona is per definitie een werkpunt. De ene echte achterstand (smartwatchbanden `01-01` mist de inbound-route-sectie uit v1.3.0) en het naijlende life-hub-manifest zijn als consument-werkpunten vastgelegd in `dossiers/persona-drift-doctrine.md`.
+
+[PR #68](https://github.com/DaveKJohn/davekjohns-workshop/pull/68)
+
+---
+
 ### #67 · Dossier: consumenten-quickstart voor collega-repos · Docs · 2026-07-17
 
 Nieuwe deelbare quickstart-pagina (`claude-code-plugins/claude-specialists/QUICKSTART.md`) voor collega's die hun eigen repo willen aansluiten zonder het systeem gebouwd te hebben: wat je krijgt, aansluiten in drie stappen (settings.json → `specialists-init` → herstart + check), hoe je bijblijft via releases en de per-plugin CHANGELOGs, en de inbound-route voor terugmeldingen. Root-README en familie-README verwijzen ernaar; het werkdossier `dossiers/consumenten-quickstart.md` documenteert de afwegingen.
