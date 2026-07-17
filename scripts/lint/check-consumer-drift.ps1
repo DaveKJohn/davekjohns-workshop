@@ -108,7 +108,9 @@ function Get-PortableBody {
         # 4 op het plugin-pad .claude/plugins/claude-specialists/<plugin>/). Normaliseer het
         # link-doel voor de vergelijking, zodat die technisch noodzakelijke aanpassing niet als
         # drift telt en echte inhoudelijke achterstand zichtbaar blijft (vondst Rebecca, 17-07-2026).
-        $line = [regex]::Replace($line, '\]\((?:\.\./)+CLAUDE\.md\)', '](CLAUDE.md)')
+        # Bewust alleen de twee geldige diepten (advies Victor): een andere diepte is een echt
+        # kapot pad en hoort wel als drift op te vallen.
+        $line = [regex]::Replace($line, '\]\((?:(?:\.\./){2}|(?:\.\./){4})CLAUDE\.md\)', '](CLAUDE.md)')
         $body.Add($line.TrimEnd())
     }
     return (($body -join "`n").Trim())

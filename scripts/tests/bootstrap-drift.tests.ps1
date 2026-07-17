@@ -125,6 +125,19 @@ try {
     Assert-True ($d1b.Out -match 'IDENTICAL\] 01-01-persona') 'persona 01-01 blijft IDENTICAL bij diepere index-link'
     Assert-True (-not ($d1b.Out -match 'DRIFTED\]   01-01-persona')) 'diepere index-link wordt niet als DRIFTED gemeld'
 
+    # --- 3c. Een ongeldige link-diepte blijft wel drift (advies Victor) ------------------------------
+    # Alleen 2 (legacy-pad) en 4 (plugin-pad) niveaus zijn geldige layouts; 3 niveaus is een echt
+    # kapot pad en mag niet stilzwijgend worden weggenormaliseerd.
+    Write-Host "check-consumer-drift.ps1 -- ongeldige link-diepte = DRIFTED" -ForegroundColor Cyan
+    $extText = [System.IO.File]::ReadAllText($ext, [System.Text.Encoding]::UTF8)
+    $extText = $extText.Replace('](../../../../CLAUDE.md)', '](../../../CLAUDE.md)')
+    [System.IO.File]::WriteAllText($ext, $extText, (New-Object System.Text.UTF8Encoding($false)))
+    $d1c = Invoke-Script -Path $DriftLint -ScriptArgs @('-ConsumerPath', $Fixture, '-Quiet')
+    Assert-True ($d1c.Out -match 'DRIFTED\]   01-01-persona') 'persona 01-01 DRIFTED bij ongeldige link-diepte (3 niveaus)'
+    # Herstel naar een geldige diepte, zodat sectie 4 zuiver de body-wijziging test.
+    $extText = $extText.Replace('](../../../CLAUDE.md)', '](../../CLAUDE.md)')
+    [System.IO.File]::WriteAllText($ext, $extText, (New-Object System.Text.UTF8Encoding($false)))
+
     # --- 4. Drift na een body-wijziging: DRIFTED (informatief, exit blijft 0) ------------------------
     Write-Host "check-consumer-drift.ps1 -- gewijzigde body = DRIFTED" -ForegroundColor Cyan
     $ext = Join-Path $Fixture '.claude\extensions\01-01-extension.md'

@@ -58,8 +58,9 @@ achterstand, 6× vals-positief door één structureel padverschil.
   niveaus omhoog (`../../CLAUDE.md`, het legacy-pad), terwijl beide consumenten terecht vier
   niveaus omhoog linken vanaf het plugin-pad. Elke correct gesyncte consument werd daardoor
   permanent als `DRIFTED` gemeld. **Fix op deze branch:** `check-consumer-drift.ps1` normaliseert
-  het link-doel vóór de body-vergelijking (+ twee nieuwe asserts in `bootstrap-drift.tests.ps1`,
-  25 totaal).
+  het link-doel vóór de body-vergelijking — na Victor's review bewust beperkt tot de twee geldige
+  diepten (2 en 4 niveaus), zodat een écht kapot pad wel drift blijft melden (+ drie nieuwe
+  asserts in `bootstrap-drift.tests.ps1`, 26 totaal).
 - **Echte achterstand (1×):** smartwatchbanden's Chris (`01-01`) mist de sectie
   "Kern-verbeterpunten — de inbound-route" (toegevoegd in v1.3.0, PR #54). **Werkpunt in de
   smartwatchbanden-repo:** de persona-kopie verversen vanaf de bron (en daarna het
