@@ -53,6 +53,9 @@ Na inschakelen zijn de specialisten aanroepbaar met de **plugin-naam als namespa
 
 ## Meer weten?
 
+**Zelf aansluiten?** Volg de [Quickstart](QUICKSTART.md) — aansluiten in drie stappen, voor wie het
+systeem niet gebouwd heeft.
+
 Hoe een repo deze plugins consumeert (marketplace-source, `enabledPlugins`), hoe het gesplitste
 manual-model werkt en hoe het bootstrap-adoptiepad (`specialists-init`) een verse repo op gang helpt,
 staat in de [root-README](../../README.md) van de werkplaats.

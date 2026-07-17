@@ -92,6 +92,10 @@ Een nieuw ingeschakelde plugin is pas in een **volgende** Claude Code-sessie zic
 
 ## Adoptie: het bootstrap-pad
 
+> **Nieuw hier?** De deelbare beginnerroute staat in de
+> [Quickstart](claude-code-plugins/claude-specialists/QUICKSTART.md) — aansluiten in drie stappen,
+> voor wie het systeem niet gebouwd heeft. Hieronder staat de achterliggende uitleg.
+
 De plugin inschakelen levert de **werker-subagents**, maar niet de **dirigent** (Chris) of de
 governance-/hooks-laag — die kunnen niet uit een plugin komen (een plugin injecteert geen
 hoofdloop-context en bewerkt geen `CLAUDE.md`). De skill **`specialists-init`** (groep 1) dicht dat
