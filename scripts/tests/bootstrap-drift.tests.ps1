@@ -80,7 +80,7 @@ try {
     Assert-True (Test-Path -LiteralPath $claudeMd) 'CLAUDE.md-scaffold aangemaakt'
     $mdText = [System.IO.File]::ReadAllText($claudeMd, [System.Text.Encoding]::UTF8)
     Assert-True ($mdText -match [regex]::Escape('@.claude/plugins/claude-specialists/specialists/01-01-extension.md')) 'CLAUDE.md draagt de lens-@-import (plugin-pad)'
-    Assert-True ($mdText -match '(?m)^@.*personas/01-01-persona\.md$') 'CLAUDE.md draagt de body-@-import (uit de plugin-install)'
+    Assert-True ($mdText -match '(?m)^@[^\r\n]*personas/01-01-persona\.md') 'CLAUDE.md draagt de body-@-import (uit de plugin-install)'
     Assert-True (Test-Path -LiteralPath (Join-Path $Fixture '.claude\settings.suggested.jsonc')) 'settings.suggested.jsonc neergezet'
 
     # --- 1b. Persona-lens is LENS-ONLY: geen body-kopie, wel het VUL-IN-slot -------------------------
