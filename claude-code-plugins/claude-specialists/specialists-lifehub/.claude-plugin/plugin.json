@@ -2,7 +2,7 @@
   "name": "specialists-lifehub",
   "displayName": "Claude Specialists — life-hub-domein",
   "description": "Domein-plugin voor life-hub-achtige repo's (persoonlijke informatie-hub / brain-gebaseerde kennisrepo): de subagents Astrid, Fiona, Hugo, Ian en Onyx. Bewust NIET repo-neutraal — alleen een life-hub-achtige repo schakelt deze plugin in. De governance-laag (CLAUDE.md + .claude/manuals/*) en de gedeelde kern (plugin 'specialists') blijven apart.",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "author": { "name": "DaveKJohn" },
   "keywords": ["specialists", "workflow", "claude-code", "life-hub", "brain"]
 }

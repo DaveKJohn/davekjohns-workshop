@@ -11,6 +11,7 @@ gesneden via [`scripts/release/cut-release.ps1`](../scripts/release/cut-release.
 
 | Versie | Datum | Type | Titel |
 |---|---|---|---|
+| [1.7.0](development/1.7/1.7.0.md) | 2026-07-18 | Minor | Ravi + lens-migratie: repo-lenzen op het plugin-pad, persona's lens-only |
 | [1.6.0](development/1.6/1.6.0.md) | 2026-07-18 | Minor | Gedeelde agent-def-blokken uit een enkele bron (build-en-lint) |
 | [1.5.2](development/1.5/1.5.2.md) | 2026-07-18 | Patch | Persona-indexregel locatie-onafhankelijk (bron-fix inbound #64) |
 | [1.5.1](development/1.5/1.5.1.md) | 2026-07-18 | Patch | Lens-only-model in de drift-check en persona-sjablonen; inbound-regel in alle agent-defs |
