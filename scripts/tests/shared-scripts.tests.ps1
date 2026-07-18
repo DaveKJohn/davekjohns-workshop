@@ -52,11 +52,13 @@ foreach ($pair in $pairs) {
     Assert-Equal $src $mirror "in sync: $($pair.Name)"
 }
 
-Write-Host "Dual-context resolutie geborgd in de bron" -ForegroundColor Cyan
+Write-Host "Dual-context resolutie geborgd in elke bron" -ForegroundColor Cyan
 # De hele spiegel-mechaniek leunt erop dat een gedeeld script zijn repo-root dual-context oplost.
-# Verdwijnt CLAUDE_PROJECT_DIR uit de bron, dan breekt de consument-aanroep stil -- dit vangt dat.
-$foldSrc = Get-NormalizedScriptContent -Path $fold.SourcePath
-Assert-True ($foldSrc -match 'CLAUDE_PROJECT_DIR') 'fold-bron lost repo-root via CLAUDE_PROJECT_DIR op'
+# Verdwijnt CLAUDE_PROJECT_DIR uit een bron, dan breekt de consument-aanroep stil -- dit vangt dat.
+foreach ($pair in $pairs) {
+    $src = Get-NormalizedScriptContent -Path $pair.SourcePath
+    Assert-True ($src -match 'CLAUDE_PROJECT_DIR') "$($pair.Name): bron lost repo-root via CLAUDE_PROJECT_DIR op"
+}
 
 Write-Host "Get-NormalizedScriptContent" -ForegroundColor Cyan
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("shared-scripts-test-$PID.ps1")

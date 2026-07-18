@@ -33,6 +33,11 @@ function Get-SharedScriptPairs {
             Name   = 'fold-changelog-entry'
             Source = 'scripts\release\fold-changelog-entry.ps1'
             Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\release\fold-changelog-entry.ps1'
+        },
+        @{
+            Name   = 'open-pr'
+            Source = 'scripts\release\open-pr.ps1'
+            Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\release\open-pr.ps1'
         }
     )
 

@@ -43,6 +43,11 @@ Assert-Match $name '^[\w.-]+/[\w.-]+$' 'Get-RepoName heeft de vorm owner/naam'
 $blob = Get-RepoBlobUrl
 Assert-Equal "https://github.com/$name/blob/main/" $blob 'Get-RepoBlobUrl is afgeleid van Get-RepoName'
 
+# De lint-poort die open-pr.ps1 draait (repo-specifiek, geinjecteerd i.p.v. hardcoded in open-pr).
+$lint = Get-LintScript
+Assert-Match $lint '\.ps1$' 'Get-LintScript wijst naar een .ps1'
+Assert-Match $lint '^scripts[\\/]' 'Get-LintScript is repo-root-relatief onder scripts/'
+
 Write-Host ""
 if ($script:fail -gt 0) {
     Write-Host "FAALT: $($script:fail) fout, $($script:pass) goed." -ForegroundColor Red

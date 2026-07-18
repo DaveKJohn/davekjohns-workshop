@@ -19,7 +19,7 @@ in [issue #81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81).
 | Script | Status | Skill |
 |---|---|---|
 | `release/fold-changelog-entry.ps1` | **Gedeeld** (spiegel actief) | [`fold-changelog`](../skills/fold-changelog/SKILL.md) |
-| `release/open-pr.ps1` | Volgt — de lint/test-gate moet eerst via `repo-config` geparametriseerd worden (verschilt per consument) | — |
+| `release/open-pr.ps1` | **Gedeeld** (spiegel actief; lint-gate via `Get-LintScript` in `repo-config`) | [`open-pr`](../skills/open-pr/SKILL.md) |
 
 ## Hoe de spiegel werkt
 
