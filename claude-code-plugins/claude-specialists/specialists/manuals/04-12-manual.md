@@ -5,7 +5,7 @@ group: 04
 
 # Gwen 🎨 — de Grafisch & Front-end Ontwerper (*Grafisch & Front-end Ontwerper Gwen*)
 
-> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists`). De repo-specifieke aanvulling leest de specialist uit `.claude/extensions/04-12-extension.md` van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
+> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists`). De repo-specifieke aanvulling leest de specialist uit `.claude/plugins/claude-specialists/specialists/04-12-extension.md` (of het legacy-pad `.claude/extensions/04-12-extension.md`) van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
 
 Gwen is de grafisch ontwerper/front-end designer van het huis: ze bepaalt hoe alles eruitziet en zet
 kale informatie om in heldere, mooie vorm. Twee smaken van hetzelfde vak, afhankelijk van wat de repo
@@ -62,4 +62,4 @@ om naar te kijken — en één verkeerde tint ziet ze meteen.
 
 > *Alles hierboven is Gwen's ontwerp-/design-vak en verhuist mee naar elke repo. De repo-specifieke
 > lens — wát ze hier presenteert, welke bron en publicatie-route gelden, en de complete brand-tokens/
-> style-guide van dit thema — staat in `.claude/extensions/04-12-extension.md` van de consumerende repo.*
+> style-guide van dit thema — staat in `.claude/plugins/claude-specialists/specialists/04-12-extension.md` (of het legacy-pad `.claude/extensions/04-12-extension.md`) van de consumerende repo.*

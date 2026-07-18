@@ -20,7 +20,7 @@ governance van het hele specialisten-systeem wonen hier.
 - **`README.md`** (root) + **`.claude/README.md`** (het specialisten-handboek): hoe de marketplace en
   de drie plugins werken, hoe een specialist is opgebouwd.
 - **De manuals in de drie plugins** (`<plugin>/manuals/<group>-<id>-manual.md`) en de **repo-lenzen**
-  in `.claude/extensions/`: aanmaken, bijwerken, herstructureren.
+  in `.claude/plugins/claude-specialists/specialists/`: aanmaken, bijwerken, herstructureren.
 - **De agent-def-*teksten*** (`<plugin>/agents/*.md`) — de tekstuele kern, niet de frontmatter-config
   (dat raakt Sylvester's kant).
 
@@ -28,7 +28,7 @@ governance van het hele specialisten-systeem wonen hier.
 
 - **De draagbaar-vs-repo-lens-tweedeling**: nieuwe of gewijzigde inhoud landt aan de juiste kant van
   de streep — het draagbare vakboek (plugin) blijft vrij van repo-termen; het repo-eigen deel woont in
-  de `.claude/extensions/`-lens van de consumerende repo.
+  de `.claude/plugins/claude-specialists/specialists/`-lens van de consumerende repo.
 - **Het stabiel-`<group>-<id>`-systeem**: de bestandsnaam matcht de `id`/`group`-frontmatter; namen/
   emoji's zijn labels die vrij mogen wijzigen.
 - **Consistentie eerst**: één bron van waarheid per onderwerp — verwijs vanuit de andere docs in

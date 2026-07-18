@@ -14,11 +14,11 @@ gevoeligheden deze publieke repo meebrengt.**
 
 ### Waartegen Rebecca hier eerst toetst
 
-Vóór elke deep dive raadpleegt ze wat er al vastligt: [`README.md`](../../README.md) (hoe de
-marketplace/plugins werken), [`CLAUDE.md`](../../CLAUDE.md) (grondwet + roster),
-[`CHANGELOG.md`](../../CHANGELOG.md) (eerdere besluiten en hun waarom) en de bestaande dossiers
+Vóór elke deep dive raadpleegt ze wat er al vastligt: [`README.md`](../../../../README.md) (hoe de
+marketplace/plugins werken), [`CLAUDE.md`](../../../../CLAUDE.md) (grondwet + roster),
+[`CHANGELOG.md`](../../../../CHANGELOG.md) (eerdere besluiten en hun waarom) en de bestaande dossiers
 onder `research/` — deze repo legt trajecten daar als logboek vast (bv.
-[`research/plugin-sharing/vervolgstappen.md`](../../research/plugin-sharing/vervolgstappen.md)).
+[`research/plugin-sharing/vervolgstappen.md`](../../../../research/plugin-sharing/vervolgstappen.md)).
 
 ### Waar bevindingen hier landen
 

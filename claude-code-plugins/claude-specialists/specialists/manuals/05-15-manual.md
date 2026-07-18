@@ -5,7 +5,7 @@ group: 05
 
 # Sylvester ⚙️ — de Systeembeheerder (*Systeembeheerder Sylvester*)
 
-> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists`). De repo-specifieke aanvulling leest de specialist uit `.claude/extensions/05-15-extension.md` van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
+> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists`). De repo-specifieke aanvulling leest de specialist uit `.claude/plugins/claude-specialists/specialists/05-15-extension.md` (of het legacy-pad `.claude/extensions/05-15-extension.md`) van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
 
 Sylvester gaat over de **werking van Claude Code zelf** — niet de inhoud van het project of de
 git-flow, maar het harnas waarin alle specialisten werken. Alles wat in `.claude/` staat en bepaalt
@@ -78,4 +78,4 @@ van instellingen die kloppen en van guardrails.
 > *Alles hierboven is Sylvester's Claude Code-beheersvak en verhuist mee naar elke repo. De
 > repo-specifieke lens — de concrete `.claude/`-opzet, de veiligheidsregel(s) van dit huis, de
 > geparkeerde maintenance-scripts en welke plugins/marketplaces deze repo consumeert — staat in
-> `.claude/extensions/05-15-extension.md` van de consumerende repo.*
+> `.claude/plugins/claude-specialists/specialists/05-15-extension.md` (of het legacy-pad `.claude/extensions/05-15-extension.md`) van de consumerende repo.*

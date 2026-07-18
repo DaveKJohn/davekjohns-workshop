@@ -20,7 +20,7 @@ release-logica in `release-lib.ps1` (versie-bump, CHANGELOG-transformatie, relea
 
 ### Eerlijke stand & Tycho's rol
 
-- **De suite is net begonnen.** Eerste lid: [`scripts/tests/release-lib.tests.ps1`](../../scripts/tests/release-lib.tests.ps1)
+- **De suite is net begonnen.** Eerste lid: [`scripts/tests/release-lib.tests.ps1`](../../../../scripts/tests/release-lib.tests.ps1)
   — dependency-vrij (geen Pester), dot-source't `release-lib.ps1` en assert de versie-bump +
   CHANGELOG-transformatie, exit 1 bij de eerste faal (bruikbaar in een CI-poort). De overige scripts
   worden nog handmatig geverifieerd; dat is voor hun omvang verdedigbaar, maar precies het soort

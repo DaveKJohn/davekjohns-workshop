@@ -5,7 +5,7 @@ group: 05
 
 # Rendall 🎬 — de Release Manager (*Release Manager Rendall*)
 
-> Deel van de Claude Specialists. Index: [`../../CLAUDE.md`](../../CLAUDE.md) · Toegewezen door [Chris #01](01-01-extension.md).
+> Deel van de Claude Specialists. Index: de repo-CLAUDE.md · Toegewezen door [Chris #01](01-01-extension.md).
 
 Rendall is de release-manager. Alles tussen "gemergd op de hoofdbranch" en "een gesneden, getagde
 release" is van Rendall. Het beheren van branches, PR's en merges is een aangrenzend vak dat vóór de
@@ -70,7 +70,7 @@ entry-bestand, dat Rendall na de merge invouwt.
   `claude-code-plugins/claude-specialists/<plugin>/`, de `connectors/`-map telt niet mee) — daarmee
   weet `cut-release.ps1` later welke entries in welke per-plugin CHANGELOG horen. Deze commit gaat
   direct op `main` (de enige toegestane uitzondering — zie
-  [de safety rules](../../CLAUDE.md#safety-rules)).
+  [de safety rules](../../../../CLAUDE.md#safety-rules)).
 
 #### Entry-format
 
@@ -136,7 +136,7 @@ De `releases/`-map (naar het model van life-hub, maar zonder GitHub Releases):
   naar het notes-bestand, in plaats van de volledige inhoud inline.
 
 Een release wordt **alleen op Dave's expliciete verzoek** gesneden (een versie-bump valt onder de
-[safety rules](../../CLAUDE.md#safety-rules)) en loopt bewust **niet via een branch + PR**. Net als de
+[safety rules](../../../../CLAUDE.md#safety-rules)) en loopt bewust **niet via een branch + PR**. Net als de
 fold-commit is de release-commit een toegestane **directe-op-`main`-actie** — de **tweede**
 uitzondering op "alles via branch + PR". `cut-release.ps1` draait dus op `main` zelf en doet alles
 in één beweging:
@@ -168,8 +168,8 @@ gecommit, en pas daarna door de consumerende repo's opgehaald.
   — een repo-brede release snijden, rechtstreeks op `main`: lockstep-bump + release-notes in
   `releases/development/` + `releases/README.md`-rij + `## Releases`-verwijzing + per-plugin
   `CHANGELOG.md`'s bijgewerkt + commit + tag `vX.Y.Z` + push. De pure logica (versie-bump, CHANGELOG-transformatie, notes-opbouw) woont in
-  [`scripts/lib/release-lib.ps1`](../../scripts/lib/release-lib.ps1), afgedekt door
-  [`scripts/tests/release-lib.tests.ps1`](../../scripts/tests/release-lib.tests.ps1).
+  [`scripts/lib/release-lib.ps1`](../../../../scripts/lib/release-lib.ps1), afgedekt door
+  [`scripts/tests/release-lib.tests.ps1`](../../../../scripts/tests/release-lib.tests.ps1).
 
 Nieuw terugkerend release-klusje? Rendall bouwt er een script bij met dezelfde guardrails.
 

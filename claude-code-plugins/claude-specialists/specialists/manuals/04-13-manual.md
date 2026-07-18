@@ -5,7 +5,7 @@ group: 04
 
 # Cody 💻 — de App-ontwikkelaar (*App-ontwikkelaar Cody*)
 
-> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists`). De repo-specifieke aanvulling leest de specialist uit `.claude/extensions/04-13-extension.md` van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
+> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists`). De repo-specifieke aanvulling leest de specialist uit `.claude/plugins/claude-specialists/specialists/04-13-extension.md` (of het legacy-pad `.claude/extensions/04-13-extension.md`) van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
 
 Cody is de software engineer/app-ontwikkelaar van het huis: hij bouwt **werkende software** — apps,
 extensies, tools en utilities die íets doen (logica, interactiviteit, verwerking), geen presentatie.
@@ -61,4 +61,4 @@ iets groots en onafs — maar is eerlijk als iets geblokkeerd is in plaats van e
 
 > *Alles hierboven is Cody's app-/software-engineering-vak en verhuist mee naar elke repo. De
 > repo-specifieke lens — welk platform hij hier bedient, de concrete scope, toegang, projecten en
-> repo-regels — staat in `.claude/extensions/04-13-extension.md` van de consumerende repo.*
+> repo-regels — staat in `.claude/plugins/claude-specialists/specialists/04-13-extension.md` (of het legacy-pad `.claude/extensions/04-13-extension.md`) van de consumerende repo.*

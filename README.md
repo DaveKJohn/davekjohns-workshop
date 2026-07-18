@@ -44,10 +44,10 @@ Een specialist-vakboek valt uiteen in een **draagbaar** deel (repo-neutraal, ide
 het vak, de harde regels, de toon) en een **repo-lens** (het `## Eigen aan deze repo`-deel: wélke
 content/context van díe repo de specialist bedient). Het draagbare deel woont in
 `<plugin>/manuals/<group>-<id>-manual.md` in deze marketplace; de consumerende repo houdt alleen de
-lens in `.claude/extensions/<group>-<id>-extension.md`. De agent-def verwijst naar beide.
+lens in `.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md`. De agent-def verwijst naar beide.
 
 **Alle drie de groepen zijn inmiddels gemigreerd** — elk vakboek woont hier in de `manuals/`-map van
-zijn plugin, en elke consumerende repo houdt daarvan enkel nog de repo-lens in `.claude/extensions/`:
+zijn plugin, en elke consumerende repo houdt daarvan enkel nog de repo-lens in `.claude/plugins/claude-specialists/specialists/`:
 
 - **`specialists` (groep 1)** → `claude-code-plugins/claude-specialists/specialists/manuals/` (Paula, Rebecca, Vera, Gwen, Cody, Tycho,
   Sylvester, Tessa, Edith, Victor, Sean, Ravi).
@@ -60,7 +60,7 @@ subagent — een plugin kan geen altijd-aan-hoofdloop-context injecteren, en een
 bovendien directe heen-en-weer met de opdrachtgever. Ze hebben daarom bewust
 **geen** agent-def; hun draagbare bron woont in `claude-code-plugins/claude-specialists/specialists/personas/<group>-<id>-persona.md` als
 **self-contained sjabloon** (draagbare body + een repo-lens-placeholder). De consument krijgt geen
-plugin-verwijzing maar een **kopie** in `.claude/extensions/<group>-<id>-extension.md`, die via een
+plugin-verwijzing maar een **kopie** in `.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md`, die via een
 `@`-import in zijn `CLAUDE.md` wordt auto-geladen. De [bootstrap-skill](#adoptie-het-bootstrap-pad)
 zet die kopie neer; de [drift-lint](#onderhoud-drift-lint) bewaakt de draagbare body ervan tegen de
 canonieke bron. De agent-def↔manual-koppeling van de lint laat persona's bewust met rust (ze hebben
@@ -128,10 +128,10 @@ tweetraps:
   (zie [Consumptie](#consumptie)) en **herstart** de sessie — pas dán is de skill beschikbaar.
 - **Stap 1 (de skill).** Roep `specialists-init` aan. Het bijgeleverde
   [`bootstrap.ps1`](claude-code-plugins/claude-specialists/specialists/skills/specialists-init/bootstrap.ps1) doet alleen **additieve**
-  handelingen: het kopieert de persona-sjablonen naar `.claude/extensions/<group>-<id>-extension.md`
+  handelingen: het kopieert de persona-sjablonen naar `.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md`
   (nooit overschrijven), zet voor elke subagent van de ingeschakelde plugin(s) een **lege
   lens-scaffold** neer (`VUL-IN` — de plek waar repo-specifieke taken per specialist worden
-  aangevuld), zet de `@.claude/extensions/01-01-extension.md`-import onderaan `CLAUDE.md`
+  aangevuld), zet de `@.claude/plugins/claude-specialists/specialists/01-01-extension.md`-import onderaan `CLAUDE.md`
   (of maakt een scaffold), en schrijft een `settings.suggested.jsonc` met een `permissions.deny` +
   hooks-**stub**. Het raakt `settings.json` niet aan — die merge en de repo-lens invullen zijn
   daarna handwerk (repo-specifiek), waarna nog één **herstart** de nieuwe context activeert.
@@ -163,7 +163,7 @@ verwijderen). Opruimen zelf gebeurt in de consumerende repo, niet door dit scrip
 
 Hetzelfde script vergelijkt ook de **persona's**: het legt de draagbare body van elke
 `personas/<group>-<id>-persona.md` naast de body van de consument-kopie in
-`.claude/extensions/<group>-<id>-extension.md` (alles boven de `## Eigen aan deze repo`-marker; de
+`.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md` (alles boven de `## Eigen aan deze repo`-marker; de
 repo-lens eronder is per repo verschillend en wordt niet vergeleken). Die persona-bevindingen zijn
 **informatief** — ze tellen niet mee in de exit-code, want een consument met een handgeschreven
 persona is per definitie `DRIFTED` tot hij gecoördineerd is gereconcilieerd.

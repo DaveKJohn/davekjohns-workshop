@@ -18,7 +18,7 @@ artefacten hier onder hem vallen en met welk mechanisme hij globaliseert.**
   onder **Grenzen** en **Werkwijze**. Deze repo is de **bron** van het specialisten-systeem, dus een
   hier weggewerkte duplicatie werkt via een release door naar álle consumerende repo's.
 - Deze repo is ook zelf een consument, dus dezelfde regel geldt voor de **repo-lenzen** in
-  `.claude/extensions/` waar die gedragsregels zouden dupliceren.
+  `.claude/plugins/claude-specialists/specialists/` waar die gedragsregels zouden dupliceren.
 
 ### Het mechanisme dat hier ligt
 

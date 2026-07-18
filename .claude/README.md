@@ -16,11 +16,12 @@ georganiseerd zijn**. Het is **geen vervanging** van de safety-rules of de routi
 
 - De grondwet blijft [`../CLAUDE.md#safety-rules`](../CLAUDE.md#safety-rules).
 - **Chris blijft elke opdracht aannemen en routeren** — zie zijn vaste ritueel in
-  [`extensions/01-01-extension.md`](extensions/01-01-extension.md).
+  [`extensions/01-01-extension.md`](plugins/claude-specialists/specialists/01-01-extension.md).
 
 ## Lay-out van deze map
 
-- **`extensions/`** — de **repo-laag** van het specialisten-systeem: één bestand per specialist,
+- **`plugins/claude-specialists/specialists/`** — de **repo-laag** van het specialisten-systeem (de
+  repo-lenzen op het **plugin-pad**, de standaard-locatie): één bestand per specialist,
   `<group>-<id>-extension.md`. Er zijn twee soorten:
   - **Subagent-lens** — voor de specialisten die als subagent uit de `specialists`-plugin komen
     (Sylvester, Tessa, Edith, Victor, Tycho): alleen het `## Eigen aan deze repo`-deel, dat het
@@ -29,7 +30,7 @@ georganiseerd zijn**. Het is **geen vervanging** van de safety-rules of de routi
   - **Persona-manual** — voor de persona-only specialisten (Chris, Derek, Rendall), die in het
     hoofdgesprek draaien i.p.v. als subagent. De main-loop leest geen plugin-bestanden, dus hier
     staat hun **volledige** manual en wordt Chris hiervandaan auto-geladen
-    (`@.claude/extensions/01-01-extension.md` onderaan `../CLAUDE.md`). De **draagbare body** van elke
+    (`@.claude/plugins/claude-specialists/specialists/01-01-extension.md` onderaan `../CLAUDE.md`). De **draagbare body** van elke
     persona heeft wél een canonieke bron in de plugin — `claude-code-plugins/claude-specialists/specialists/personas/<group>-<id>-persona.md`
     — die de bootstrap-skill `specialists-init` bij adoptie naar `.claude/extensions/` kopieert; dit
     lokale bestand is dus een (met drift-lint bewaakte) kopie van die bron, aangevuld met de repo-lens.
@@ -39,7 +40,7 @@ georganiseerd zijn**. Het is **geen vervanging** van de safety-rules of de routi
   via [`settings.json`](settings.json) en aanroepbaar als `@specialists:<naam>`.
 - **`settings.json`** — de harness-config: `extraKnownMarketplaces` (de `github`-source
   `DaveKJohn/davekjohns-workshop` — de repo wijst naar zichzelf) + `enabledPlugins`
-  (`specialists@davekjohns-workshop`). [Sylvester #15](extensions/05-15-extension.md)'s domein.
+  (`specialists@davekjohns-workshop`). [Sylvester #15](plugins/claude-specialists/specialists/05-15-extension.md)'s domein.
 
 ## Hoe een specialist is opgebouwd
 
@@ -57,8 +58,8 @@ georganiseerd zijn**. Het is **geen vervanging** van de safety-rules of de routi
 
 **Regels:** bestaan beide, dan is de **manual leidend**; de agent-def is de uitvoerbare verkorting.
 Een vakregel wijzig je in de manual; de agent-def alleen als de operationele kern of tool-set
-verandert. Het *principe* en de manuals horen bij [Tessa #16](extensions/06-16-extension.md); de
-agent-def-config (frontmatter, tools, model) bij [Sylvester #15](extensions/05-15-extension.md).
+verandert. Het *principe* en de manuals horen bij [Tessa #16](plugins/claude-specialists/specialists/06-16-extension.md); de
+agent-def-config (frontmatter, tools, model) bij [Sylvester #15](plugins/claude-specialists/specialists/05-15-extension.md).
 **Chris blijft een persona** — hij is de enige die Dave iets kan **vrágen**.
 
 ### Elke manual: draagbaar vak en repo-eigen slot
@@ -71,7 +72,7 @@ Elk vakboek is in tweeën opgebouwd, en die twee helften wonen fysiek apart:
    álles wat repo-specifiek is. Vaste opbouw: cursieve lens-regel → kernclaim → repo-secties → een
    "**hóé** (draagbaar) vs. **wát** (repo-eigen)"-slot.
 
-[Tessa #16](extensions/06-16-extension.md) bewaakt deze tweedeling bij elke wijziging.
+[Tessa #16](plugins/claude-specialists/specialists/06-16-extension.md) bewaakt deze tweedeling bij elke wijziging.
 
 ### Stabiel id + group — de bestandsnaam is `<group>-<id>`
 
@@ -80,7 +81,7 @@ een **group** (organisatie-eenheid: **01 = Leiding, 02 = Staf, 03+ = teams**). D
 `<group>-<id>-extension.md`; het draagbare vakboek `<group>-<id>-manual.md` en de agent-def
 `<group>-<id>-agent.md` wonen in de plugin. **Naam, emoji en titel zijn labels** — die mogen vrij
 wijzigen; bestandsnaam en linkpaden hangen aan `id`/`group`, niet aan de naam. **De lint-poort bewaakt
-het** ([Sylvester #15](extensions/05-15-extension.md)): elke bestandsnaam matcht de frontmatter
+het** ([Sylvester #15](plugins/claude-specialists/specialists/05-15-extension.md)): elke bestandsnaam matcht de frontmatter
 (`id:` én `group:`).
 
 ## Het team hier
@@ -103,21 +104,21 @@ onderstaande lijst is puur navigatie naar de repo-extensies zelf.
 
 | # | Specialist | Repo-extensie | Agent-def |
 |---|---|---|---|
-| 01 | Chris 🧭 — Chief of Staff | [`extensions/01-01-extension.md`](extensions/01-01-extension.md) | — (persona-only) |
-| 05 | Derek 🐙 — DevOps Engineer | [`extensions/05-05-extension.md`](extensions/05-05-extension.md) | — (persona-only) |
-| 06 | Rendall 🎬 — Release Manager | [`extensions/05-06-extension.md`](extensions/05-06-extension.md) | — (persona-only) |
-| 07 | Rebecca 🔬 — Research Specialist | [`extensions/03-07-extension.md`](extensions/03-07-extension.md) | `@specialists:rebecca` |
-| 15 | Sylvester ⚙️ — Systeembeheerder | [`extensions/05-15-extension.md`](extensions/05-15-extension.md) | `@specialists:sylvester` |
-| 16 | Tessa 📜 — Technical Writer | [`extensions/06-16-extension.md`](extensions/06-16-extension.md) | `@specialists:tessa` |
-| 17 | Edith 🔍 — Eindredacteur | [`extensions/06-17-extension.md`](extensions/06-17-extension.md) | `@specialists:edith` |
-| 18 | Tycho 🧪 — Test Engineer | [`extensions/04-18-extension.md`](extensions/04-18-extension.md) | `@specialists:tycho` |
-| 19 | Victor 🧐 — Code Reviewer | [`extensions/06-19-extension.md`](extensions/06-19-extension.md) | `@specialists:victor` |
-| 23 | Sean 🛡️ — Security Engineer | [`extensions/06-23-extension.md`](extensions/06-23-extension.md) | `@specialists:sean` |
-| 24 | Ravi ♻️ — Refactoring-specialist | [`extensions/06-24-extension.md`](extensions/06-24-extension.md) | `@specialists:ravi` |
+| 01 | Chris 🧭 — Chief of Staff | [`extensions/01-01-extension.md`](plugins/claude-specialists/specialists/01-01-extension.md) | — (persona-only) |
+| 05 | Derek 🐙 — DevOps Engineer | [`extensions/05-05-extension.md`](plugins/claude-specialists/specialists/05-05-extension.md) | — (persona-only) |
+| 06 | Rendall 🎬 — Release Manager | [`extensions/05-06-extension.md`](plugins/claude-specialists/specialists/05-06-extension.md) | — (persona-only) |
+| 07 | Rebecca 🔬 — Research Specialist | [`extensions/03-07-extension.md`](plugins/claude-specialists/specialists/03-07-extension.md) | `@specialists:rebecca` |
+| 15 | Sylvester ⚙️ — Systeembeheerder | [`extensions/05-15-extension.md`](plugins/claude-specialists/specialists/05-15-extension.md) | `@specialists:sylvester` |
+| 16 | Tessa 📜 — Technical Writer | [`extensions/06-16-extension.md`](plugins/claude-specialists/specialists/06-16-extension.md) | `@specialists:tessa` |
+| 17 | Edith 🔍 — Eindredacteur | [`extensions/06-17-extension.md`](plugins/claude-specialists/specialists/06-17-extension.md) | `@specialists:edith` |
+| 18 | Tycho 🧪 — Test Engineer | [`extensions/04-18-extension.md`](plugins/claude-specialists/specialists/04-18-extension.md) | `@specialists:tycho` |
+| 19 | Victor 🧐 — Code Reviewer | [`extensions/06-19-extension.md`](plugins/claude-specialists/specialists/06-19-extension.md) | `@specialists:victor` |
+| 23 | Sean 🛡️ — Security Engineer | [`extensions/06-23-extension.md`](plugins/claude-specialists/specialists/06-23-extension.md) | `@specialists:sean` |
+| 24 | Ravi ♻️ — Refactoring-specialist | [`extensions/06-24-extension.md`](plugins/claude-specialists/specialists/06-24-extension.md) | `@specialists:ravi` |
 
 De rest van de `specialists`-plugin (Paula #09, Vera #11, Gwen #12, Cody #13) is óók
 ingeschakeld en aanroepbaar als `@specialists:<naam>`, maar heeft in deze repo zelden werk en dus
-(nog) geen repo-lens. Duikt zulk werk op, dan schrijft [Tessa #16](extensions/06-16-extension.md)
+(nog) geen repo-lens. Duikt zulk werk op, dan schrijft [Tessa #16](plugins/claude-specialists/specialists/06-16-extension.md)
 eerst de lens. De domein-plugins `specialists-lifehub` en `specialists-shopify` staan hier **uit** —
 deze repo is geen life-hub-achtige of Shopify-repo.
 
@@ -125,5 +126,5 @@ deze repo is geen life-hub-achtige of Shopify-repo.
 
 Het team en de teamindeling komen **in overleg met Dave** tot stand en kunnen wijzigen — precies zoals
 nieuwe specialisten alleen in overleg ontstaan (zie
-[Chris #01](extensions/01-01-extension.md#nieuwe-specialisten--alleen-in-overleg)). Wijzigt de
+[Chris #01](plugins/claude-specialists/specialists/01-01-extension.md#nieuwe-specialisten--alleen-in-overleg)). Wijzigt de
 indeling, dan werkt Tessa dit document bij.

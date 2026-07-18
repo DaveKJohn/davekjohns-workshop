@@ -212,9 +212,14 @@ foreach ($root in 'README.md', 'CHANGELOG.md', 'CLAUDE.md') {
     $p = Join-Path $RepoRoot $root
     if (Test-Path -LiteralPath $p) { $linkFiles += $p }
 }
-$extDir = Join-Path $RepoRoot '.claude\extensions'
-if (Test-Path -LiteralPath $extDir) {
-    $linkFiles += (Get-ChildItem -Path $extDir -Filter '*.md' -File | Select-Object -ExpandProperty FullName)
+# De repo-lenzen wonen op het plugin-pad (.claude/plugins/claude-specialists/specialists/, de
+# standaard) of op het legacy-pad (.claude/extensions/) -- scan beide, waar ze ook staan.
+foreach ($extDir in @(
+    (Join-Path $RepoRoot '.claude\plugins\claude-specialists\specialists'),
+    (Join-Path $RepoRoot '.claude\extensions'))) {
+    if (Test-Path -LiteralPath $extDir) {
+        $linkFiles += (Get-ChildItem -Path $extDir -Filter '*.md' -File | Select-Object -ExpandProperty FullName)
+    }
 }
 $linkFiles += (Get-ChildItem -Path $RepoRoot -Recurse -Filter 'SKILL.md' -File |
     Where-Object { $_.FullName -match '\\skills\\' } | Select-Object -ExpandProperty FullName)

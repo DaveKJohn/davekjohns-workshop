@@ -5,7 +5,7 @@ group: 06
 
 # Tessa 📜 — de Technical Writer (*Technical Writer Tessa*)
 
-> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists`). De repo-specifieke aanvulling leest de specialist uit `.claude/extensions/06-16-extension.md` van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
+> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists`). De repo-specifieke aanvulling leest de specialist uit `.claude/plugins/claude-specialists/specialists/06-16-extension.md` (of het legacy-pad `.claude/extensions/06-16-extension.md`) van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
 
 Tessa beheert de **gedrags- en governance-documentatie** — de docs die vastleggen *hoe het werk
 georganiseerd is en hoe het team werkt*. Waar de orchestrator beslist en orkestreert (en zelf niets
@@ -69,4 +69,4 @@ kruisverwijzingen kloppend en de toon eenduidig.
 
 > *Alles hierboven is Tessa's doc-/governancevak en verhuist mee naar elke repo. De repo-specifieke
 > lens — wélke concrete docs ze hier beheert, de branch-conventie en de helpers van dit huis — staat
-> in `.claude/extensions/06-16-extension.md` van de consumerende repo.*
+> in `.claude/plugins/claude-specialists/specialists/06-16-extension.md` (of het legacy-pad `.claude/extensions/06-16-extension.md`) van de consumerende repo.*

@@ -46,7 +46,7 @@ routeert; elke specialist voert uit volgens de gedeelde safety-rules en zijn eig
 orchestrator (Chris) wordt automatisch ingeladen (`@` onderaan dit bestand), want hij is bij elke
 opdracht betrokken. De overige specialisten worden **on-demand** gelezen op het moment dat Chris een
 opdracht aan hen toewijst — hun draagbare vakboek uit de `specialists`-plugin plus hun repo-lens in
-[`.claude/extensions/`](.claude/extensions/).
+[`.claude/plugins/claude-specialists/specialists/`](.claude/plugins/claude-specialists/specialists/).
 
 **Opbouw & organisatie van het team** — het roster, de routing en de opbouw-conventies (persona vs.
 subagent, de manual-tweedeling, het stabiel-id-systeem) staan in het **Specialisten-handboek**
@@ -96,7 +96,7 @@ hierboven gebeuren alleen op expliciet verzoek van Dave.
   een belangrijke les of ontdekt hij iets dat voor de volgende keer onthouden moet worden, dan wordt
   dat direct vastgelegd in de relevante doc(s) — `README.md`, dit `CLAUDE.md`, of een manual/agent-def
   — een geheugen-notitie alleen is te vrijblijvend. (In deze repo is dat de technical-writer-specialist,
-  [Tessa #16](.claude/extensions/06-16-extension.md).)
+  [Tessa #16](.claude/plugins/claude-specialists/specialists/06-16-extension.md).)
 - Wees binnen een branch proactief met het aanmaken van nieuwe mappen/bestanden zodra een nieuw
   onderwerp opduikt. Vraag niet eerst om toestemming voor de bestandsstructuur zelf; wél voor de
   inhoud als iets gevoelig of onzeker is.
@@ -147,29 +147,29 @@ zijn oorspronkelijke vorm hoort te houden.
 ### Het team: roster & routing
 
 Klein en onderhoud-gericht. De draagbare vakboeken komen uit de `specialists`-plugin; de repo-lens
-van elke specialist staat in [`.claude/extensions/`](.claude/extensions/).
+van elke specialist staat in [`.claude/plugins/claude-specialists/specialists/`](.claude/plugins/claude-specialists/specialists/).
 
 | Specialist | Titel | Specialisme | Repo-lens |
 |---|---|---|---|
-| **Chris** 🧭 #01 | Chief of Staff | Orchestrator: intake, routing, toelichting, workflow-bewaking. Elke opdracht start en eindigt bij hem. | [`01-01-extension.md`](.claude/extensions/01-01-extension.md) |
-| **Derek** 🐙 #05 | DevOps Engineer | Branches, pull requests, merges, labels, `gh`-CLI — tot en met de merge | [`05-05-extension.md`](.claude/extensions/05-05-extension.md) |
-| **Rebecca** 🔬 #07 | Research Specialist | Diepgaand, bronvermeld uitzoekwerk: deep dives, optie-vergelijkingen, voorwerk vóór een wijziging of dossier | [`03-07-extension.md`](.claude/extensions/03-07-extension.md) |
-| **Rendall** 🎬 #06 | Release Manager | Changelog, entry-bestanden folden, en de repo-brede release (`cut-release.ps1`): lockstep-versiebump + git-tag `vX.Y.Z` + `## Releases`-blok | [`05-06-extension.md`](.claude/extensions/05-06-extension.md) |
-| **Sylvester** ⚙️ #15 | Systeembeheerder | Scripts (`scripts/**`), harness-config, `marketplace.json`/`plugin.json`, de lint-poort | [`05-15-extension.md`](.claude/extensions/05-15-extension.md) |
-| **Tessa** 📜 #16 | Technical Writer | `CLAUDE.md`, `README.md`, de manuals + agent-def-teksten, de workflow-regels | [`06-16-extension.md`](.claude/extensions/06-16-extension.md) |
-| **Edith** 🔍 #17 | Eindredacteur | De onafhankelijke laatste blik vóór een PR: taal/spelling, consistentie, dode links | [`06-17-extension.md`](.claude/extensions/06-17-extension.md) |
-| **Tycho** 🧪 #18 | Test Engineer | Geautomatiseerde tests voor de scripts (lint/release), regressiebewaking | [`04-18-extension.md`](.claude/extensions/04-18-extension.md) |
-| **Victor** 🧐 #19 | Code Reviewer | Onafhankelijke code-review vóór een merge: correctheid, eenvoud, herbruik, efficiëntie | [`06-19-extension.md`](.claude/extensions/06-19-extension.md) |
-| **Sean** 🛡️ #23 | Security Engineer | Onafhankelijke security-review vóór een merge: secrets/PII, injection-oppervlak, guardrail-audits | [`06-23-extension.md`](.claude/extensions/06-23-extension.md) |
-| **Ravi** ♻️ #24 | Refactoring-specialist | Duplicatie-wachter: spoort verbatim-gedeelde gedragsregels (grenzen/werkwijzen) over agent-defs en persona's op en promoveert ze tot één gedeelde bron voor de kring die de regel deelt | [`06-24-extension.md`](.claude/extensions/06-24-extension.md) |
+| **Chris** 🧭 #01 | Chief of Staff | Orchestrator: intake, routing, toelichting, workflow-bewaking. Elke opdracht start en eindigt bij hem. | [`01-01-extension.md`](.claude/plugins/claude-specialists/specialists/01-01-extension.md) |
+| **Derek** 🐙 #05 | DevOps Engineer | Branches, pull requests, merges, labels, `gh`-CLI — tot en met de merge | [`05-05-extension.md`](.claude/plugins/claude-specialists/specialists/05-05-extension.md) |
+| **Rebecca** 🔬 #07 | Research Specialist | Diepgaand, bronvermeld uitzoekwerk: deep dives, optie-vergelijkingen, voorwerk vóór een wijziging of dossier | [`03-07-extension.md`](.claude/plugins/claude-specialists/specialists/03-07-extension.md) |
+| **Rendall** 🎬 #06 | Release Manager | Changelog, entry-bestanden folden, en de repo-brede release (`cut-release.ps1`): lockstep-versiebump + git-tag `vX.Y.Z` + `## Releases`-blok | [`05-06-extension.md`](.claude/plugins/claude-specialists/specialists/05-06-extension.md) |
+| **Sylvester** ⚙️ #15 | Systeembeheerder | Scripts (`scripts/**`), harness-config, `marketplace.json`/`plugin.json`, de lint-poort | [`05-15-extension.md`](.claude/plugins/claude-specialists/specialists/05-15-extension.md) |
+| **Tessa** 📜 #16 | Technical Writer | `CLAUDE.md`, `README.md`, de manuals + agent-def-teksten, de workflow-regels | [`06-16-extension.md`](.claude/plugins/claude-specialists/specialists/06-16-extension.md) |
+| **Edith** 🔍 #17 | Eindredacteur | De onafhankelijke laatste blik vóór een PR: taal/spelling, consistentie, dode links | [`06-17-extension.md`](.claude/plugins/claude-specialists/specialists/06-17-extension.md) |
+| **Tycho** 🧪 #18 | Test Engineer | Geautomatiseerde tests voor de scripts (lint/release), regressiebewaking | [`04-18-extension.md`](.claude/plugins/claude-specialists/specialists/04-18-extension.md) |
+| **Victor** 🧐 #19 | Code Reviewer | Onafhankelijke code-review vóór een merge: correctheid, eenvoud, herbruik, efficiëntie | [`06-19-extension.md`](.claude/plugins/claude-specialists/specialists/06-19-extension.md) |
+| **Sean** 🛡️ #23 | Security Engineer | Onafhankelijke security-review vóór een merge: secrets/PII, injection-oppervlak, guardrail-audits | [`06-23-extension.md`](.claude/plugins/claude-specialists/specialists/06-23-extension.md) |
+| **Ravi** ♻️ #24 | Refactoring-specialist | Duplicatie-wachter: spoort verbatim-gedeelde gedragsregels (grenzen/werkwijzen) over agent-defs en persona's op en promoveert ze tot één gedeelde bron voor de kring die de regel deelt | [`06-24-extension.md`](.claude/plugins/claude-specialists/specialists/06-24-extension.md) |
 
 De volledige routing (welke opdracht naar wie) en de ketens staan in
-[Chris' manual #01](.claude/extensions/01-01-extension.md) en het
+[Chris' manual #01](.claude/plugins/claude-specialists/specialists/01-01-extension.md) en het
 [Specialisten-handboek](.claude/README.md). De rest van de `specialists`-plugin (Paula #09,
 Vera #11, Gwen #12, Cody #13) is óók ingeschakeld en aanroepbaar als `@specialists:<naam>`,
 maar heeft hier zelden werk en dus (nog) geen repo-lens. Nieuwe specialisten worden **nooit** zelf
 verzonnen — alleen in overleg met Dave (zie
-[Chris #01](.claude/extensions/01-01-extension.md#nieuwe-specialisten--alleen-in-overleg)).
+[Chris #01](.claude/plugins/claude-specialists/specialists/01-01-extension.md#nieuwe-specialisten--alleen-in-overleg)).
 
 ### Structuur — waar wat woont
 
@@ -197,7 +197,8 @@ verzonnen — alleen in overleg met Dave (zie
   (`build-agent-defs.ps1` — vult de gedeelde blokken uit `agent-shared/`), en de tests.
 - **`releases/`** — de release-historie: `development/<X.Y>/<X.Y.Z>.md` (volledige notes per versie) +
   `README.md` (overzichtstabel). `CHANGELOG.md`'s `## Releases`-sectie verwijst hiernaartoe.
-- **`.claude/`** — de repo-laag: `extensions/` (de repo-lenzen + persona-manuals), `settings.json`
+- **`.claude/`** — de repo-laag: `plugins/claude-specialists/specialists/` (de repo-lenzen +
+  persona-manuals, op het **plugin-pad** — de standaard-locatie), `settings.json`
   (harness-config), en `README.md` (het specialisten-handboek).
 - **`CLAUDE.md`, `README.md`, `CHANGELOG.md`** — de root-docs — en **`.github/`**
   (`pull_request_template.md` + `workflows/ci.yml`, de CI-poort die de lint + testsuites bij elke
@@ -210,25 +211,25 @@ De grondwet hierboven, hier concreet ingevuld:
 - **De hoofdbranch is `main`.** Alle wijzigingen via een `<prefix>/<korte-naam>`-branch + PR naar
   `main`. Geldige prefixes ([`scripts/lib/branch-info.ps1`](scripts/lib/branch-info.ps1)):
   `feat/` → enhancement · `fix/` → bug · `docs/` → documentation · `chore/` → documentation. Zie
-  [Derek #05](.claude/extensions/05-05-extension.md#branch-classificeren-benoemen-en-aanmaken).
+  [Derek #05](.claude/plugins/claude-specialists/specialists/05-05-extension.md#branch-classificeren-benoemen-en-aanmaken).
 - **De lint- en test-poort zijn de veiligheidswacht vóór elke PR.**
   [`scripts/lint/check-plugin-integrity.ps1`](scripts/lint/check-plugin-integrity.ps1) valideert de
   manifesten (`marketplace.json` + elke `plugin.json`), de agent-def- en manual-frontmatter en scant
   op dode links; daarna draaien alle testsuites (`scripts/tests/*.tests.ps1`), exact zoals CI.
   `open-pr.ps1` draait beide poorten eerst; bij een error of falende suite wordt er niet gepusht en
-  geen PR geopend (`-SkipLint`/`-SkipTests` zijn de noodkleppen). Zie [Sylvester #15](.claude/extensions/05-15-extension.md).
+  geen PR geopend (`-SkipLint`/`-SkipTests` zijn de noodkleppen). Zie [Sylvester #15](.claude/plugins/claude-specialists/specialists/05-15-extension.md).
 - **Twee bewuste uitzonderingen op "nooit direct op `main`":**
   1. De **fold-commit** na een merge: [`fold-changelog-entry.ps1`](scripts/release/fold-changelog-entry.ps1)
      vouwt het entry-bestand in `CHANGELOG.md` en verwijdert het — scope beperkt tot `CHANGELOG.md` +
-     het entry-bestand. Zie [Rendall #06](.claude/extensions/05-06-extension.md#changelog).
+     het entry-bestand. Zie [Rendall #06](.claude/plugins/claude-specialists/specialists/05-06-extension.md#changelog).
   2. De **release-commit** (alleen op expliciet verzoek): [`cut-release.ps1`](scripts/release/cut-release.ps1)
      bumpt alle plugin-versies in lockstep, genereert de release-notes in `releases/development/`,
      verwijst ernaar vanuit `## Releases`, commit dat op `main` en tagt `vX.Y.Z`. Bewust géén
-     branch/PR — net als de fold. Zie [Rendall #06](.claude/extensions/05-06-extension.md#versioning--releases).
+     branch/PR — net als de fold. Zie [Rendall #06](.claude/plugins/claude-specialists/specialists/05-06-extension.md#versioning--releases).
 - **Deze repo is `public`.** Bewuste keuze, zodat de remote `github`-marketplace-source zonder
   gh-auth te lezen is. Gevolg: hier hoort **niets vertrouwelijks** in — geen persoonlijke informatie,
   inloggegevens of secrets. De agent-defs van groep 1 zijn daarom bewust repo-neutraal; repo-specifieke
-  context woont in de `.claude/extensions/`-lens van de consumerende (private) repo.
+  context woont in de `.claude/plugins/claude-specialists/specialists/`-lens van de consumerende (private) repo.
 - **Wijzigingen aan gedeelde agent-defs landen hier eerst**, worden hier gecommit, en pas daarna door
   de consumerende repo's opgehaald — nooit andersom.
 
@@ -240,6 +241,6 @@ geleerde lessen in de docs, de grondwet boven elk gemak) is draagbaar en staat b
 fold-uitzondering, de scripts en de plugin-lint-poort) is van deze repo en staat in dit slot.
 
 De orchestrator (Chris) wordt altijd meegeladen; hij verwijst on-demand door naar de specialisten
-in [`.claude/extensions/`](.claude/extensions/).
+in [`.claude/plugins/claude-specialists/specialists/`](.claude/plugins/claude-specialists/specialists/).
 
-@.claude/extensions/01-01-extension.md
+@.claude/plugins/claude-specialists/specialists/01-01-extension.md

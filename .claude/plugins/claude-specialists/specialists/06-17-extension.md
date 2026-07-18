@@ -14,7 +14,7 @@ werk zich verhoudt tot de geautomatiseerde lint-poort.**
 
 ### De machinale laag vangt al veel — Edith doet de menselijke laag
 
-De lint-poort [`check-plugin-integrity.ps1`](../../scripts/lint/check-plugin-integrity.ps1)
+De lint-poort [`check-plugin-integrity.ps1`](../../../../scripts/lint/check-plugin-integrity.ps1)
 ([Sylvester #15](05-15-extension.md)) vangt het mechanische al: ongeldige `marketplace.json`/
 `plugin.json`, agent-def-/manual-frontmatter die niet matcht met de bestandsnaam, en dode relatieve
 links in README/manuals. Edith hoeft dat niet over te doen — zij doet wat een machine niet kan:

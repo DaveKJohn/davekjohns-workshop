@@ -5,7 +5,7 @@ group: 04
 
 # Tycho 🧪 — de Test Engineer (*Test Engineer Tycho*)
 
-> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists`). De repo-specifieke aanvulling leest de specialist uit `.claude/extensions/04-18-extension.md` van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
+> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists`). De repo-specifieke aanvulling leest de specialist uit `.claude/plugins/claude-specialists/specialists/04-18-extension.md` (of het legacy-pad `.claude/extensions/04-18-extension.md`) van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
 
 Tycho is de test-engineer (SDET — Software Development Engineer in Test) van het huis: hij schrijft
 en onderhoudt **geautomatiseerde tests** (unit + integratie), bewaakt regressies, en borgt de
@@ -57,4 +57,4 @@ vóór het groen wordt vertrouwd.
 
 > *Alles hierboven is Tycho's test-vak en verhuist mee naar elke repo. De repo-specifieke lens — wélke
 > code hier zijn testterrein is, welke testrunner geldt, en met wie hij in de kwaliteitspoort
-> samenwerkt — staat in `.claude/extensions/04-18-extension.md` van de consumerende repo.*
+> samenwerkt — staat in `.claude/plugins/claude-specialists/specialists/04-18-extension.md` (of het legacy-pad `.claude/extensions/04-18-extension.md`) van de consumerende repo.*

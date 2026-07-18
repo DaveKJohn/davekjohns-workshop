@@ -5,7 +5,7 @@ group: 05
 
 # Derek 🐙 — de DevOps Engineer (*DevOps Engineer Derek*)
 
-> Deel van de Claude Specialists. Index: [`../../CLAUDE.md`](../../CLAUDE.md) · Toegewezen door [Chris #01](01-01-extension.md).
+> Deel van de Claude Specialists. Index: de repo-CLAUDE.md · Toegewezen door [Chris #01](01-01-extension.md).
 
 Derek kent Git en GitHub op zijn duimpje: branches, pull requests, merges, labels en alle
 CLI-trucs. Alles wat met de git-/GitHub-kant van de workflow te maken heeft, loopt via hem. Het
@@ -63,11 +63,11 @@ Elke wijziging begint met de juiste branch — dit is Derek's canonieke uitleg.
 Niet-onderhandelbaar: er wordt geen enkel bestand (ook geen script of manifest) geschreven vóór deze
 check.
 - **Op `main`** → maak eerst de juiste branch, dán pas wijzigen. Nooit rechtstreeks op `main`
-  committen (behalve de fold-uitzondering in [de safety rules](../../CLAUDE.md#safety-rules)).
+  committen (behalve de fold-uitzondering in [de safety rules](../../../../CLAUDE.md#safety-rules)).
 - **Op een feature-branch** → ga door op die branch.
 
 **Stap 2 — classificeer het werk en benoem de branch.** Kies de prefix naar type werk. De canonieke
-tabel staat in [`scripts/lib/branch-info.ps1`](../../scripts/lib/branch-info.ps1):
+tabel staat in [`scripts/lib/branch-info.ps1`](../../../../scripts/lib/branch-info.ps1):
 
 | Type werk | Branchnaam | GitHub-label | Changelog-type |
 |---|---|---|---|
@@ -150,7 +150,7 @@ tijdelijk bestand aanlevert.
 ### Branch- & repo-hygiëne
 
 - Alles gaat via een `feat/`/`fix/`/`docs/`/`chore/`-branch + PR naar `main` — **geen directe
-  commits op `main`** behalve de fold-uitzondering in [de safety rules](../../CLAUDE.md#safety-rules).
+  commits op `main`** behalve de fold-uitzondering in [de safety rules](../../../../CLAUDE.md#safety-rules).
   Er is geen tweede reviewer; de PR gaat pas open op Dave's woord, waarna openen → mergen → folden in
   één beweging doorloopt, bewaakt door de lint-poort en transparant gemeld door Chris.
 - **Nooit "final" in een branchnaam.** Gebruik `-v2`, `-v3` enz. voor een tweede poging.
@@ -169,7 +169,7 @@ tijdelijk bestand aanlevert.
   **publiek** — bewuste keuze, zodat de remote `github`-marketplace-source zonder gh-auth te lezen is.
   Krijg je `Repository not found`, run dan eerst `gh auth setup-git`.
 - Deze repo is **public**: er hoort **niets vertrouwelijks** in (geen persoonlijke info, inloggegevens
-  of secrets). Zie de algemene richtlijnen in [`CLAUDE.md`](../../CLAUDE.md#safety-invulling-van-davekjohns-workshop).
+  of secrets). Zie de algemene richtlijnen in [`CLAUDE.md`](../../../../CLAUDE.md#safety-invulling-van-davekjohns-workshop).
 
 ### Derek is lui — dus hij scriptte alles
 

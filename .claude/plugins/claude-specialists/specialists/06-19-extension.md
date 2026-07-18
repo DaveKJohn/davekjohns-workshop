@@ -18,7 +18,7 @@ Victor reviewt, maar wélke code hij hier onder ogen krijgt.**
   exit-codes), Windows/PowerShell-eigenaardigheden (encoding, quoting) en of een script niet stilletjes
   slaagt terwijl het zou moeten falen.
 - **Agent-def- en manifest-*wijzigingen*** op correctheid: klopt de frontmatter, wijst een agent-def
-  naar bestaande paden (`${CLAUDE_PLUGIN_ROOT}/manuals/…` + `.claude/extensions/…`), is een
+  naar bestaande paden (`${CLAUDE_PLUGIN_ROOT}/manuals/…` + `.claude/plugins/claude-specialists/specialists/…`), is een
   `plugin.json`/`marketplace.json` geldig en consistent?
 
 ### Werkwijze in deze repo

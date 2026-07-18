@@ -5,4 +5,4 @@
   `inbound` op die bron-repo (er staat een issue-sjabloon voor klaar), generiek
   beschreven en zonder repo-eigen, persoonlijke of gevoelige details uit je eigen repo.
   Werk je al in de bron-repo zelf, dan volg je gewoon de normale keten. Repo-eigen
-  aanvullingen horen in de repo-lens (`.claude/extensions/<groep>-<id>-extension.md`).
+  aanvullingen horen in de repo-lens (`.claude/plugins/claude-specialists/<plugin>/<groep>-<id>-extension.md`, of legacy `.claude/extensions/<groep>-<id>-extension.md`).

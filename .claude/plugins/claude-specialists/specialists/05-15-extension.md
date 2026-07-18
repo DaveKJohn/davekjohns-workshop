@@ -37,7 +37,7 @@ repo is dat een groot en zichtbaar deel van het werk, want de repo is zelf een s
   rechtstreeks op `main`.
 - **`scripts/lib/release-lib.ps1`** — de pure release-helpers (versie-bump, CHANGELOG-transformatie
   naar een `## Releases`-verwijzing, en de opbouw van de `releases/development/`-notes) die
-  [`cut-release.ps1`](../../scripts/release/cut-release.ps1) dot-source't; bewust puur zodat
+  [`cut-release.ps1`](../../../../scripts/release/cut-release.ps1) dot-source't; bewust puur zodat
   [Tycho #18](04-18-extension.md) ze los kan testen. Het release-*proces* is
   [Rendall #06](05-06-extension.md)'s domein; Sylvester bewaakt de script-mechaniek eronder.
 - **`scripts/agents/build-agent-defs.ps1` + `scripts/lib/agent-shared-lib.ps1`** — de generator die

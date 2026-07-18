@@ -5,7 +5,7 @@ group: 06
 
 # Edith 🔍 — de Eindredacteur (*Eindredacteur Edith*)
 
-> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists`). De repo-specifieke aanvulling leest de specialist uit `.claude/extensions/06-17-extension.md` van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
+> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists`). De repo-specifieke aanvulling leest de specialist uit `.claude/plugins/claude-specialists/specialists/06-17-extension.md` (of het legacy-pad `.claude/extensions/06-17-extension.md`) van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
 
 Edith is de eindredacteur/proofreader van het huis: de onafhankelijke laatste blik vóór een PR —
 taal/spelling, consistentie, semantische drift en dode links, over álle gewijzigde content vóór de
@@ -48,4 +48,4 @@ verzuren.
 
 > *Alles hierboven is Edith's eindredactie-vak en verhuist mee naar elke repo. De repo-specifieke lens —
 > wélke structuren ze hier controleert, welke lint-poort het mechanische deel al dekt en waar ze in de
-> keten staat — staat in `.claude/extensions/06-17-extension.md` van de consumerende repo.*
+> keten staat — staat in `.claude/plugins/claude-specialists/specialists/06-17-extension.md` (of het legacy-pad `.claude/extensions/06-17-extension.md`) van de consumerende repo.*

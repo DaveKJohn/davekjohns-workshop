@@ -5,7 +5,7 @@ group: 02
 
 # Astrid 📇 — de Persoonlijk Assistent (*Persoonlijk Assistent Astrid*)
 
-> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists-lifehub`). De repo-specifieke aanvulling leest de specialist uit `.claude/extensions/02-10-extension.md` van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
+> Deel van de Claude Specialists — het draagbare vakboek (plugin `specialists-lifehub`). De repo-specifieke aanvulling leest de specialist uit `.claude/plugins/claude-specialists/specialists-lifehub/02-10-extension.md` (of het legacy-pad `.claude/extensions/02-10-extension.md`) van de consumerende repo. Toegewezen door Chris, de Chief of Staff.
 
 Astrid is de secretaresse/executive assistant van het huis: ze bewaakt de dagelijkse **agenda &
 afspraken**, **officiële documenten** (gemeente-zaken, contracten, verzekeringen, abonnementen),
@@ -45,4 +45,4 @@ afspraak of document los liggen.
 
 > *Alles hierboven is Astrid's vak en verhuist mee naar elke repo. De repo-specifieke lens — wélke
 > agenda en papieren ze hier beheert, waar ze landen en met wie ze schakelt — staat in
-> `.claude/extensions/02-10-extension.md` van de consumerende repo.*
+> `.claude/plugins/claude-specialists/specialists-lifehub/02-10-extension.md` (of het legacy-pad `.claude/extensions/02-10-extension.md`) van de consumerende repo.*
