@@ -2,7 +2,7 @@
 .SYNOPSIS
     Bootstrap-script van de specialists-init-skill: zet in een CONSUMERENDE repo de niet-plugin-laag
     van het Claude-Specialists-systeem op -- de orchestrator + hoofdloop-persona's (Chris/Derek/
-    Rendall) via de @-import in CLAUDE.md, plus een gedocumenteerd settings-/hooks-voorstel.
+    Rendall) via @-imports in CLAUDE.md, plus een gedocumenteerd settings-/hooks-voorstel.
 .DESCRIPTION
     Een Claude Code-plugin kan subagents leveren, maar GEEN altijd-aan-hoofdloop-context injecteren
     en niet de CLAUDE.md van een consument bewerken. Chris (de orchestrator) is precies zulke
@@ -11,16 +11,22 @@
     marketplace-source + enabledPlugins al heeft ingesteld en de sessie is herstart (anders is de
     skill zelf nog niet beschikbaar -- de kip-en-ei die de skill in stap 0 documenteert).
 
+    De repo-lenzen wonen op het PLUGIN-PAD (.claude/plugins/<familie>/<plugin>/, de standaard) en de
+    persona-lenzen zijn LENS-ONLY: geen body-kopie, alleen het repo-eigen '## Eigen aan deze repo'-slot.
+    De draagbare body komt via een @-import rechtstreeks uit de plugin-install (het ~/.claude/plugins/
+    marketplaces/...-pad). Zo woont elke gedragsregel op een plek (de plugin), niet gedupliceerd.
+
     Het doet alleen VEILIGE, additieve handelingen -- het overschrijft nooit bestaande inhoud:
-      1. Kopieert <plugin>/personas/<g>-<id>-persona.md naar
-         <ConsumerRoot>/.claude/extensions/<g>-<id>-extension.md -- alleen als die nog niet bestaat.
+      1. Zet per persona (<plugin>/personas/<g>-<id>-persona.md) een LENS-ONLY extension neer in
+         <ConsumerRoot>/.claude/plugins/<familie>/<plugin>/<g>-<id>-extension.md -- alleen als die nog
+         niet bestaat. De body komt uit de plugin-install; de extension draagt enkel het repo-lens-slot.
       1b. Zet voor elke subagent van de INGESCHAKELDE plugin(s) (enabledPlugins in de settings van
-          de consument; zonder settings alleen de eigen plugin) een lege lens-scaffold neer in
-          .claude/extensions/<g>-<id>-extension.md, duidelijk gemarkeerd als VUL-IN -- zo is
-          zichtbaar waar repo-specifieke taken per specialist worden aangevuld.
-      2. Zorgt dat <ConsumerRoot>/CLAUDE.md onderaan de @-import van de orchestrator draagt
-         (@.claude/extensions/01-01-extension.md). Ontbreekt CLAUDE.md, dan schrijft het een minimale
-         scaffold; bestaat de import al, dan doet het niets.
+          de consument; zonder settings alleen de eigen plugin) een lege lens-scaffold neer op het
+          plugin-pad, duidelijk gemarkeerd als VUL-IN.
+      2. Zorgt dat <ConsumerRoot>/CLAUDE.md onderaan de TWEE @-imports van de orchestrator draagt: de
+         body uit de plugin-install (~/.claude/plugins/marketplaces/.../01-01-persona.md) en de
+         repo-lens (.claude/plugins/<familie>/<plugin>/01-01-extension.md). Ontbreekt CLAUDE.md, dan
+         schrijft het een minimale scaffold; bestaan de imports al, dan doet het niets.
       3. Schrijft een voorstel-snippet (.claude/settings.suggested.jsonc) met de aanbevolen
          permissions.deny + een hooks-stub. Het RAAKT settings.json NIET aan -- een JSON-merge is
          repo-specifiek en risicovol, dus die beoordeling laat het aan de gebruiker/Claude.
@@ -40,6 +46,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
 # De persona-bron zit twee niveaus boven dit script: <plugin>/skills/specialists-init/ -> <plugin>/personas/
 $personaDir = Join-Path $PSScriptRoot '..\..\personas'
@@ -54,49 +61,99 @@ if (-not (Test-Path -LiteralPath $ConsumerRoot -PathType Container)) {
 }
 $ConsumerRoot = (Resolve-Path -LiteralPath $ConsumerRoot).Path
 
+# --- Familie/plugin + het ~-pad naar de plugin-install afleiden -------------------------------------
+# personaDir = <...>/claude-code-plugins/<familie>/<plugin>/personas. Daaruit halen we de plugin die de
+# persona's draagt en de familie-map -- die bepalen het plugin-pad in de consument
+# (.claude/plugins/<familie>/<plugin>/). De draagbare body komt uit de plugin-install; als personaDir
+# onder de gebruikers-home (~) valt (de normale marketplace-cache), drukken we dat pad als ~-pad uit
+# voor de @-import in CLAUDE.md.
+# github-source-cache: <...>/claude-code-plugins/<familie>/<plugin>/personas -> familie = segment na
+# 'claude-code-plugins', plugin = het segment daarna. Fallback (versie-cache <...>/<plugin>/<versie>/
+# personas): plugin = map boven personas (of boven de versie-map), familie = de map daarboven.
+$segs = ($personaDir -replace '/', '\') -split '\\' | Where-Object { $_ }
+$ccpIdx = [array]::IndexOf([string[]]$segs, 'claude-code-plugins')
+if ($ccpIdx -ge 0 -and ($ccpIdx + 2) -lt $segs.Count) {
+    $family        = $segs[$ccpIdx + 1]
+    $personaPlugin = $segs[$ccpIdx + 2]
+} else {
+    $pdParent = Split-Path $personaDir -Parent
+    if ((Split-Path $pdParent -Leaf) -match '^\d+\.\d+\.\d+') {
+        $personaPlugin = Split-Path (Split-Path $pdParent -Parent) -Leaf
+        $family        = Split-Path (Split-Path (Split-Path $pdParent -Parent) -Parent) -Leaf
+    } else {
+        $personaPlugin = Split-Path $pdParent -Leaf
+        $family        = Split-Path (Split-Path $pdParent -Parent) -Leaf
+    }
+}
+$homeDir = $HOME
+if ($personaDir.StartsWith($homeDir, [System.StringComparison]::OrdinalIgnoreCase)) {
+    $personaTilde = '~' + $personaDir.Substring($homeDir.Length)
+} else {
+    $personaTilde = $personaDir
+}
+$personaTilde = $personaTilde -replace '\\', '/'
+
+# Plugin-pad in de consument (de standaard-locatie voor de lenzen).
+$padRel = ".claude/plugins/$family"
+$padDirRoot = Join-Path $ConsumerRoot (".claude\plugins\$family")
+
 Write-Host "== specialists-init bootstrap -- $ConsumerRoot ==" -ForegroundColor Cyan
 
-# --- 1. Persona-sjablonen naar .claude/extensions/ (nooit overschrijven) ----------------------------
-$extDir = Join-Path $ConsumerRoot '.claude\extensions'
-if (-not (Test-Path -LiteralPath $extDir)) {
-    New-Item -ItemType Directory -Path $extDir -Force | Out-Null
-    Write-Host "  [maak]  .claude/extensions/ aangemaakt." -ForegroundColor Green
-}
+# --- 1. Persona-lenzen (LENS-ONLY) naar het plugin-pad (nooit overschrijven) ------------------------
+$personaDest = Join-Path $padDirRoot $personaPlugin
+if (-not (Test-Path -LiteralPath $personaDest)) { New-Item -ItemType Directory -Path $personaDest -Force | Out-Null }
 
 $copied = 0; $kept = 0
 Get-ChildItem -Path $personaDir -Filter '*-persona.md' -File | Sort-Object Name | ForEach-Object {
     if ($_.BaseName -notmatch '^(\d{2})-(\d{2})-persona$') { return }
-    $dest = Join-Path $extDir ($_.BaseName -replace '-persona$', '-extension')
-    $dest = "$dest.md"
+    $g = $Matches[1]; $id = $Matches[2]
+    $dest = Join-Path $personaDest "$g-$id-extension.md"
     if (Test-Path -LiteralPath $dest -PathType Leaf) {
         Write-Host "  [houd]  $(Split-Path $dest -Leaf) bestaat al -- niet overschreven." -ForegroundColor DarkGray
         $script:kept++
+        return
+    }
+    # Titel (de eerste #-kop) uit het sjabloon halen; de body zelf kopieren we NIET (lens-only).
+    # Als UTF8 lezen -- de titel bevat een emoji en em-dash die anders mojibake worden.
+    $title = ''
+    foreach ($line in (([System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8)) -split "`r?`n")) {
+        if ($line -match '^#\s') { $title = $line.TrimEnd(); break }
+    }
+    if (-not $title) { $title = "# $g-$id" }
+    $bodyPath = "$personaTilde/$($_.Name)"
+    if ($g -eq '01' -and $id -eq '01') {
+        $loadNote = 'Chris laadt zijn body automatisch via de `@`-import onderaan `CLAUDE.md`; de andere persona''s worden on-demand van dit pad gelezen.'
     } else {
-        # De persona-sjablonen dragen bewust GEEN '## Eigen aan deze repo'-slot meer -- bij een
-        # consument die de body rechtstreeks importeert (lens-only-model) laadt dat slot als ruis
-        # mee. We nemen de draagbare body over en voegen hier zelf een verse VUL-IN-slot toe, zodat
-        # een verse consument een duidelijke plek voor de repo-lens houdt (net als de lens-scaffolds
-        # in stap 1b).
-        $portable = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8).TrimEnd()
-        $personaSlot = @'
+        $loadNote = 'De body wordt on-demand uit dit pad gelezen wanneer Chris deze persona erbij haalt (geen vaste `@`-import).'
+    }
+    $content = @"
+---
+id: $id
+group: $g
+---
+
+$title
+
+> Repo-lens (lens-only persona) -- de draagbare body woont in de plugin-bron:
+> ``$bodyPath``.
+> $loadNote
+
 ## Eigen aan deze repo (VUL-IN)
 
 <!-- TODO (in te vullen na bootstrap): vervang deze placeholder door de repo-lens van deze
      specialist -- wie hij of zij in DEZE repo aanstuurt of bedient en langs welke afspraken:
      het team en de routing, de ketens en de poortwachters (de safety-rules, de branch-discipline
      en de PR-regel; verwijs naar de repo-CLAUDE.md#safety-rules). Het draagbare vak blijft in de
-     plugin-persona; alleen repo-eigen zaken horen hier. Zie het gesplitste manual-model in
-     .claude/README.md. -->
-'@
-        [System.IO.File]::WriteAllText($dest, ($portable + "`n`n" + $personaSlot + "`n"), (New-Object System.Text.UTF8Encoding($false)))
-        Write-Host "  [kopie] $($_.Name) -> .claude/extensions/$(Split-Path $dest -Leaf) (+ VUL-IN-slot)" -ForegroundColor Green
-        $script:copied++
-    }
+     plugin-persona; alleen repo-eigen zaken horen hier. -->
+"@
+    [System.IO.File]::WriteAllText($dest, ($content.TrimEnd() + "`n"), $Utf8NoBom)
+    Write-Host "  [maak]  lens-only $padRel/$personaPlugin/$(Split-Path $dest -Leaf)" -ForegroundColor Green
+    $script:copied++
 }
 
 # --- 1b. Lege lens-scaffolds voor de subagent-specialisten (nooit overschrijven) --------------------
-# De agent-defs komen uit de plugin(s); de repo-lens per specialist woont in de consument. Voor elke
-# agent van de ingeschakelde plugin(s) zetten we een lege, duidelijk gemarkeerde scaffold neer.
+# De agent-defs komen uit de plugin(s); de repo-lens per specialist woont op het plugin-pad van de
+# consument. Voor elke agent van de ingeschakelde plugin(s) zetten we een lege, gemarkeerde scaffold neer.
 
 # Eigen plugin-naam: in de bron-layout is de mapnaam de plugin-naam; in de plugin-cache is dat de
 # map boven de versie-map (...\<plugin>\<x.y.z>\).
@@ -162,10 +219,12 @@ foreach ($pluginName in ($pluginNames | Sort-Object -Unique)) {
         Write-Host "  [let op] agents-map van plugin '$pluginName' niet gevonden -- overgeslagen." -ForegroundColor Yellow
         continue
     }
+    $pluginPad = Join-Path $padDirRoot $pluginName
+    if (-not (Test-Path -LiteralPath $pluginPad)) { New-Item -ItemType Directory -Path $pluginPad -Force | Out-Null }
     Get-ChildItem -Path $agentsDir -Filter '*-agent.md' -File | Sort-Object Name | ForEach-Object {
         if ($_.BaseName -notmatch '^(\d{2})-(\d{2})-agent$') { return }
         $group = $Matches[1]; $id = $Matches[2]
-        $dest = Join-Path $extDir "$group-$id-extension.md"
+        $dest = Join-Path $pluginPad "$group-$id-extension.md"
         if (Test-Path -LiteralPath $dest -PathType Leaf) { $script:lensKept++; return }
         $agentName = ''
         foreach ($line in (Get-Content -LiteralPath $_.FullName -TotalCount 10)) {
@@ -196,21 +255,24 @@ group: $group
      - verwijzingen naar de safety-rules/poortwachters van deze repo.
      Het draagbare vak blijft in de plugin-manual; alleen repo-eigen zaken horen hier. -->
 "@
-        [System.IO.File]::WriteAllText($dest, $template, (New-Object System.Text.UTF8Encoding($false)))
-        Write-Host "  [maak]  lens-scaffold .claude/extensions/$group-$id-extension.md ($displayName, $pluginName)" -ForegroundColor Green
+        [System.IO.File]::WriteAllText($dest, $template, $Utf8NoBom)
+        Write-Host "  [maak]  lens-scaffold $padRel/$pluginName/$group-$id-extension.md ($displayName)" -ForegroundColor Green
         $script:scaffolded++
     }
 }
 
-# --- 2. De @-import onderaan CLAUDE.md --------------------------------------------------------------
-$importLine = '@.claude/extensions/01-01-extension.md'
+# --- 2. De twee @-imports onderaan CLAUDE.md (body uit de plugin + de repo-lens) --------------------
+$bodyImport = "@$personaTilde/01-01-persona.md"
+$lensImport = "@$padRel/$personaPlugin/01-01-extension.md"
 $claudeMd = Join-Path $ConsumerRoot 'CLAUDE.md'
 $importBlock = @"
 
-De orchestrator (Chris) wordt altijd meegeladen; hij verwijst on-demand door naar de specialisten
-in [``.claude/extensions/``](.claude/extensions/).
+De orchestrator (Chris) wordt altijd meegeladen -- zijn draagbare body uit de plugin-install en zijn
+repo-lens uit het plugin-pad; hij verwijst on-demand door naar de specialisten in ``$padRel/``.
 
-$importLine
+$bodyImport
+
+$lensImport
 "@
 
 if (-not (Test-Path -LiteralPath $claudeMd -PathType Leaf)) {
@@ -222,16 +284,16 @@ een Chief of Staff. Deze scaffold is door de ``specialists-init``-skill neergeze
 governance en safety-rules van deze repo.
 $importBlock
 "@
-    [System.IO.File]::WriteAllText($claudeMd, $scaffold, (New-Object System.Text.UTF8Encoding($false)))
-    Write-Host "  [maak]  CLAUDE.md-scaffold aangemaakt met de orchestrator-import." -ForegroundColor Green
+    [System.IO.File]::WriteAllText($claudeMd, $scaffold, $Utf8NoBom)
+    Write-Host "  [maak]  CLAUDE.md-scaffold aangemaakt met de orchestrator-imports." -ForegroundColor Green
 } else {
     $md = [System.IO.File]::ReadAllText($claudeMd, [System.Text.Encoding]::UTF8)
-    if ($md -match [regex]::Escape($importLine)) {
-        Write-Host "  [houd]  CLAUDE.md heeft de orchestrator-import al." -ForegroundColor DarkGray
+    if ($md -match [regex]::Escape($lensImport)) {
+        Write-Host "  [houd]  CLAUDE.md heeft de orchestrator-imports al." -ForegroundColor DarkGray
     } else {
         $md = $md.TrimEnd() + "`n" + $importBlock + "`n"
-        [System.IO.File]::WriteAllText($claudeMd, $md, (New-Object System.Text.UTF8Encoding($false)))
-        Write-Host "  [voeg]  orchestrator-import toegevoegd onderaan CLAUDE.md." -ForegroundColor Green
+        [System.IO.File]::WriteAllText($claudeMd, $md, $Utf8NoBom)
+        Write-Host "  [voeg]  orchestrator-imports toegevoegd onderaan CLAUDE.md." -ForegroundColor Green
     }
 }
 
@@ -266,14 +328,14 @@ $suggestion = @'
   }
 }
 '@
-[System.IO.File]::WriteAllText($suggestPath, $suggestion, (New-Object System.Text.UTF8Encoding($false)))
+[System.IO.File]::WriteAllText($suggestPath, $suggestion, $Utf8NoBom)
 Write-Host "  [maak]  .claude/settings.suggested.jsonc neergezet (voorstel -- niet actief)." -ForegroundColor Green
 
 # --- Rapport ----------------------------------------------------------------------------------------
 Write-Host ""
-Write-Host "Klaar: $copied persona('s) gekopieerd, $kept al aanwezig; $scaffolded lens-scaffold(s) neergezet, $lensKept al aanwezig." -ForegroundColor Cyan
+Write-Host "Klaar: $copied persona-lens(en) neergezet, $kept al aanwezig; $scaffolded lens-scaffold(s) neergezet, $lensKept al aanwezig." -ForegroundColor Cyan
 Write-Host "Volgende stappen (handmatig -- dit script raakt settings.json/hooks bewust niet aan):" -ForegroundColor Cyan
-Write-Host "  1. Vul in elk .claude/extensions/*-extension.md het '## Eigen aan deze repo'-slot met de repo-lens (de VUL-IN-scaffolds mogen leeg blijven tot een specialist hier echt werk krijgt)." -ForegroundColor Gray
+Write-Host "  1. Vul in elk $padRel/*/*-extension.md het '## Eigen aan deze repo'-slot met de repo-lens (de VUL-IN-scaffolds mogen leeg blijven tot een specialist hier echt werk krijgt)." -ForegroundColor Gray
 Write-Host "  2. Neem uit .claude/settings.suggested.jsonc over wat je wilt in settings.json en verwijder het voorstel." -ForegroundColor Gray
-Write-Host "  3. Herstart de Claude Code-sessie zodat de nieuwe @-import + config actief worden." -ForegroundColor Gray
+Write-Host "  3. Herstart de Claude Code-sessie zodat de nieuwe @-imports + config actief worden." -ForegroundColor Gray
 exit 0
