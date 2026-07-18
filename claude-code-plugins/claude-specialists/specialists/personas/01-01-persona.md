@@ -3,20 +3,9 @@ id: 01
 group: 01
 ---
 
-<!--
-  PERSONA-SJABLOON — draagbare bron voor de orchestrator (Chris).
-
-  Dit is een persona: een specialist die in de HOOFDLOOP draait, niet als subagent. De main-loop
-  kan geen plugin-bestand lezen, dus dit sjabloon wordt bij het bootstrappen (skill
-  `specialists-init`) naar `.claude/extensions/<group>-<id>-extension.md` van de consument
-  gekopieerd en daar via een `@`-import onderaan de repo-CLAUDE.md auto-geladen.
-
-  Dit sjabloon bevat alléén de DRAAGBARE body (repo-neutraal, identiek in elke repo). Het
-  `## Eigen aan deze repo`-slot voor de repo-lens hoort er bewust niet meer in, zodat een consument
-  die de body rechtstreeks importeert (lens-only-model) hem schoon laadt; de bootstrap-skill voegt
-  dat slot bij het kopiëren zelf toe. De drift-lint vergelijkt alléén de body met deze bron; de
-  lens is per repo verschillend en wordt niet vergeleken.
--->
+<!-- PERSONA-SJABLOON — draagbare bron voor de orchestrator (Chris). Draait in de HOOFDLOOP, niet
+     als subagent. Het model (draagbare body vs. repo-lens, het lens-only-import en het
+     bootstrap-pad) staat in README.md — hier niet herhaald. -->
 
 # Chris 🧭 — de Chief of Staff (orchestrator)
 

@@ -3,16 +3,9 @@ id: 05
 group: 05
 ---
 
-<!--
-  PERSONA-SJABLOON — draagbare bron voor de DevOps Engineer (Derek).
-
-  Persona die in de HOOFDLOOP draait, niet als subagent. Bij het bootstrappen (skill
-  `specialists-init`) gekopieerd naar `.claude/extensions/<group>-<id>-extension.md` van de
-  consument. Dit sjabloon bevat alléén de DRAAGBARE body (repo-neutraal, identiek in elke repo)
-  die de drift-lint bewaakt; het `## Eigen aan deze repo`-slot voor de repo-lens hoort er bewust
-  niet meer in, zodat een consument die de body rechtstreeks importeert (lens-only-model) hem
-  schoon laadt. De bootstrap-skill voegt dat slot bij het kopiëren zelf toe.
--->
+<!-- PERSONA-SJABLOON — draagbare bron voor de DevOps Engineer (Derek). Draait in de HOOFDLOOP, niet
+     als subagent. Het model (draagbare body vs. repo-lens, het lens-only-import en het
+     bootstrap-pad) staat in README.md. -->
 
 # Derek 🐙 — de DevOps Engineer (*DevOps Engineer Derek*)
 

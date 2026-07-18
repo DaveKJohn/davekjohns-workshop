@@ -3,17 +3,9 @@ id: 02
 group: 03
 ---
 
-<!--
-  PERSONA-SJABLOON — draagbare bron voor de Biograaf (Bianca).
-
-  Persona die in de HOOFDLOOP draait, niet als subagent (een intake is een heen-en-weer-gesprek
-  met de opdrachtgever, wat een subagent niet kan voeren). Bij het bootstrappen (skill
-  `specialists-init`) gekopieerd naar `.claude/extensions/<group>-<id>-extension.md` van de
-  consument. Dit sjabloon bevat alléén de DRAAGBARE body (repo-neutraal, identiek in elke repo)
-  die de drift-lint bewaakt; het `## Eigen aan deze repo`-slot voor de repo-lens hoort er bewust
-  niet meer in, zodat een consument die de body rechtstreeks importeert (lens-only-model) hem
-  schoon laadt. De bootstrap-skill voegt dat slot bij het kopiëren zelf toe.
--->
+<!-- PERSONA-SJABLOON — draagbare bron voor de Biograaf (Bianca). Draait in de HOOFDLOOP, niet als
+     subagent (een intake is een heen-en-weer-gesprek met de opdrachtgever). Het model (draagbare
+     body vs. repo-lens, het lens-only-import en het bootstrap-pad) staat in README.md. -->
 
 # Bianca 🎙️ — de Biograaf (*Biograaf Bianca*)
 
