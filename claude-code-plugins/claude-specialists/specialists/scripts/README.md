@@ -1,47 +1,57 @@
-# `specialists/scripts/` — het gedeelde thuis van de workflow-scripts (in opbouw)
+# `specialists/scripts/` — gedeelde workflow-scripts (spiegel voor consumenten)
 
-Deze map is het toekomstige **single source of truth**-thuis van de repo-agnostische workflow-scripts,
-zodat consumenten (life-hub, smartwatchbanden, de workshop zelf) ze niet langer per repo dupliceren.
-De aanleiding staat in [issue #81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81).
+Deze map is het **single source of truth**-thuis van de repo-agnostische workflow-scripts, zodat
+consumenten (life-hub, smartwatchbanden, …) ze niet langer per repo dupliceren. De aanleiding staat
+in [issue #81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81).
 
-> **Status: alleen de structuur staat er.** In deze fase is bewust nog géén script verplaatst — de
-> map + de lint-bewaking zijn het fundament. De daadwerkelijke verhuizing volgt in een latere stap,
-> zodra de aanroep-mechaniek gekozen is (zie hieronder).
+**Het model — spiegel, geen verhuizing:**
+- De **workshop-root-kopie is de canonieke, geteste bron** (`scripts/…` in deze repo). Daar wordt
+  ontwikkeld en getest; CI draait die vanaf een kale checkout.
+- De kopie **hier in de plugin is een LF-identieke spiegel** — dat is wat een **consument** draait
+  (via een skill). De werkplaats zelf blijft zijn root-kopie gebruiken.
+- Een **drift-lint** (`check-plugin-integrity.ps1`) bewaakt dat spiegel en bron gelijk blijven, en de
+  generator `scripts/sync/build-shared-scripts.ps1` schrijft de spiegel bij. Zo erft de spiegel de
+  testdekking van de root-kopie zónder dat we hem in de workshop live hoeven te draaien (dat kan niet:
+  de werkplaats consumeert de laatst-gepushte plugin, niet je branch).
 
-## Wat hier straks woont — en wat niet
+## Status
 
-Een script hoort hier alleen als het **repo-agnostisch** is (geen repo-naam, geen CI-afhankelijkheid).
-Repo-eigen data blijft in de consument, in `scripts/repo-config.ps1` (repo-naam, blob-URL, e.d.), en
-wordt door het gecentraliseerde script ingelezen via `${CLAUDE_PROJECT_DIR}` — dat pad resolvet altijd,
-ook in plugin-context.
+| Script | Status | Skill |
+|---|---|---|
+| `release/fold-changelog-entry.ps1` | **Gedeeld** (spiegel actief) | [`fold-changelog`](../skills/fold-changelog/SKILL.md) |
+| `release/open-pr.ps1` | Volgt — de lint/test-gate moet eerst via `repo-config` geparametriseerd worden (verschilt per consument) | — |
 
-**Blijft bewust in de root van de consument** (kan hier dus níét heen):
+## Hoe de spiegel werkt
+
+1. **Dual-context repo-root.** Een gedeeld script lost zijn repo-root op als
+   `${CLAUDE_PROJECT_DIR}` (bij een consument die de spiegel draait) óf de git-root (workshop-root /
+   buiten een sessie). Zo werkt dezelfde file in beide locaties en blijft de spiegel byte-identiek.
+2. **Repo-data blijft lokaal.** Het script leest zijn repo-eigen blokje uit de **root van de
+   consument**: `scripts/repo-config.ps1` (repo-naam) en `scripts/lib/branch-info.ps1`
+   (branch-/type-afleiding). `${CLAUDE_PLUGIN_ROOT}` resolvet alléén binnen plugin-eigen componenten,
+   dus die injectie loopt via `${CLAUDE_PROJECT_DIR}`, niet via de plugin-root.
+3. **Consument roept aan via een skill** (`/fold-changelog`) die het script draait met
+   `${CLAUDE_PLUGIN_ROOT}/scripts/release/…`. Een skill is de enige door de docs bevestigde mechaniek
+   die zowel een mens als Claude kan aanroepen (`bin/` staat alleen op de PATH van de Bash-tool en is
+   niet direct door een mens aan te roepen).
+
+Een script toevoegen aan de gedeelde set: registreer het paar (bron → spiegel) in
+`scripts/lib/shared-scripts-lib.ps1`, draai `scripts/sync/build-shared-scripts.ps1`, en voeg zo nodig
+een skill toe.
+
+## Wat bewust in de root van de consument blijft (kan hier níét heen)
 
 - Alles wat **CI** aanroept vanaf een kale checkout zónder plugin-cache (de lint-poort, de testsuites
   en hun libs). CI ziet de plugin-cache niet.
 - **`branch-info.ps1` kan niet mee.** Hij is aan de root vastgeklonken door twee onafhankelijke
   aanroepers: `release-lib.ps1` dot-sourcet hem (voor de branch-typen, `Get-BranchTypes`) en draait in
-  **CI** vanaf een kale checkout — én het root-script `open-pr.ps1` dot-sourcet hem. Zolang `release-lib`
-  van `branch-info` afhangt, zou verplaatsen de CI-poort breken. Merk op: `${CLAUDE_PLUGIN_ROOT}`
-  resolvet sowieso alléén binnen plugin-eigen componenten, niet in een root-script.
-
-## Open ontwerpkeuze vóór de eerste verhuizing
-
-Een script dat een mens/agent direct aanroept (zoals `new-changelog-entry.ps1`) moet vanuit de plugin
-bereikbaar blijven. Het native `bin/`-mechanisme (auto-PATH, kaal aanroepbaar) bestaat, maar is voor
-deze Windows/PowerShell-repo op drie punten nog onbevestigd: `bin/` staat op de PATH van de
-**Bash-tool** (niet de PowerShell-tool waarmee onze `.ps1` draait) en een **mens kan het niet direct**
-aanroepen; Windows `.ps1`-als-kaal-commando vergt een `.cmd`-shim waarvan de docs het gedrag niet
-bevestigen; en of een `bin/`-executable `${CLAUDE_PROJECT_DIR}` krijgt (nodig om de root-libs te
-bereiken) is evenmin gedocumenteerd. De enige door de docs bevestigde mechaniek die zowel een mens
-(`/naam`) als Claude kan aanroepen, is een **skill** die het script via `${CLAUDE_PLUGIN_ROOT}` draait.
-
-Daarom blijft de verhuizing (Fase 2) bewust uitgesteld. De volledige afweging staat in
-[issue #81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81) (zie het Fase 2-addendum).
+  **CI** vanaf een kale checkout — én de root-scripts dot-sourcen hem. Zolang `release-lib` van
+  `branch-info` afhangt, zou verplaatsen de CI-poort breken.
+- **`repo-config.ps1`** is per definitie repo-data (repo-naam, blob-URL) en hoort per repo lokaal.
 
 ## Precedent
 
 De plugin draait al `hooks/connector-sessioncheck.ps1` via `hooks/hooks.json` met `${CLAUDE_PLUGIN_ROOT}`
 in élke consument, zónder registratie in het consument-`settings.json`. Dat hook-mechanisme is bewezen;
-de aanroep-mechaniek voor los aan te roepen scripts (`bin/` vs. een skill) ligt nog open — zie de
-ontwerpkeuze hierboven.
+de gedeelde-scripts-spiegel + skill hierboven breidt datzelfde SSOT-principe uit naar los aan te roepen
+workflow-scripts.
