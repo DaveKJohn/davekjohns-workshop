@@ -59,12 +59,13 @@ hoofdloop-specialisten (Chris #01, Bianca #02, Derek #05, Rendall #06) draaien i
 subagent — een plugin kan geen altijd-aan-hoofdloop-context injecteren, en een intake-gesprek vergt
 bovendien directe heen-en-weer met de opdrachtgever. Ze hebben daarom bewust
 **geen** agent-def; hun draagbare bron woont in `claude-code-plugins/claude-specialists/specialists/personas/<group>-<id>-persona.md` als
-**self-contained sjabloon** (draagbare body + een repo-lens-placeholder). De consument krijgt geen
-plugin-verwijzing maar een **kopie** in `.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md`, die via een
-`@`-import in zijn `CLAUDE.md` wordt auto-geladen. De [bootstrap-skill](#adoptie-het-bootstrap-pad)
-zet die kopie neer; de [drift-lint](#onderhoud-drift-lint) bewaakt de draagbare body ervan tegen de
-canonieke bron. De agent-def↔manual-koppeling van de lint laat persona's bewust met rust (ze hebben
-geen agent-def).
+**self-contained sjabloon** (draagbare body + een repo-lens-placeholder). De consument laadt de
+**draagbare body rechtstreeks uit de plugin-install** via een `@`-import in zijn `CLAUDE.md` (de
+orchestrator altijd, de overige persona's on-demand). De lokale extension
+`.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md` is daardoor **lens-only**:
+alleen het repo-eigen `## Eigen aan deze repo`-deel, géén body-kopie. De [drift-lint](#onderhoud-drift-lint)
+herkent zo'n lens-only-extension en meldt hem als `LENS-ONLY`. De agent-def↔manual-koppeling van de
+lint laat persona's bewust met rust (ze hebben geen agent-def).
 
 ### Gedeelde agent-def-blokken — één bron voor de verbatim-grenzen
 

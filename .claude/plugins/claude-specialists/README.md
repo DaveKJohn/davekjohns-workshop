@@ -27,13 +27,14 @@ georganiseerd zijn**. Het is **geen vervanging** van de safety-rules of de routi
     (Sylvester, Tessa, Edith, Victor, Tycho): alleen het `## Eigen aan deze repo`-deel, dat het
     draagbare vakboek in de plugin aanvult met de context van déze repo. De subagent leest
     plugin-vakboek + deze lens samen; de agent-def verwijst naar beide.
-  - **Persona-manual** — voor de persona-only specialisten (Chris, Derek, Rendall), die in het
-    hoofdgesprek draaien i.p.v. als subagent. De main-loop leest geen plugin-bestanden, dus hier
-    staat hun **volledige** manual en wordt Chris hiervandaan auto-geladen
-    (`@.claude/plugins/claude-specialists/specialists/01-01-extension.md` onderaan `../../../CLAUDE.md`). De **draagbare body** van elke
-    persona heeft wél een canonieke bron in de plugin — `claude-code-plugins/claude-specialists/specialists/personas/<group>-<id>-persona.md`
-    — die de bootstrap-skill `specialists-init` bij adoptie naar `.claude/extensions/` kopieert; dit
-    lokale bestand is dus een (met drift-lint bewaakte) kopie van die bron, aangevuld met de repo-lens.
+  - **Persona-lens (lens-only)** — voor de persona-only specialisten (Chris, Derek, Rendall), die in
+    het hoofdgesprek draaien i.p.v. als subagent. De main-loop laadt geen plugin-subagents, dus de
+    **draagbare body** komt via een `@`-import rechtstreeks uit de plugin-install: Chris altijd
+    (`@~/.claude/plugins/marketplaces/davekjohns-workshop/claude-code-plugins/claude-specialists/specialists/personas/01-01-persona.md`
+    onderaan `../../../CLAUDE.md`), Derek en Rendall on-demand van datzelfde pad. De extension zelf is
+    daardoor **lens-only**: alleen het repo-eigen `## Eigen aan deze repo`-deel, géén body-kopie — net
+    als de subagent-lens. Zo woont elke draagbare gedragsregel op één plek (de plugin), niet
+    gedupliceerd.
 - **Subagent-definities — uit de eigen `specialists`-plugin, niet lokaal.** De compacte, uitvoerbare
   vorm van een specialist (`<group>-<id>-agent.md`) bewaart deze repo **niet** in een lokale
   `.claude/agents/`-map: ze komen uit de `specialists`-plugin van deze marketplace zelf, ingeschakeld

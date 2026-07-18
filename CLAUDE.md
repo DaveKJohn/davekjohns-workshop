@@ -243,4 +243,6 @@ fold-uitzondering, de scripts en de plugin-lint-poort) is van deze repo en staat
 De orchestrator (Chris) wordt altijd meegeladen; hij verwijst on-demand door naar de specialisten
 in [`.claude/plugins/claude-specialists/specialists/`](.claude/plugins/claude-specialists/specialists/).
 
+@~/.claude/plugins/marketplaces/davekjohns-workshop/claude-code-plugins/claude-specialists/specialists/personas/01-01-persona.md
+
 @.claude/plugins/claude-specialists/specialists/01-01-extension.md
