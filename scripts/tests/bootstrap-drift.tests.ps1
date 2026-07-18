@@ -122,30 +122,13 @@ try {
     Assert-True ($d1.Out -match 'IDENTICAL\] 01-01-persona') 'persona 01-01 body IDENTICAL'
     Assert-True (-not ($d1.Out -match 'DRIFTED\]')) 'geen enkele DRIFTED op verse kopie'
 
-    # --- 3b. Een diepere index-link is geen drift (vondst Rebecca, 17-07-2026) -----------------------
-    # Een consument op het plugin-pad linkt de index 4 niveaus omhoog i.p.v. 2 -- dat is een
-    # technisch noodzakelijke aanpassing, geen inhoudelijke drift.
-    Write-Host "check-consumer-drift.ps1 -- diepere index-link = geen drift" -ForegroundColor Cyan
-    $ext = Join-Path $Fixture '.claude\extensions\01-01-extension.md'
-    $extText = [System.IO.File]::ReadAllText($ext, [System.Text.Encoding]::UTF8)
-    $extText = $extText.Replace('](../../CLAUDE.md)', '](../../../../CLAUDE.md)')
-    [System.IO.File]::WriteAllText($ext, $extText, (New-Object System.Text.UTF8Encoding($false)))
-    $d1b = Invoke-Script -Path $DriftLint -ScriptArgs @('-ConsumerPath', $Fixture, '-Quiet')
-    Assert-True ($d1b.Out -match 'IDENTICAL\] 01-01-persona') 'persona 01-01 blijft IDENTICAL bij diepere index-link'
-    Assert-True (-not ($d1b.Out -match 'DRIFTED\]   01-01-persona')) 'diepere index-link wordt niet als DRIFTED gemeld'
-
-    # --- 3c. Een ongeldige link-diepte blijft wel drift (advies Victor) ------------------------------
-    # Alleen 2 (legacy-pad) en 4 (plugin-pad) niveaus zijn geldige layouts; 3 niveaus is een echt
-    # kapot pad en mag niet stilzwijgend worden weggenormaliseerd.
-    Write-Host "check-consumer-drift.ps1 -- ongeldige link-diepte = DRIFTED" -ForegroundColor Cyan
-    $extText = [System.IO.File]::ReadAllText($ext, [System.Text.Encoding]::UTF8)
-    $extText = $extText.Replace('](../../../../CLAUDE.md)', '](../../../CLAUDE.md)')
-    [System.IO.File]::WriteAllText($ext, $extText, (New-Object System.Text.UTF8Encoding($false)))
-    $d1c = Invoke-Script -Path $DriftLint -ScriptArgs @('-ConsumerPath', $Fixture, '-Quiet')
-    Assert-True ($d1c.Out -match 'DRIFTED\]   01-01-persona') 'persona 01-01 DRIFTED bij ongeldige link-diepte (3 niveaus)'
-    # Herstel naar een geldige diepte, zodat sectie 4 zuiver de body-wijziging test.
-    $extText = $extText.Replace('](../../../CLAUDE.md)', '](../../CLAUDE.md)')
-    [System.IO.File]::WriteAllText($ext, $extText, (New-Object System.Text.UTF8Encoding($false)))
+    # --- 3b. Root-fix #64: de indexregel is locatie-onafhankelijk (geen pad-diepte-link) ------------
+    # De persona-sjablonen dragen geen '](../../CLAUDE.md)'-link meer in de indexregel; daardoor is er
+    # geen link-normalisatie meer nodig en neemt een consument de body op elk pad byte-identiek over.
+    # (Vervangt de oude normalisatie-tests 3b/3c, die de inmiddels verwijderde workaround dekten.)
+    Write-Host "persona-indexregel -- locatie-onafhankelijk (inbound #64)" -ForegroundColor Cyan
+    $srcIndex = [System.IO.File]::ReadAllText((Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\specialists\personas\01-01-persona.md'), [System.Text.Encoding]::UTF8)
+    Assert-True (-not ($srcIndex -match '\]\((?:\.\./)+CLAUDE\.md\)')) 'persona-indexregel draagt geen pad-diepte-afhankelijke CLAUDE.md-link meer'
 
     # --- 4. Drift na een body-wijziging: DRIFTED (informatief, exit blijft 0) ------------------------
     Write-Host "check-consumer-drift.ps1 -- gewijzigde body = DRIFTED" -ForegroundColor Cyan
