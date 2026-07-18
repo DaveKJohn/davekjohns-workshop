@@ -19,19 +19,29 @@ ook in plugin-context.
 
 - Alles wat **CI** aanroept vanaf een kale checkout zónder plugin-cache (de lint-poort, de testsuites
   en hun libs). CI ziet de plugin-cache niet.
-- Scripts waarvan een **root-aanroeper** afhankelijk is en die zelf nog niet is verhuisd:
-  `${CLAUDE_PLUGIN_ROOT}` resolvet alléén binnen plugin-eigen componenten, niet in een root-script.
-  Daarom kan `branch-info.ps1` pas mee zodra ook `open-pr.ps1` meeverhuist.
+- **`branch-info.ps1` kan niet mee.** Hij is aan de root vastgeklonken door twee onafhankelijke
+  aanroepers: `release-lib.ps1` dot-sourcet hem (voor de branch-typen, `Get-BranchTypes`) en draait in
+  **CI** vanaf een kale checkout — én het root-script `open-pr.ps1` dot-sourcet hem. Zolang `release-lib`
+  van `branch-info` afhangt, zou verplaatsen de CI-poort breken. Merk op: `${CLAUDE_PLUGIN_ROOT}`
+  resolvet sowieso alléén binnen plugin-eigen componenten, niet in een root-script.
 
 ## Open ontwerpkeuze vóór de eerste verhuizing
 
 Een script dat een mens/agent direct aanroept (zoals `new-changelog-entry.ps1`) moet vanuit de plugin
-bereikbaar blijven. De weg daarvoor is een **`bin/`-wrapper op PATH** (met een `.cmd`-wrapper voor
-Windows PowerShell) — het patroon dat [issue #81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81)
-voorstelt. Zolang die keuze niet is uitgewerkt, blijft de verhuizing bewust uitgesteld.
+bereikbaar blijven. Het native `bin/`-mechanisme (auto-PATH, kaal aanroepbaar) bestaat, maar is voor
+deze Windows/PowerShell-repo op drie punten nog onbevestigd: `bin/` staat op de PATH van de
+**Bash-tool** (niet de PowerShell-tool waarmee onze `.ps1` draait) en een **mens kan het niet direct**
+aanroepen; Windows `.ps1`-als-kaal-commando vergt een `.cmd`-shim waarvan de docs het gedrag niet
+bevestigen; en of een `bin/`-executable `${CLAUDE_PROJECT_DIR}` krijgt (nodig om de root-libs te
+bereiken) is evenmin gedocumenteerd. De enige door de docs bevestigde mechaniek die zowel een mens
+(`/naam`) als Claude kan aanroepen, is een **skill** die het script via `${CLAUDE_PLUGIN_ROOT}` draait.
+
+Daarom blijft de verhuizing (Fase 2) bewust uitgesteld. De volledige afweging staat in
+[issue #81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81) (zie het Fase 2-addendum).
 
 ## Precedent
 
 De plugin draait al `hooks/connector-sessioncheck.ps1` via `hooks/hooks.json` met `${CLAUDE_PLUGIN_ROOT}`
-in élke consument, zónder registratie in het consument-`settings.json`. Datzelfde mechanisme (plus een
-`bin/`-map voor los aan te roepen scripts) draagt de scripts die hierheen verhuizen.
+in élke consument, zónder registratie in het consument-`settings.json`. Dat hook-mechanisme is bewezen;
+de aanroep-mechaniek voor los aan te roepen scripts (`bin/` vs. een skill) ligt nog open — zie de
+ontwerpkeuze hierboven.
