@@ -212,6 +212,9 @@ foreach ($root in 'README.md', 'CHANGELOG.md', 'CLAUDE.md') {
     $p = Join-Path $RepoRoot $root
     if (Test-Path -LiteralPath $p) { $linkFiles += $p }
 }
+# Het specialisten-handboek woont naast de lenzen (op familie-niveau) -- ook zijn links valideren.
+$handbook = Join-Path $RepoRoot '.claude\plugins\claude-specialists\README.md'
+if (Test-Path -LiteralPath $handbook) { $linkFiles += $handbook }
 # De repo-lenzen wonen op het plugin-pad (.claude/plugins/claude-specialists/specialists/, de
 # standaard) of op het legacy-pad (.claude/extensions/) -- scan beide, waar ze ook staan.
 foreach ($extDir in @(

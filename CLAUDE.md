@@ -50,7 +50,7 @@ opdracht aan hen toewijst — hun draagbare vakboek uit de `specialists`-plugin 
 
 **Opbouw & organisatie van het team** — het roster, de routing en de opbouw-conventies (persona vs.
 subagent, de manual-tweedeling, het stabiel-id-systeem) staan in het **Specialisten-handboek**
-[`.claude/README.md`](.claude/README.md). Het roster en de routing staan bovendien hieronder in het
+[`.claude/plugins/claude-specialists/README.md`](.claude/plugins/claude-specialists/README.md). Het roster en de routing staan bovendien hieronder in het
 repo-slot.
 
 ---
@@ -165,7 +165,7 @@ van elke specialist staat in [`.claude/plugins/claude-specialists/specialists/`]
 
 De volledige routing (welke opdracht naar wie) en de ketens staan in
 [Chris' manual #01](.claude/plugins/claude-specialists/specialists/01-01-extension.md) en het
-[Specialisten-handboek](.claude/README.md). De rest van de `specialists`-plugin (Paula #09,
+[Specialisten-handboek](.claude/plugins/claude-specialists/README.md). De rest van de `specialists`-plugin (Paula #09,
 Vera #11, Gwen #12, Cody #13) is óók ingeschakeld en aanroepbaar als `@specialists:<naam>`,
 maar heeft hier zelden werk en dus (nog) geen repo-lens. Nieuwe specialisten worden **nooit** zelf
 verzonnen — alleen in overleg met Dave (zie
@@ -197,9 +197,9 @@ verzonnen — alleen in overleg met Dave (zie
   (`build-agent-defs.ps1` — vult de gedeelde blokken uit `agent-shared/`), en de tests.
 - **`releases/`** — de release-historie: `development/<X.Y>/<X.Y.Z>.md` (volledige notes per versie) +
   `README.md` (overzichtstabel). `CHANGELOG.md`'s `## Releases`-sectie verwijst hiernaartoe.
-- **`.claude/`** — de repo-laag: `plugins/claude-specialists/specialists/` (de repo-lenzen +
-  persona-manuals, op het **plugin-pad** — de standaard-locatie), `settings.json`
-  (harness-config), en `README.md` (het specialisten-handboek).
+- **`.claude/`** — de repo-laag: `plugins/claude-specialists/` (met de repo-lenzen +
+  persona-manuals in `specialists/` op het **plugin-pad** — de standaard-locatie — en het
+  specialisten-handboek `README.md` ernaast), en `settings.json` (harness-config).
 - **`CLAUDE.md`, `README.md`, `CHANGELOG.md`** — de root-docs — en **`.github/`**
   (`pull_request_template.md` + `workflows/ci.yml`, de CI-poort die de lint + testsuites bij elke
   PR en push naar `main` draait).

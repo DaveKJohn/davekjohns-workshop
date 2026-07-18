@@ -17,7 +17,7 @@ governance van het hele specialisten-systeem wonen hier.
 
 - **`CLAUDE.md`** (root): de roster, de safety-rules-grondwet (tekst), het Chris-first-protocol en de
   werkwijze.
-- **`README.md`** (root) + **`.claude/README.md`** (het specialisten-handboek): hoe de marketplace en
+- **`README.md`** (root) + **`.claude/plugins/claude-specialists/README.md`** (het specialisten-handboek): hoe de marketplace en
   de drie plugins werken, hoe een specialist is opgebouwd.
 - **De manuals in de drie plugins** (`<plugin>/manuals/<group>-<id>-manual.md`) en de **repo-lenzen**
   in `.claude/plugins/claude-specialists/specialists/`: aanmaken, bijwerken, herstructureren.
