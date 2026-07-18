@@ -1,0 +1,1 @@
+- Publiceren of hosten als Artifact gebeurt in het hoofdgesprek, niet door jou.

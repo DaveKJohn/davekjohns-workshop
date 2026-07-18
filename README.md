@@ -66,6 +66,28 @@ zet die kopie neer; de [drift-lint](#onderhoud-drift-lint) bewaakt de draagbare 
 canonieke bron. De agent-def↔manual-koppeling van de lint laat persona's bewust met rust (ze hebben
 geen agent-def).
 
+### Gedeelde agent-def-blokken — één bron voor de verbatim-grenzen
+
+Een aantal bullets onder **Grenzen** is woord-voor-woord identiek over veel agent-defs — de
+**inbound-regel** zelfs in alle 19. Zulke governance hoort *in* de agent-def-body (altijd-geladen,
+ook voor een rechtstreeks aangeroepen werker-subagent), maar Claude Code kent geen native transclusie
+in een agent-def — wat er staat, staat er letterlijk. Om die blokken tóch op **één plek** te
+onderhouden i.p.v. in elke agent-def, geldt een **build-en-lint**-model:
+
+- De canonieke tekst van elk gedeeld blok woont in
+  `claude-code-plugins/claude-specialists/agent-shared/<naam>.md`.
+- In een agent-def verschijnt het blok tussen sentinels:
+  `<!-- BEGIN shared:<naam> … -->` … `<!-- END shared:<naam> -->`. De inhoud staat er echt (self-contained), maar is als gegenereerd gemarkeerd.
+- **Bewerk nooit tussen de sentinels.** Wijzig het bronbestand en draai
+  [`scripts/agents/build-agent-defs.ps1`](scripts/agents/build-agent-defs.ps1) — alle agent-defs die
+  het blok dragen worden bijgewerkt. De [lint-poort](#onderhoud-drift-lint) (`check-plugin-integrity.ps1`,
+  check 7) faalt zodra een gemarkeerde regio afwijkt van zijn bron (hand-edit of vergeten rebuild),
+  net als de drift-lint voor consumenten.
+
+Huidige blokken: `grens-inbound` (19 agent-defs), `grens-webcontent` (3) en `grens-artifact-publish`
+(2). Zo kost het aanpassen van een gedeelde grens nog één edit + één build, niet 19 handmatige
+wijzigingen.
+
 ## Consumptie
 
 Een consumerende repo voegt deze marketplace toe via `extraKnownMarketplaces` in

@@ -18,7 +18,8 @@ repo is dat een groot en zichtbaar deel van het werk, want de repo is zelf een s
   elke `plugin.json`, de agent-def-/manual-frontmatter (`name`/`id`/`group` + bestandsnaam-match),
   scant op dode links (in `README.md`, `CHANGELOG.md`, de manuals, `SKILL.md`'s en `releases/**`), en
   controleert dat elke `scripts/**/*.ps1` foutloos parseert (vangt syntaxfouten in de orkestratie die
-  pas bij uitvoering zouden breken). Dit is de veiligheidswacht die
+  pas bij uitvoering zouden breken), en bewaakt (check 7) dat elke gedeelde-blok-regio in een
+  agent-def nog gelijk is aan zijn bron in `agent-shared/`. Dit is de veiligheidswacht die
   [Derek #05](05-05-extension.md)'s `open-pr.ps1` vóór elke push draait — én die `cut-release.ps1`
   vóór een release draait.
 - **`.github/workflows/ci.yml`** — de CI-poort op GitHub: draait dezelfde lint-poort + alle
@@ -39,6 +40,12 @@ repo is dat een groot en zichtbaar deel van het werk, want de repo is zelf een s
   [`cut-release.ps1`](../../scripts/release/cut-release.ps1) dot-source't; bewust puur zodat
   [Tycho #18](04-18-extension.md) ze los kan testen. Het release-*proces* is
   [Rendall #06](05-06-extension.md)'s domein; Sylvester bewaakt de script-mechaniek eronder.
+- **`scripts/agents/build-agent-defs.ps1` + `scripts/lib/agent-shared-lib.ps1`** — de generator die
+  de verbatim-gedeelde bullets uit `claude-code-plugins/claude-specialists/agent-shared/<naam>.md` in
+  alle agent-defs invult (tussen `<!-- BEGIN/END shared:… -->`-sentinels). Wijzig een gedeeld blok →
+  draai `build-agent-defs.ps1` → alle agent-defs bij; `-Check` (en de lint-poort, check 7) faalt bij
+  drift. De pure expansie-logica woont in de lib, zodat [Tycho #18](04-18-extension.md) haar los kan
+  testen — spiegelt de `release-lib`-opzet. **Nooit tussen de sentinels handmatig bewerken.**
 - **`.claude/settings.json`** — de harness-config van déze repo: de `extraKnownMarketplaces`
   (`github`-source `DaveKJohn/davekjohns-workshop`) en `enabledPlugins` waarmee de repo zijn eigen
   `specialists`-plugin (groep 1) inschakelt.

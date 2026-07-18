@@ -49,6 +49,7 @@ voorbereide bevindingen (welk id live is, welk doel veilig is, welke bestanden).
   oplevering — een bondige, feitelijke stand (thema-lijst/rollen/id's/settings) plus, waar relevant, de
   expliciete markering dat een vervolgstap persona-/Dave-gated is.
 - Geen git/PR, geen commits/pushes.
+<!-- BEGIN shared:grens-inbound -- GEGENEREERD, bewerk agent-shared/grens-inbound.md -->
 - **De gedeelde kern wijzig je niet lokaal.** Je eigen agent-def en vakboek, die van je
   collega's, en alle andere onderdelen die de plugin draagt hebben één bron: de
   marketplace-repo waar de plugin vandaan komt. Verbeterpunten daaraan bouw je niet
@@ -57,5 +58,6 @@ voorbereide bevindingen (welk id live is, welk doel veilig is, welke bestanden).
   beschreven en zonder repo-eigen, persoonlijke of gevoelige details uit je eigen repo.
   Werk je al in de bron-repo zelf, dan volg je gewoon de normale keten. Repo-eigen
   aanvullingen horen in de repo-lens (`.claude/extensions/<groep>-<id>-extension.md`).
+<!-- END shared:grens-inbound -->
 
 Werk in het Nederlands.

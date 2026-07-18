@@ -39,6 +39,7 @@ workflow-regels als *beschrijving* (niet de scripts zelf).
   config-kant expliciet in je oplevering voor de vervolg-specialist(en).
 - **Nieuwe specialisten verzin je niet zelf** — dat blijft een beslissing van de gebruiker in
   overleg met de orchestrator. Je schrijft de manual pas nadat dat is bevestigd.
+<!-- BEGIN shared:grens-inbound -- GEGENEREERD, bewerk agent-shared/grens-inbound.md -->
 - **De gedeelde kern wijzig je niet lokaal.** Je eigen agent-def en vakboek, die van je
   collega's, en alle andere onderdelen die de plugin draagt hebben één bron: de
   marketplace-repo waar de plugin vandaan komt. Verbeterpunten daaraan bouw je niet
@@ -47,6 +48,7 @@ workflow-regels als *beschrijving* (niet de scripts zelf).
   beschreven en zonder repo-eigen, persoonlijke of gevoelige details uit je eigen repo.
   Werk je al in de bron-repo zelf, dan volg je gewoon de normale keten. Repo-eigen
   aanvullingen horen in de repo-lens (`.claude/extensions/<groep>-<id>-extension.md`).
+<!-- END shared:grens-inbound -->
 - Je werkt op de branch die al klaarstaat; commit of push niet zelf.
 - Je krijgt de gespreksgeschiedenis niet mee; werk alleen met wat er in je opdracht staat. Mis je
   context, benoem dat expliciet in je oplevering in plaats van te gokken.

@@ -180,15 +180,20 @@ verzonnen — alleen in overleg met Dave (zie
   `manuals/`. Naast de plugin-mappen (bewust níét erin, zodat het niet meereist met de
   plugin-cache) woont `connectors/`: het register van welke repo's elke plugin geïnstalleerd
   hebben en of ze in sync zijn (doctrine + format in het
-  [connectors-README](claude-code-plugins/claude-specialists/connectors/README.md)).
+  [connectors-README](claude-code-plugins/claude-specialists/connectors/README.md)). Om dezelfde
+  reden (niet meereizen met de plugin-cache) woont daar ook `agent-shared/`: de canonieke bron van
+  de verbatim-gedeelde bullets die tussen `<!-- BEGIN/END shared:… -->`-sentinels in alle agent-defs
+  verschijnen — één bron, ingevuld door de generator (zie het `scripts/`-punt hieronder), bewaakt
+  door de lint-poort.
   `specialists` draagt daarnaast `personas/` (de draagbare sjablonen van de
   hoofdloop-specialisten Chris/Bianca/Derek/Rendall) en `skills/specialists-init/` (het repo-neutrale
   bootstrap-adoptiepad, zie [`README.md`](README.md#adoptie-het-bootstrap-pad)); `specialists-shopify`
   draagt een domein-`skills/`-map.
-- **`scripts/lib/`, `scripts/lint/`, `scripts/release/`, `scripts/sync/`, `scripts/tests/`** — de
-  gedeelde helpers (`branch-info.ps1`, `release-lib.ps1`), de lint-poort + drift-check, de
-  changelog/PR/release-scripts (incl. `cut-release.ps1`), de connectors-check
-  (`check-connectors.ps1`), en de tests.
+- **`scripts/lib/`, `scripts/lint/`, `scripts/release/`, `scripts/sync/`, `scripts/agents/`,
+  `scripts/tests/`** — de gedeelde helpers (`branch-info.ps1`, `release-lib.ps1`,
+  `agent-shared-lib.ps1`), de lint-poort + drift-check, de changelog/PR/release-scripts (incl.
+  `cut-release.ps1`), de connectors-check (`check-connectors.ps1`), de agent-def-generator
+  (`build-agent-defs.ps1` — vult de gedeelde blokken uit `agent-shared/`), en de tests.
 - **`releases/`** — de release-historie: `development/<X.Y>/<X.Y.Z>.md` (volledige notes per versie) +
   `README.md` (overzichtstabel). `CHANGELOG.md`'s `## Releases`-sectie verwijst hiernaartoe.
 - **`.claude/`** — de repo-laag: `extensions/` (de repo-lenzen + persona-manuals), `settings.json`

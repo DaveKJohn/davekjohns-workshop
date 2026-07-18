@@ -28,6 +28,9 @@
       6. specialisten-systeem-integriteit: per plugin is elk '<group>-<id>' uniek over de agent-defs,
          heeft elke agent-def een geldige 'name:' + een bijbehorende manuals/<g>-<id>-manual.md die
          hij ook noemt, en heeft elke manual omgekeerd een agent-def (geen wees-manual).
+      7. gedeelde agent-def-blokken: elke <!-- BEGIN/END shared:NAME -->-regio in een agent-def is nog
+         gelijk aan zijn canonieke bron in agent-shared/<naam>.md (zie scripts/agents/build-agent-defs.ps1)
+         -- een hand-edit binnen de sentinels of een vergeten rebuild valt zo op de poort.
 
     Exit-code: 0 = geen errors. 1 = minstens een error (bruikbaar als poort in open-pr.ps1).
 .EXAMPLE
@@ -340,6 +343,25 @@ Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-manual.md' -File |
                 $rel = $_.FullName.Replace($RepoRoot, '.')
                 Add-Error "[specialist] ${rel}: wees-manual -- geen bijbehorende agents/$g-$id-agent.md in dezelfde plugin."
             }
+        }
+    }
+
+# --- 7. gedeelde agent-def-blokken in sync met hun bron ---------------------------------------------
+# Verbatim-gedeelde bullets (bv. de inbound-regel, 19/19) worden op EEN plek onderhouden in
+# agent-shared/<naam>.md en in de agent-defs ingevuld tussen <!-- BEGIN/END shared:NAME -->-sentinels
+# (build via scripts/agents/build-agent-defs.ps1). Hier bewaken we dat elke gemarkeerde regio nog
+# gelijk is aan zijn bron -- zo valt een hand-edit binnen de sentinels of een vergeten rebuild op.
+. (Join-Path $PSScriptRoot '..\lib\agent-shared-lib.ps1')
+$agentSharedDir = Get-AgentSharedDir -RepoRoot $RepoRoot
+Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-agent.md' -File |
+    Where-Object { $_.FullName -match '\\agents\\' } | ForEach-Object {
+        $raw = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8)
+        $rel = $_.FullName.Replace($RepoRoot, '.')
+        $sharedProblems = New-Object System.Collections.Generic.List[string]
+        $expanded = Expand-AgentDefShared -Content $raw -SharedDir $agentSharedDir -Problems $sharedProblems
+        foreach ($p in $sharedProblems) { Add-Error "[shared] ${rel}: $p" }
+        if ($expanded -ne ($raw -replace "`r`n", "`n")) {
+            Add-Error "[shared] ${rel}: gedeeld blok wijkt af van de bron -- draai scripts/agents/build-agent-defs.ps1."
         }
     }
 
