@@ -107,12 +107,13 @@ bodies, één echte achterstand, en zes vals-positieven door één structureel p
   model: repo-eigen inhoud hoort in het `## Eigen aan deze repo`-slot (de lens), en een gewenste
   wijziging aan het draagbare deel gaat via de inbound-route hierboven — nooit als blijvende
   lokale afwijking. De check hoeft bewuste drift dus niet te faciliteren of te markeren.
-- **Technisch noodzakelijke padverschillen zijn geen drift.** De index-link in de blockquote onder
-  de titel wijst relatief naar de repo-`CLAUDE.md` en ligt op het plugin-pad
-  (`.claude/plugins/claude-specialists/<plugin>/`) dieper dan op het legacy-pad
-  (`.claude/extensions/`).
-  `check-consumer-drift.ps1` normaliseert dat link-doel vóór de vergelijking; een correct
-  gesyncte consument leest dus gewoon `IDENTICAL`, op welk pad hij ook zit.
+- **Lens-only persona's leveren geen body-drift op.** Een correct opgezette persona-lens (op het
+  plugin-pad `.claude/plugins/claude-specialists/<plugin>/`) draagt geen body-kopie meer -- de
+  draagbare body komt via een `@`-import uit de plugin-install. De indexregel is sinds #64
+  locatie-onafhankelijke platte tekst (geen pad-diepte-link), dus er valt niets meer te normaliseren.
+  `check-consumer-drift.ps1` herkent de `> Repo-lens (lens-only persona)`-blockquote en meldt zo'n
+  lens als `LENS-ONLY`; een consument met een oude, volledige body-kopie wordt nog wel op echte
+  body-drift vergeleken.
 - **Een `DRIFTED`-persona betekent daarmee altijd een werkpunt**: óf achterstand (de bron is
   doorontwikkeld — ververs de kopie vanaf de bron in een sessie van de consument zelf), óf een
   nog-niet-teruggelegde consument-wijziging (leg die eerst via de inbound-route terug). Niet

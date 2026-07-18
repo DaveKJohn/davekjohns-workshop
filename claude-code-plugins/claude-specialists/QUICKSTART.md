@@ -39,16 +39,18 @@ cachet hem zelf. **Herstart daarna je Claude Code-sessie** — pas dan zijn de p
 uit stap 2) beschikbaar.
 
 **Stap 2 — draai de bootstrap-skill.** Roep in de nieuwe sessie `specialists-init` aan. Die zet —
-puur additief, zonder iets te overschrijven — de persona-kopieën (waaronder Chris) in
-`.claude/extensions/`, een lege repo-lens-scaffold per specialist, de Chris-import in jouw
-`CLAUDE.md`, en een voorstel voor safety-instellingen (`settings.suggested.jsonc`, ter eigen
+puur additief, zonder iets te overschrijven — de **lens-only** persona-lenzen (waaronder Chris) +
+een lege repo-lens-scaffold per specialist op het **plugin-pad**
+(`.claude/plugins/claude-specialists/<plugin>/`), de twee Chris-`@`-imports in jouw `CLAUDE.md` (zijn
+draagbare body uit de plugin-install + zijn repo-lens), en een voorstel voor safety-instellingen
+(`settings.suggested.jsonc`, ter eigen
 beoordeling). De details van dit pad staan in de
 [root-README › Adoptie](../../README.md#adoptie-het-bootstrap-pad) — die telt de stappen daar als
 "stap 0" (het inschakelen hierboven) en "stap 1" (de skill).
 
 **Stap 3 — herstart en controleer.** Start opnieuw en check dat Chris het woord neemt (elke beurt
 opent met een afzender-kopregel zoals `🧭 Chris — intake & routing`). Vul daarna in je eigen tempo de
-repo-lenzen in `.claude/extensions/` in: dáár vertel je per specialist wat hij in jouw repo bedient.
+repo-lenzen op het plugin-pad (`.claude/plugins/claude-specialists/<plugin>/`) in: dáár vertel je per specialist wat hij in jouw repo bedient.
 De werker-specialisten zijn direct aanroepbaar als `@specialists:<naam>`.
 
 ## Bijblijven
@@ -66,5 +68,5 @@ er voor díe plugin veranderde; de volledige geschiedenis staat in de werkplaats
   [issue-sjabloon](../../.github/ISSUE_TEMPLATE/inbound-verbeterpunt.md) voor klaar. De werkplaats
   verwerkt het via zijn eigen keten, en de verbetering komt via een release bij álle consumenten
   terug.
-- **Repo-eigen aanvullingen** horen in jouw eigen repo-lenzen (`.claude/extensions/`) — die zijn van
-  jou en reizen niet mee met de plugin.
+- **Repo-eigen aanvullingen** horen in jouw eigen repo-lenzen op het plugin-pad
+  (`.claude/plugins/claude-specialists/<plugin>/`) — die zijn van jou en reizen niet mee met de plugin.
