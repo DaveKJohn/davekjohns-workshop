@@ -376,6 +376,26 @@ Get-ChildItem -Path $RepoRoot -Recurse -Filter '*-agent.md' -File |
         }
     }
 
+# --- 8. gedeelde workflow-scripts in sync met hun bron ---------------------------------------------
+# Repo-agnostische scripts worden als plugin-spiegel gedeeld met consumenten (issue #81): de
+# root-kopie is de geteste bron, de plugin-spiegel is wat een consument draait. Hier bewaken we dat
+# elke spiegel nog LF-identiek is aan zijn bron -- zo valt een hand-edit in de spiegel of een vergeten
+# rebuild (scripts/sync/build-shared-scripts.ps1) op voor het via een PR op main belandt.
+. (Join-Path $PSScriptRoot '..\lib\shared-scripts-lib.ps1')
+foreach ($pair in @(Get-SharedScriptPairs -RepoRoot $RepoRoot)) {
+    $src = Get-NormalizedScriptContent -Path $pair.SourcePath
+    if ($null -eq $src) {
+        Add-Error "[shared-script] bron ontbreekt: $($pair.SourceRel)."
+        continue
+    }
+    $mirror = Get-NormalizedScriptContent -Path $pair.MirrorPath
+    if ($null -eq $mirror) {
+        Add-Error "[shared-script] spiegel ontbreekt: $($pair.MirrorRel) -- draai scripts/sync/build-shared-scripts.ps1."
+    } elseif ($src -ne $mirror) {
+        Add-Error "[shared-script] $($pair.MirrorRel) wijkt af van $($pair.SourceRel) -- draai scripts/sync/build-shared-scripts.ps1."
+    }
+}
+
 # --- Rapport ----------------------------------------------------------------------------------------
 if ($errors.Count -eq 0) {
     Write-Host "  Geen bevindingen." -ForegroundColor Green
