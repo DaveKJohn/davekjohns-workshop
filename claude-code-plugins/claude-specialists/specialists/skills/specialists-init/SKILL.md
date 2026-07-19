@@ -2,9 +2,10 @@
 name: specialists-init
 description: >-
   Bootstrap het Claude-Specialists-systeem in een nieuwe consumerende repo: haak de orchestrator
-  (Chris) en de hoofdloop-persona's (Derek, Rendall) aan via twee @-imports in CLAUDE.md (de
-  draagbare body uit de plugin-install + een lens-only repo-lens op het plugin-pad), zet lege
-  lens-scaffolds plus de script-config-scaffolds neer, en lever een governance-/safety-hooks-voorstel.
+  (Chris) aan via twee @-imports in CLAUDE.md (de draagbare body uit de plugin-install + zijn
+  lens-only repo-lens op het plugin-pad), zet de overige hoofdloop-persona's (Derek, Rendall) en de
+  subagents als lens-only scaffolds op het plugin-pad neer plus de script-config-scaffolds, en lever
+  een governance-/safety-hooks-voorstel.
   Gebruik dit wanneer de gedeelde `specialists`-plugin wél is ingeschakeld maar de dirigent en de
   governance-laag nog ontbreken ("de werkers zijn er, Chris niet").
 ---
@@ -13,9 +14,10 @@ description: >-
 
 De gedeelde `specialists`-plugin levert de **werker-subagents** (Sylvester, Tessa, Edith, Victor,
 Tycho, …). Wat een plugin **niet** kan, is altijd-aan-hoofdloop-context injecteren of de `CLAUDE.md`
-van een consument bewerken. Precies daar zit het gat: **Chris** (de orchestrator) en de andere
-hoofdloop-persona's (**Derek**, **Rendall**) worden geladen via een `@`-import onderaan de
-repo-`CLAUDE.md`, plus de governance- en safety-laag die per repo verschilt. Deze skill dicht dat gat.
+van een consument bewerken. Precies daar zit het gat: **Chris** (de orchestrator) wordt geladen via
+een `@`-import onderaan de repo-`CLAUDE.md`; **Derek** en **Rendall** staan als lens-only persona op
+het plugin-pad klaar en worden on-demand ingelezen. Deze skill zet dat op, plus de governance- en
+safety-laag die per repo verschilt.
 
 ## Kip-en-ei — stap 0 doet de gebruiker zelf
 
