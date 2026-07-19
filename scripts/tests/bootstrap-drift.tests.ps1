@@ -121,9 +121,10 @@ try {
             if (Test-Path -LiteralPath $gitFix) { Remove-Item -Recurse -Force -LiteralPath $gitFix -ErrorAction SilentlyContinue }
         }
     }
-    # Isoleer de git-config: CI-runners zetten soms een globale insteadOf die git@github.com: naar een
-    # https-token-URL herschrijft (en `git remote get-url` past dat toe). Met een lege global/system-
-    # config test de ssh-case ook echt SSH; de token-vorm dekken we los af met de 'https-cred'-case.
+    # Isoleer de git-config met een lege global/system-config: CI-runners zetten een globale insteadOf
+    # die de vorm van get-url herschrijft (git@github.com: -> https, soms met token-userinfo, soms
+    # ssh://). Zo test elke case echt de bedoelde URL-vorm. De regex in de bootstrap dekt bovendien
+    # alle vormen, dus ook zonder isolatie zou de afleiding kloppen -- dit maakt de labels alleen eerlijk.
     $emptyGitCfg = Join-Path $Fixture 'empty-gitconfig'
     [System.IO.File]::WriteAllText($emptyGitCfg, '')
     $oldGCG = $env:GIT_CONFIG_GLOBAL; $oldGCS = $env:GIT_CONFIG_SYSTEM
@@ -131,6 +132,7 @@ try {
     try {
         Test-DerivedRepoName -OriginUrl 'https://github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true  -Label 'https'
         Test-DerivedRepoName -OriginUrl 'git@github.com:DaveKJohn/mijn-repo.git'    -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true  -Label 'ssh'
+        Test-DerivedRepoName -OriginUrl 'ssh://git@github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true -Label 'ssh-scheme'
         # Credential-embedded https (zoals een CI-token-rewrite): owner/repo wordt afgeleid, de userinfo weggegooid.
         Test-DerivedRepoName -OriginUrl 'https://x-access-token:SECRET@github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true -Label 'https-cred'
         Test-DerivedRepoName -OriginUrl 'https://gitlab.com/DaveKJohn/mijn-repo.git' -Expected '' -ShouldDerive $false -Label 'niet-github'

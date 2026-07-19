@@ -397,11 +397,13 @@ function Get-DerivedRepoName([string]$Root) {
         return $null
     }
     if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($url)) { return $null }
-    # Alleen github.com, beide vormen (HTTPS + SSH); owner/repo als strikte slug; .git-suffix eraf.
-    # De https-vorm mag optionele userinfo dragen (bv. 'x-access-token:TOKEN@' -- zo herschrijft een
-    # git insteadOf-regel een SSH-remote, en zo ziet een consument met credentials in de origin-URL
-    # eruit). Die userinfo wordt bewust NIET gevangen -- alleen owner/repo, streng gevalideerd.
-    $m = [regex]::Match($url.Trim(), '^(?:https://(?:[^/@]+@)?github\.com/|git@github\.com:)(?<owner>[A-Za-z0-9][A-Za-z0-9._-]*)/(?<repo>[A-Za-z0-9][A-Za-z0-9._-]*?)(?:\.git)?/?$')
+    # Alleen github.com; alle gangbare vormen (https/ssh/git-scheme + de scp-achtige git@github.com:).
+    # owner/repo als strikte slug; .git-suffix en trailing slash eraf. De scheme-vormen mogen optionele
+    # userinfo dragen (bv. 'x-access-token:TOKEN@' -- zo herschrijft een git insteadOf-regel een remote,
+    # en zo ziet een consument met credentials in de origin-URL eruit); die userinfo wordt bewust NIET
+    # gevangen -- alleen owner/repo. Userinfo kan geen '/' bevatten, dus een 'evil.com/x@github.com'-
+    # spoof matcht niet.
+    $m = [regex]::Match($url.Trim(), '^(?:(?:https|ssh|git)://(?:[^/@]+@)?github\.com/|git@github\.com:)(?<owner>[A-Za-z0-9][A-Za-z0-9._-]*)/(?<repo>[A-Za-z0-9][A-Za-z0-9._-]*?)(?:\.git)?/?$')
     if (-not $m.Success) { return $null }
     return "$($m.Groups['owner'].Value)/$($m.Groups['repo'].Value)"
 }
