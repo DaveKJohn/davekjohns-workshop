@@ -108,6 +108,8 @@ try {
         try {
             & git -C $gitFix init -q 2>$null | Out-Null
             if ($OriginUrl) { & git -C $gitFix remote add origin $OriginUrl 2>$null | Out-Null }
+            $diagRaw = (& git -C $gitFix remote get-url origin 2>&1 | Out-String).Trim()
+            Write-Host "  [DIAG $Label] get-url='$diagRaw'"
             $rg = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $gitFix)
             Assert-Equal 0 $rg.Code "git-afleiding ($Label): bootstrap exit 0"
             $txt = [System.IO.File]::ReadAllText((Join-Path $gitFix 'scripts\repo-config.ps1'), [System.Text.Encoding]::UTF8)
@@ -128,6 +130,8 @@ try {
     [System.IO.File]::WriteAllText($emptyGitCfg, '')
     $oldGCG = $env:GIT_CONFIG_GLOBAL; $oldGCS = $env:GIT_CONFIG_SYSTEM
     $env:GIT_CONFIG_GLOBAL = $emptyGitCfg; $env:GIT_CONFIG_SYSTEM = $emptyGitCfg
+    Write-Host "  [DIAG env] GCG='$env:GIT_CONFIG_GLOBAL' GCS='$env:GIT_CONFIG_SYSTEM' COUNT='$env:GIT_CONFIG_COUNT' NOSYSTEM='$env:GIT_CONFIG_NOSYSTEM'"
+    Write-Host "  [DIAG insteadof] $((& git config --show-origin --get-regexp 'url\..*\.insteadof' 2>&1) -join ' || ')"
     try {
         Test-DerivedRepoName -OriginUrl 'https://github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true  -Label 'https'
         Test-DerivedRepoName -OriginUrl 'git@github.com:DaveKJohn/mijn-repo.git'    -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true  -Label 'ssh'
