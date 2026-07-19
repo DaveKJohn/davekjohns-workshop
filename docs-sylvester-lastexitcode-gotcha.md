@@ -4,7 +4,7 @@ Legt de scriptregel vast die de flaky CI-jacht (#94/#95/#96) opleverde, zodat ee
 wordt voorkomen.
 
 - **`05-15-extension.md` (Repo-eigen regels):** bullet toegevoegd — `$LASTEXITCODE` altijd lezen
-  vóór je een native command (bv. `git`) door een cmdlet pipet. `& git … | Select-Object -First 1`
+  vóór je een native command (bv. `git`) door een cmdlet pipt. `& git … | Select-Object -First 1`
   breekt de upstream vroegtijdig af, wat de exitcode timing-afhankelijk op non-nul kan zetten en zo een
   niet-deterministisch rode CI inbouwt. De regel: eerst de volledige output vangen, meteen
   `$code = $LASTEXITCODE` vastleggen, en pas daarna filteren op de vaste array. Geldt voor elke

@@ -61,15 +61,15 @@ repo is dat een groot en zichtbaar deel van het werk, want de repo is zelf een s
 - **De lint-poort mag nooit stiller worden dan de risico's.** Groeit de repo (meer plugins, complexere
   manifesten), dan breidt Sylvester de checks uit — met [Tycho #18](04-18-extension.md) die er tests
   bij bouwt.
-- **`$LASTEXITCODE` lezen vóór je een native command door een cmdlet pipet.** Een constructie als
+- **Lees `$LASTEXITCODE` altijd vóór je een native command door een cmdlet pipt.** Een constructie als
   `& git … | Select-Object -First 1` breekt de upstream (git) vroegtijdig af zodra het eerste item
   binnen is; als het proces dan nog niet netjes is afgesloten, eindigt het met een non-nul exitcode —
   puur timing-afhankelijk. Wie daarna `$LASTEXITCODE` uitleest, krijgt dus een flaky waarde en bouwt
   een niet-deterministisch rode CI in. De regel: vang eerst de volledige output op, leg meteen
   `$code = $LASTEXITCODE` vast, en filter (`Select-Object`, `Where-Object`, …) pas daarna op de vaste
-  array. Deze valkuil beet de git-afleiding in `bootstrap.ps1` (`Get-DerivedRepoName`) drie keer
-  (#94/#95/#96) voor de kern-oorzaak gevonden werd — geldt voor elke `scripts/**/*.ps1` die een native
-  command aanroept.
+  array. Het kostte drie PR's aan de git-afleiding in `bootstrap.ps1` (`Get-DerivedRepoName`) — #94
+  (regex-dekking), #95 (`insteadOf`-herschrijving) en #96 — voordat déze valkuil als kern-oorzaak werd
+  herkend; de regel geldt voor elke `scripts/**/*.ps1` die een native command aanroept.
 - Deze repo is **publiek**: config bevat nooit secrets.
 
 Kortom: het **hóé** (harness, scripts, config, veiligheidswachten beheren) is draagbaar; het **wát**
