@@ -11,7 +11,7 @@ rauwe dot-source-fout.
   per repo anders en wordt bewust niet meegebakken.
 - **Pre-flight:** `open-pr` (beide bestanden) en `fold` (alleen `repo-config`) checken vóór de
   dot-source op aanwezigheid én op niet-ingevulde `VUL-IN`-placeholders, en stoppen anders met een
-  duidelijke wegwijzer i.p.v. een rauwe fout. De spiegels zijn via de generator meegeregenereerd.
+  duidelijke wegwijzer i.p.v. een rauwe fout. De spiegels zijn via de generator opnieuw gegenereerd.
 - **Tests:** bootstrap-drift dekt de scaffold + idempotentie; shared-scripts dekt het pre-flight-gedrag
   van beide bron-scripts.
 - **Docs:** de skill-teksten (`specialists-init`, `open-pr`, `fold-changelog`) en de plugin-scripts-README
