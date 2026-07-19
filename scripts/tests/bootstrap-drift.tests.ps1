@@ -121,26 +121,16 @@ try {
             if (Test-Path -LiteralPath $gitFix) { Remove-Item -Recurse -Force -LiteralPath $gitFix -ErrorAction SilentlyContinue }
         }
     }
-    # Isoleer de git-config met een lege global/system-config: CI-runners zetten een globale insteadOf
-    # die de vorm van get-url herschrijft (git@github.com: -> https, soms met token-userinfo, soms
-    # ssh://). Zo test elke case echt de bedoelde URL-vorm. De regex in de bootstrap dekt bovendien
-    # alle vormen, dus ook zonder isolatie zou de afleiding kloppen -- dit maakt de labels alleen eerlijk.
-    $emptyGitCfg = Join-Path $Fixture 'empty-gitconfig'
-    [System.IO.File]::WriteAllText($emptyGitCfg, '')
-    $oldGCG = $env:GIT_CONFIG_GLOBAL; $oldGCS = $env:GIT_CONFIG_SYSTEM
-    $env:GIT_CONFIG_GLOBAL = $emptyGitCfg; $env:GIT_CONFIG_SYSTEM = $emptyGitCfg
-    try {
-        Test-DerivedRepoName -OriginUrl 'https://github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true  -Label 'https'
-        Test-DerivedRepoName -OriginUrl 'git@github.com:DaveKJohn/mijn-repo.git'    -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true  -Label 'ssh'
-        Test-DerivedRepoName -OriginUrl 'ssh://git@github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true -Label 'ssh-scheme'
-        # Credential-embedded https (zoals een CI-token-rewrite): owner/repo wordt afgeleid, de userinfo weggegooid.
-        Test-DerivedRepoName -OriginUrl 'https://x-access-token:SECRET@github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true -Label 'https-cred'
-        Test-DerivedRepoName -OriginUrl 'https://gitlab.com/DaveKJohn/mijn-repo.git' -Expected '' -ShouldDerive $false -Label 'niet-github'
-        Test-DerivedRepoName -OriginUrl ''                                          -Expected '' -ShouldDerive $false -Label 'geen-remote'
-    } finally {
-        if ($null -eq $oldGCG) { Remove-Item Env:GIT_CONFIG_GLOBAL -ErrorAction SilentlyContinue } else { $env:GIT_CONFIG_GLOBAL = $oldGCG }
-        if ($null -eq $oldGCS) { Remove-Item Env:GIT_CONFIG_SYSTEM -ErrorAction SilentlyContinue } else { $env:GIT_CONFIG_SYSTEM = $oldGCS }
-    }
+    # De bootstrap leest de origin via `git config --get remote.origin.url`, dat de RAUWE opgeslagen
+    # URL geeft en `insteadOf` negeert -- dus wat we hier met `remote add` zetten, komt onveranderd bij
+    # de afleiding aan, ongeacht de git-config van de (CI-)machine. Geen isolatie meer nodig.
+    Test-DerivedRepoName -OriginUrl 'https://github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true  -Label 'https'
+    Test-DerivedRepoName -OriginUrl 'git@github.com:DaveKJohn/mijn-repo.git'    -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true  -Label 'ssh'
+    Test-DerivedRepoName -OriginUrl 'ssh://git@github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true -Label 'ssh-scheme'
+    # Credential-embedded https (bv. een token in de URL): owner/repo wordt afgeleid, de userinfo weggegooid.
+    Test-DerivedRepoName -OriginUrl 'https://x-access-token:SECRET@github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true -Label 'https-cred'
+    Test-DerivedRepoName -OriginUrl 'https://gitlab.com/DaveKJohn/mijn-repo.git' -Expected '' -ShouldDerive $false -Label 'niet-github'
+    Test-DerivedRepoName -OriginUrl ''                                          -Expected '' -ShouldDerive $false -Label 'geen-remote'
 
     # --- 1b. Persona-lens is LENS-ONLY: geen body-kopie, wel het VUL-IN-slot -------------------------
     Write-Host "persona-lens -- lens-only (geen body-kopie)" -ForegroundColor Cyan

@@ -390,9 +390,13 @@ function Get-BranchInfo {
 # in `gh --repo` wordt gebruikt -- dus streng valideren (advies Sean) en bij elke twijfel terugvallen op
 # de VUL-IN-placeholder. De git-aanroep mag de bootstrap nooit laten crashen (geen git/geen origin ->
 # gewoon terugval), dus de hele afleiding zit in een try/catch.
+# Bewust `git config --get remote.origin.url` en NIET `git remote get-url`: dat laatste past
+# `insteadOf`-herschrijvingen toe (CI-runners en sommige dev-machines zetten die globaal, bv.
+# git@github.com: -> https), waardoor de teruggegeven vorm onvoorspelbaar wordt. `config --get` geeft
+# de RAUWE opgeslagen origin -- exact wat de consument configureerde, immuun voor insteadOf.
 function Get-DerivedRepoName([string]$Root) {
     try {
-        $url = (& git -C $Root remote get-url origin 2>$null | Select-Object -First 1)
+        $url = (& git -C $Root config --get remote.origin.url 2>$null | Select-Object -First 1)
     } catch {
         return $null
     }
