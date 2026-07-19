@@ -395,12 +395,21 @@ function Get-BranchInfo {
 # git@github.com: -> https), waardoor de teruggegeven vorm onvoorspelbaar wordt. `config --get` geeft
 # de RAUWE opgeslagen origin -- exact wat de consument configureerde, immuun voor insteadOf.
 function Get-DerivedRepoName([string]$Root) {
+    # Bewust GEEN `... | Select-Object -First 1` op de git-aanroep zelf: die pipe breekt de upstream
+    # (git) vroegtijdig af zodra de eerste regel binnen is, en als git op dat moment nog niet netjes
+    # is afgesloten wordt het proces met een non-nul exitcode beeindigd -- timing-afhankelijk. Die
+    # flakey `$LASTEXITCODE` liet de guard hieronder soms `$null` teruggeven (VUL-IN i.p.v. de
+    # afgeleide naam), met een niet-deterministisch rode CI tot gevolg. Daarom: eerst de volledige
+    # output vangen, dan meteen de exitcode vastleggen, en pas daarna `Select-Object` op de vaste array.
     try {
-        $url = (& git -C $Root config --get remote.origin.url 2>$null | Select-Object -First 1)
+        $out  = & git -C $Root config --get remote.origin.url 2>$null
+        $code = $LASTEXITCODE
     } catch {
         return $null
     }
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($url)) { return $null }
+    if ($code -ne 0) { return $null }
+    $url = ($out | Select-Object -First 1)
+    if ([string]::IsNullOrWhiteSpace($url)) { return $null }
     # Alleen github.com; alle gangbare vormen (https/ssh/git-scheme + de scp-achtige git@github.com:).
     # owner/repo als strikte slug; .git-suffix en trailing slash eraf. De scheme-vormen mogen optionele
     # userinfo dragen (bv. 'x-access-token:TOKEN@' -- zo herschrijft een git insteadOf-regel een remote,
