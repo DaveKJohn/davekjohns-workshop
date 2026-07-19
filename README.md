@@ -113,6 +113,17 @@ plugins zonder handmatige lokale stap.
 
 Een nieuw ingeschakelde plugin is pas in een **volgende** Claude Code-sessie zichtbaar.
 
+**Eén canoniek kanaal — let op de oude repo-naam.** De marketplace heet `davekjohns-workshop`
+(repo `DaveKJohn/davekjohns-workshop`) en dat is het enige kanaal; gebruik die naam in
+`extraKnownMarketplaces` (zoals hierboven). Deze repo heette vroeger `claude-specialists`: die oude
+naam blijft via een **GitHub-rename-redirect** naar dezelfde repo wijzen, dus een marketplace die nog
+onder `claude-specialists` staat geregistreerd, verwijst naar exact hetzelfde repo — er is **geen
+tweede bron** om naartoe te spiegelen. Wél kan de lokale marketplace-clone van zo'n oude registratie
+achterlopen (hij is ooit op een oudere commit gecloned en convergeert niet vanzelf naar de nieuwe
+`HEAD`), waardoor een install op dat kanaal stil een oudere plugin-versie oplevert. Loop je hier
+tegenaan: werk de marketplace-registratie bij (een marketplace-update) of voeg hem opnieuw toe onder
+`davekjohns-workshop` — een verse install hoort altijd `DaveKJohn/davekjohns-workshop` te gebruiken.
+
 ## Adoptie: het bootstrap-pad
 
 > **Nieuw hier?** De deelbare beginnerroute staat in de
