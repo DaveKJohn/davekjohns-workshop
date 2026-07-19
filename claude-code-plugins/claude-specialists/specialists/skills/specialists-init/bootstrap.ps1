@@ -278,8 +278,9 @@ $repoConfigScaffold = @'
     Repo-eigen configuratie voor de gedeelde workflow-scripts (open-pr / fold-changelog).
 .DESCRIPTION
     Door specialists-init als VUL-IN-scaffold neergezet. De gedeelde skills lezen dit kleine blokje
-    repo-data uit de repo-root; de scripts zelf zijn repo-agnostisch. Vul de drie waarden hieronder in
-    en verwijder de VUL-IN-markeringen.
+    repo-data uit de repo-root; de scripts zelf zijn repo-agnostisch. Vul de resterende VUL-IN-waarden
+    hieronder in en verwijder hun VUL-IN-markeringen. RepoName wordt door de bootstrap automatisch
+    uit de git-remote (origin) afgeleid als die een github.com-adres heeft; anders blijft hij VUL-IN.
 
     Geen Set-StrictMode hier: dot-sourcen zou de strict-mode van het aanroepende script veranderen.
     Puur ASCII (repo-conventie voor .ps1): Windows PowerShell 5.1 leest een BOM-loos script als ANSI.
@@ -354,11 +355,42 @@ function Get-BranchInfo {
 }
 '@
 
+# Repo-naam afleiden uit de git-remote van de consument (ergonomie): zo hoeft niemand RepoName nog
+# met de hand in te vullen. De remote-URL is externe input die in een geschreven .ps1 belandt en later
+# in `gh --repo` wordt gebruikt -- dus streng valideren (advies Sean) en bij elke twijfel terugvallen op
+# de VUL-IN-placeholder. De git-aanroep mag de bootstrap nooit laten crashen (geen git/geen origin ->
+# gewoon terugval), dus de hele afleiding zit in een try/catch.
+function Get-DerivedRepoName([string]$Root) {
+    try {
+        $url = (& git -C $Root remote get-url origin 2>$null | Select-Object -First 1)
+    } catch {
+        return $null
+    }
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($url)) { return $null }
+    # Alleen github.com, beide vormen (HTTPS + SSH); owner/repo als strikte slug; .git-suffix eraf.
+    $m = [regex]::Match($url.Trim(), '^(?:https://github\.com/|git@github\.com:)(?<owner>[A-Za-z0-9][A-Za-z0-9._-]*)/(?<repo>[A-Za-z0-9][A-Za-z0-9._-]*?)(?:\.git)?/?$')
+    if (-not $m.Success) { return $null }
+    return "$($m.Groups['owner'].Value)/$($m.Groups['repo'].Value)"
+}
+
+# Afgeleide naam in de repo-config-scaffold zetten (voor $scriptScaffolds wordt opgebouwd, zodat de
+# nieuwe inhoud meegaat). Lukt de afleiding niet, dan blijft de VUL-IN-placeholder staan.
+$derivedRepo = Get-DerivedRepoName $ConsumerRoot
+if ($derivedRepo) {
+    $repoConfigScaffold = $repoConfigScaffold.Replace(
+        "# VUL-IN: de GitHub-repo waar deze repo woont (owner/naam), bv. 'DaveKJohn/mijn-repo'.",
+        "# Door specialists-init afgeleid uit de git-remote (origin) van deze repo. Klopt dit niet, pas hem dan aan.")
+    $repoConfigScaffold = $repoConfigScaffold.Replace(
+        "`$script:RepoName = 'VUL-IN/repo'",
+        "`$script:RepoName = '$derivedRepo'")
+}
+
 $scriptScaffolds = @(
     @{ Rel = 'scripts\repo-config.ps1';     Content = $repoConfigScaffold }
     @{ Rel = 'scripts\lib\branch-info.ps1'; Content = $branchInfoScaffold }
 )
 $scriptScaffolded = 0; $scriptKept = 0
+$repoConfigDerived = $false
 foreach ($s in $scriptScaffolds) {
     $dest = Join-Path $ConsumerRoot $s.Rel
     $relDisplay = $s.Rel -replace '\\', '/'
@@ -370,7 +402,12 @@ foreach ($s in $scriptScaffolds) {
     $destDir = Split-Path $dest -Parent
     if (-not (Test-Path -LiteralPath $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
     [System.IO.File]::WriteAllText($dest, ($s.Content.TrimEnd() + "`n"), $Utf8NoBom)
-    Write-Host "  [maak]  script-scaffold $relDisplay" -ForegroundColor Green
+    $note = ''
+    if ($s.Rel -eq 'scripts\repo-config.ps1' -and $derivedRepo) {
+        $note = " (RepoName afgeleid: $derivedRepo)"
+        $repoConfigDerived = $true
+    }
+    Write-Host "  [maak]  script-scaffold $relDisplay$note" -ForegroundColor Green
     $scriptScaffolded++
 }
 
@@ -449,7 +486,11 @@ Write-Host ""
 Write-Host "Klaar: $copied persona-lens(en) neergezet, $kept al aanwezig; $scaffolded lens-scaffold(s) neergezet, $lensKept al aanwezig; $scriptScaffolded script-scaffold(s) neergezet, $scriptKept al aanwezig." -ForegroundColor Cyan
 Write-Host "Volgende stappen (handmatig -- dit script raakt settings.json/hooks bewust niet aan):" -ForegroundColor Cyan
 Write-Host "  1. Vul in elk $padRel/*/*-extension.md het '## Eigen aan deze repo'-slot met de repo-lens (de VUL-IN-scaffolds mogen leeg blijven tot een specialist hier echt werk krijgt)." -ForegroundColor Gray
-Write-Host "  2. Wil je de gedeelde workflow-skills (open-pr / fold-changelog) gebruiken? Vul dan scripts/repo-config.ps1 (RepoName + LintScript) en scripts/lib/branch-info.ps1 (je branch-prefix-tabel) in -- de VUL-IN-scaffolds staan klaar." -ForegroundColor Gray
+if ($repoConfigDerived) {
+    Write-Host "  2. Wil je de gedeelde workflow-skills (open-pr / fold-changelog) gebruiken? RepoName is al uit de git-remote afgeleid ($derivedRepo) -- vul in scripts/repo-config.ps1 nog Get-LintScript in en in scripts/lib/branch-info.ps1 je branch-prefix-tabel." -ForegroundColor Gray
+} else {
+    Write-Host "  2. Wil je de gedeelde workflow-skills (open-pr / fold-changelog) gebruiken? Vul dan scripts/repo-config.ps1 (RepoName + LintScript) en scripts/lib/branch-info.ps1 (je branch-prefix-tabel) in -- de VUL-IN-scaffolds staan klaar." -ForegroundColor Gray
+}
 Write-Host "  3. Neem uit .claude/settings.suggested.jsonc over wat je wilt in settings.json en verwijder het voorstel." -ForegroundColor Gray
 Write-Host "  4. Herstart de Claude Code-sessie zodat de nieuwe @-imports + config actief worden." -ForegroundColor Gray
 exit 0

@@ -95,6 +95,37 @@ try {
     $biText = [System.IO.File]::ReadAllText($biScaffold, [System.Text.Encoding]::UTF8)
     Assert-True ($biText -match '\$script:BranchPrefixTable = @\{\s*\}') 'branch-info-scaffold heeft een LEGE prefix-tabel (geen repo-taxonomie meegebakken)'
 
+    # --- 1d. RepoName afgeleid uit de git-remote (origin) van de consument (Gat B) -------------------
+    # Een consument die een git-repo is met een github.com-origin krijgt RepoName voor-ingevuld i.p.v.
+    # de VUL-IN-placeholder; niet-github of geen remote -> terugval op VUL-IN. De git-aanroep mag de
+    # bootstrap nooit laten crashen. Elke case draait in een eigen wegwerp-git-repo.
+    Write-Host "bootstrap.ps1 -- RepoName afgeleid uit de git-remote (origin)" -ForegroundColor Cyan
+    function Test-DerivedRepoName {
+        param([string]$OriginUrl, [string]$Expected, [bool]$ShouldDerive, [string]$Label)
+        $gitFix = Join-Path ([System.IO.Path]::GetTempPath()) ('specialists-init-git-' + $Label)
+        if (Test-Path -LiteralPath $gitFix) { Remove-Item -Recurse -Force -LiteralPath $gitFix }
+        New-Item -ItemType Directory -Path $gitFix -Force | Out-Null
+        try {
+            & git -C $gitFix init -q 2>$null | Out-Null
+            if ($OriginUrl) { & git -C $gitFix remote add origin $OriginUrl 2>$null | Out-Null }
+            $rg = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $gitFix)
+            Assert-Equal 0 $rg.Code "git-afleiding ($Label): bootstrap exit 0"
+            $txt = [System.IO.File]::ReadAllText((Join-Path $gitFix 'scripts\repo-config.ps1'), [System.Text.Encoding]::UTF8)
+            if ($ShouldDerive) {
+                Assert-True ($txt -match [regex]::Escape("`$script:RepoName = '$Expected'")) "git-afleiding ($Label): RepoName = $Expected"
+                Assert-True (-not ($txt -match "RepoName = 'VUL-IN")) "git-afleiding ($Label): geen VUL-IN op de RepoName-regel"
+            } else {
+                Assert-True ($txt -match "RepoName = 'VUL-IN/repo'") "git-afleiding ($Label): terugval op VUL-IN/repo"
+            }
+        } finally {
+            if (Test-Path -LiteralPath $gitFix) { Remove-Item -Recurse -Force -LiteralPath $gitFix -ErrorAction SilentlyContinue }
+        }
+    }
+    Test-DerivedRepoName -OriginUrl 'https://github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true  -Label 'https'
+    Test-DerivedRepoName -OriginUrl 'git@github.com:DaveKJohn/mijn-repo.git'    -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true  -Label 'ssh'
+    Test-DerivedRepoName -OriginUrl 'https://gitlab.com/DaveKJohn/mijn-repo.git' -Expected '' -ShouldDerive $false -Label 'niet-github'
+    Test-DerivedRepoName -OriginUrl ''                                          -Expected '' -ShouldDerive $false -Label 'geen-remote'
+
     # --- 1b. Persona-lens is LENS-ONLY: geen body-kopie, wel het VUL-IN-slot -------------------------
     Write-Host "persona-lens -- lens-only (geen body-kopie)" -ForegroundColor Cyan
     $srcPersona = [System.IO.File]::ReadAllText($PersonaSrc, [System.Text.Encoding]::UTF8)
