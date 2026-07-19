@@ -2,17 +2,17 @@
   "repo": "DaveKJohn/davekjohns-workshop",
   "visibility": "public",
   "localCheckout": ".",
-  "lastChecked": "2026-07-16",
+  "lastChecked": "2026-07-19",
   "status": "in-sync",
   "plugins": [
     {
       "id": "specialists@davekjohns-workshop",
-      "syncedVersion": "1.4.1",
+      "syncedVersion": "1.9.2",
       "extensions": [
         "01-01", "03-07", "04-18", "05-05", "05-06", "05-15",
-        "06-16", "06-17", "06-19", "06-23"
+        "06-16", "06-17", "06-19", "06-23", "06-24"
       ]
     }
   ],
-  "notes": "De werkplaats consumeert zichzelf (zie CLAUDE.md); via de github-source ziet zij de laatst gepushte versie, niet lopend branch-werk."
+  "notes": "De werkplaats consumeert zichzelf (zie CLAUDE.md); via de github-source ziet zij de laatst gepushte versie, niet lopend branch-werk. Gesynct op v1.9.2 (19 juli 2026); 06-24 (Ravi) toegevoegd aan de inventaris."
 }
