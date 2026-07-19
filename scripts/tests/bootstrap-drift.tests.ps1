@@ -168,6 +168,29 @@ try {
     Assert-True (Test-Path -LiteralPath (Join-Path $cacheConsumer "$ppCache\04-99-extension.md")) 'versie-cache: scaffold uit de hoogste versie (1.10.0)'
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $cacheConsumer "$ppCache\04-88-extension.md"))) 'versie-cache: oudere versie (1.9.0) niet gebruikt'
 
+    # --- 2c. Durabel body-pad: cache-install -> @-import wijst naar de marketplaces-clone (Gat C) -----
+    # Bootst de echte user-scope layout na: .../plugins/cache/<mp>/<plugin>/<versie>/ naast een
+    # versie-loze .../plugins/marketplaces/<mp>/-clone. De geschreven @-import in CLAUDE.md moet naar de
+    # clone wijzen (durabel, overleeft een update), NIET naar de versie-gepinde cache (die na een update
+    # wordt opgeruimd -> Chris' body zou niet meer laden).
+    Write-Host "bootstrap.ps1 -- durabel body-pad (cache -> marketplaces-clone)" -ForegroundColor Cyan
+    $pluginsRoot = Join-Path $Fixture 'plugins'
+    $mp = 'mp-fixture'
+    $cacheInit = Join-Path $pluginsRoot "cache\$mp\specialists\9.9.9"
+    New-Item -ItemType Directory -Path $cacheInit -Force | Out-Null
+    Copy-Item -Path (Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\specialists\*') -Destination $cacheInit -Recurse
+    # Versie-loze marketplaces-clone met (minimaal) de personas onder claude-code-plugins/<familie>/<plugin>/.
+    $cloneP = Join-Path $pluginsRoot "marketplaces\$mp\claude-code-plugins\claude-specialists\specialists\personas"
+    New-Item -ItemType Directory -Path $cloneP -Force | Out-Null
+    Copy-Item -Path (Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\specialists\personas\*') -Destination $cloneP -Recurse
+    $durConsumer = Join-Path $Fixture 'durable-consumer'
+    New-Item -ItemType Directory -Path $durConsumer -Force | Out-Null
+    $rd = Invoke-Script -Path (Join-Path $cacheInit 'skills\specialists-init\bootstrap.ps1') -ScriptArgs @('-ConsumerRoot', $durConsumer)
+    Assert-Equal 0 $rd.Code 'durabel body-pad: bootstrap exit 0'
+    $durMd = [System.IO.File]::ReadAllText((Join-Path $durConsumer 'CLAUDE.md'), [System.Text.Encoding]::UTF8)
+    Assert-True ($durMd -match [regex]::Escape("marketplaces/$mp/claude-code-plugins/claude-specialists/specialists/personas/01-01-persona.md")) 'durabel body-pad: @-import wijst naar de marketplaces-clone'
+    Assert-True (-not ($durMd -match '/cache/')) 'durabel body-pad: @-import wijst NIET naar de versie-gepinde cache'
+
     # --- 3. Drift op een verse bootstrap: LENS-ONLY (geen body om te vergelijken) --------------------
     Write-Host "check-consumer-drift.ps1 -- verse lens-only bootstrap = LENS-ONLY" -ForegroundColor Cyan
     $d1 = Invoke-Script -Path $DriftLint -ScriptArgs @('-ConsumerPath', $Fixture, '-Quiet')
