@@ -9,6 +9,24 @@ folden) staat in [`README.md`](README.md#bijdragen--changelog--pr-workflow).
 Alles wat sinds de laatste release naar `main` is gemergd — nieuwste bovenaan, één blok per pull
 request.
 
+### #97 · PowerShell-exitcode-valkuil geborgd in Sylvester's repo-lens · Docs · 2026-07-19
+
+Legt de scriptregel vast die de flaky CI-jacht (#94/#95/#96) opleverde, zodat een vierde herhaling
+wordt voorkomen.
+
+- **`05-15-extension.md` (Repo-eigen regels):** bullet toegevoegd — `$LASTEXITCODE` altijd lezen
+  vóór je een native command (bv. `git`) door een cmdlet pipt. `& git … | Select-Object -First 1`
+  breekt de upstream vroegtijdig af, wat de exitcode timing-afhankelijk op non-nul kan zetten en zo een
+  niet-deterministisch rode CI inbouwt. De regel: eerst de volledige output vangen, meteen
+  `$code = $LASTEXITCODE` vastleggen, en pas daarna filteren op de vaste array. Geldt voor elke
+  `scripts/**/*.ps1` die een native command aanroept.
+
+Borgt de les uit #96 op een draagbare plek (de docs, niet alleen het geheugen).
+
+[PR #97](https://github.com/DaveKJohn/davekjohns-workshop/pull/97)
+
+---
+
 ### #93 · Canoniek marketplace-kanaal gedocumenteerd (oude claude-specialists-naam is een redirect) · Docs · 2026-07-19
 
 Legt de marketplace-kanaal-strategie vast, na een inbound-bevinding uit de djcylow-react-acceptatietest
