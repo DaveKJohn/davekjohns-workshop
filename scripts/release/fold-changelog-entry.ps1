@@ -30,11 +30,27 @@ $ErrorActionPreference = "Stop"
 $repoRoot = if ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR } else { (git rev-parse --show-toplevel).Trim() }
 Set-Location $repoRoot
 
+# Pre-flight (#86): fold leunt op scripts\repo-config.ps1 in de repo-root van de consument. Ontbreekt
+# die -- typisch op een schone consument -- stop met een duidelijke wegwijzer i.p.v. een rauwe
+# dot-source-fout op de . (dot-source)-regel hieronder.
+$configPath = Join-Path $repoRoot 'scripts\repo-config.ps1'
+if (-not (Test-Path -LiteralPath $configPath)) {
+    Write-Error "fold-changelog kan niet draaien -- ontbrekend repo-eigen bestand: $configPath (Get-RepoName / Get-RepoBlobUrl / Get-LintScript). Dit bestand is repo-specifiek en hoort in de repo-root van de consument. Maak het aan (de specialists-init-bootstrap zet een VUL-IN-scaffold neer, of neem een bestaande consument / de werkplaats-repo als model) en draai daarna opnieuw."
+    exit 1
+}
+
 # Repo-naam uit de lokale repo-config van de repo-root (enige bron), niet langer hardcoded. Bewust
 # vanuit $repoRoot en niet $PSScriptRoot: vanuit de plugin-spiegel wijst $PSScriptRoot naar de
 # plugin-cache, terwijl repo-config altijd in de repo-root van de consument woont.
 . (Join-Path $repoRoot 'scripts\repo-config.ps1')
 $repo = Get-RepoName
+
+# Pre-flight (#86): een niet-ingevulde scaffold (repo-config nog op VUL-IN) faalt anders pas verderop
+# met een onduidelijke gh-fout. Stop hier met een duidelijke wegwijzer.
+if ($repo -match 'VUL-IN') {
+    Write-Error "fold-changelog kan niet draaien -- scripts\repo-config.ps1 bevat nog VUL-IN-placeholders. Vul Get-RepoName in met de waarde van deze repo en draai opnieuw."
+    exit 1
+}
 
 # BOM-loze UTF8 -- Set-Content -Encoding UTF8 voegt in Windows PowerShell 5.1 altijd een BOM
 # toe, en de rest van de repo (CHANGELOG.md etc.) heeft geen BOM.

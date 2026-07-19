@@ -23,6 +23,11 @@
       1b. Zet voor elke subagent van de INGESCHAKELDE plugin(s) (enabledPlugins in de settings van
           de consument; zonder settings alleen de eigen plugin) een lege lens-scaffold neer op het
           plugin-pad, duidelijk gemarkeerd als VUL-IN.
+      1c. Zet de repo-eigen script-config-scaffolds neer die de gedeelde workflow-skills (open-pr /
+          fold-changelog) nodig hebben: scripts/repo-config.ps1 (Get-RepoName / Get-RepoBlobUrl /
+          Get-LintScript) en scripts/lib/branch-info.ps1 (de prefix-tabel). Beide als VUL-IN-scaffold
+          met een LEGE branch-tabel -- de taxonomie is per repo anders. Zonder deze bestanden loopt
+          een schone consument op een rauwe dot-source-fout (#86). Nooit overschrijven.
       2. Zorgt dat <ConsumerRoot>/CLAUDE.md onderaan de TWEE @-imports van de orchestrator draagt: de
          body uit de plugin-install (~/.claude/plugins/marketplaces/.../01-01-persona.md) en de
          repo-lens (.claude/plugins/<familie>/<plugin>/01-01-extension.md). Ontbreekt CLAUDE.md, dan
@@ -261,6 +266,114 @@ group: $group
     }
 }
 
+# --- 1c. Repo-eigen script-config scaffolds (nooit overschrijven) -----------------------------------
+# De gedeelde skills open-pr/fold-changelog leunen op twee repo-eigen bestanden in de repo-root van de
+# consument (scripts/repo-config.ps1 + scripts/lib/branch-info.ps1). Zonder die loopt een schone
+# consument op een rauwe dot-source-fout (#86). specialists-init zet ze hier als VUL-IN-scaffold neer:
+# repo-agnostische structuur met lege plekken om zelf in te vullen. De branch-taxonomie is per repo
+# anders en blijft dus bewust een LEGE tabel -- nooit de taxonomie van een andere repo.
+$repoConfigScaffold = @'
+<#
+.SYNOPSIS
+    Repo-eigen configuratie voor de gedeelde workflow-scripts (open-pr / fold-changelog).
+.DESCRIPTION
+    Door specialists-init als VUL-IN-scaffold neergezet. De gedeelde skills lezen dit kleine blokje
+    repo-data uit de repo-root; de scripts zelf zijn repo-agnostisch. Vul de drie waarden hieronder in
+    en verwijder de VUL-IN-markeringen.
+
+    Geen Set-StrictMode hier: dot-sourcen zou de strict-mode van het aanroepende script veranderen.
+    Puur ASCII (repo-conventie voor .ps1): Windows PowerShell 5.1 leest een BOM-loos script als ANSI.
+#>
+
+# VUL-IN: de GitHub-repo waar deze repo woont (owner/naam), bv. 'DaveKJohn/mijn-repo'.
+$script:RepoName = 'VUL-IN/repo'
+
+function Get-RepoName {
+    return $script:RepoName
+}
+
+function Get-RepoBlobUrl {
+    return "https://github.com/$($script:RepoName)/blob/main/"
+}
+
+# VUL-IN: repo-root-relatief pad naar de lint-poort die open-pr voor de PR draait,
+# bv. 'scripts\lint\check-plugin-integrity.ps1' of 'scripts\maintenance\lint-brain.ps1'.
+$script:LintScript = 'VUL-IN'
+
+function Get-LintScript {
+    return $script:LintScript
+}
+'@
+
+$branchInfoScaffold = @'
+<#
+.SYNOPSIS
+    Gedeelde branch-conventies voor de workflow-scripts (repo-eigen prefix-tabel).
+.DESCRIPTION
+    Door specialists-init als VUL-IN-scaffold neergezet. Levert Get-BranchTypes, Get-BranchPrefix en
+    Get-BranchInfo. De prefix-tabel bepaalt het GitHub-label van de PR en het changelog-entry-type en
+    is PER REPO anders -- vul hieronder je eigen branch-taxonomie in (de tabel is bewust leeg).
+
+    Geen Set-StrictMode hier: dot-sourcen zou de strict-mode van het aanroepende script veranderen.
+    Puur ASCII (repo-conventie voor .ps1).
+#>
+
+# VUL-IN: de canonieke branch-typen in release-notes-volgorde, bv. @('Feat', 'Fix', 'Docs', 'Chore').
+$script:BranchTypeOrder = @()
+
+# VUL-IN: prefix -> GitHub-label (PR) + branch-type (changelog-entry). Voorbeeld:
+#   feat  = @{ Label = 'enhancement';   Type = 'Feat' }
+#   fix   = @{ Label = 'bug';           Type = 'Fix' }
+#   docs  = @{ Label = 'documentation'; Type = 'Docs' }
+#   chore = @{ Label = 'documentation'; Type = 'Chore' }
+$script:BranchPrefixTable = @{
+}
+
+function Get-BranchTypes {
+    return $script:BranchTypeOrder
+}
+
+function Get-BranchPrefix {
+    param([Parameter(Mandatory = $true)][string]$Branch)
+    if ($Branch -match '/') { return ($Branch -split '/')[0] }
+    return ($Branch -split '-')[0]
+}
+
+function Get-BranchInfo {
+    param([Parameter(Mandatory = $true)][string]$Branch)
+    $prefix = Get-BranchPrefix -Branch $Branch
+    $known  = $script:BranchPrefixTable.ContainsKey($prefix)
+    [pscustomobject]@{
+        Branch   = $Branch
+        Prefix   = $prefix
+        IsKnown  = $known
+        Label    = $(if ($known) { $script:BranchPrefixTable[$prefix].Label } else { $null })
+        Type     = $(if ($known) { $script:BranchPrefixTable[$prefix].Type } else { $null })
+        SafeName = $Branch -replace '/', '-'
+    }
+}
+'@
+
+$scriptScaffolds = @(
+    @{ Rel = 'scripts\repo-config.ps1';     Content = $repoConfigScaffold }
+    @{ Rel = 'scripts\lib\branch-info.ps1'; Content = $branchInfoScaffold }
+)
+$scriptScaffolded = 0; $scriptKept = 0
+foreach ($s in $scriptScaffolds) {
+    $dest = Join-Path $ConsumerRoot $s.Rel
+    $relDisplay = $s.Rel -replace '\\', '/'
+    if (Test-Path -LiteralPath $dest -PathType Leaf) {
+        Write-Host "  [houd]  $relDisplay bestaat al -- niet overschreven." -ForegroundColor DarkGray
+        $scriptKept++
+        continue
+    }
+    $destDir = Split-Path $dest -Parent
+    if (-not (Test-Path -LiteralPath $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
+    [System.IO.File]::WriteAllText($dest, ($s.Content.TrimEnd() + "`n"), $Utf8NoBom)
+    Write-Host "  [maak]  script-scaffold $relDisplay" -ForegroundColor Green
+    $scriptScaffolded++
+}
+
 # --- 2. De twee @-imports onderaan CLAUDE.md (body uit de plugin + de repo-lens) --------------------
 $bodyImport = "@$personaTilde/01-01-persona.md"
 $lensImport = "@$padRel/$personaPlugin/01-01-extension.md"
@@ -333,9 +446,10 @@ Write-Host "  [maak]  .claude/settings.suggested.jsonc neergezet (voorstel -- ni
 
 # --- Rapport ----------------------------------------------------------------------------------------
 Write-Host ""
-Write-Host "Klaar: $copied persona-lens(en) neergezet, $kept al aanwezig; $scaffolded lens-scaffold(s) neergezet, $lensKept al aanwezig." -ForegroundColor Cyan
+Write-Host "Klaar: $copied persona-lens(en) neergezet, $kept al aanwezig; $scaffolded lens-scaffold(s) neergezet, $lensKept al aanwezig; $scriptScaffolded script-scaffold(s) neergezet, $scriptKept al aanwezig." -ForegroundColor Cyan
 Write-Host "Volgende stappen (handmatig -- dit script raakt settings.json/hooks bewust niet aan):" -ForegroundColor Cyan
 Write-Host "  1. Vul in elk $padRel/*/*-extension.md het '## Eigen aan deze repo'-slot met de repo-lens (de VUL-IN-scaffolds mogen leeg blijven tot een specialist hier echt werk krijgt)." -ForegroundColor Gray
-Write-Host "  2. Neem uit .claude/settings.suggested.jsonc over wat je wilt in settings.json en verwijder het voorstel." -ForegroundColor Gray
-Write-Host "  3. Herstart de Claude Code-sessie zodat de nieuwe @-imports + config actief worden." -ForegroundColor Gray
+Write-Host "  2. Wil je de gedeelde workflow-skills (open-pr / fold-changelog) gebruiken? Vul dan scripts/repo-config.ps1 (RepoName + LintScript) en scripts/lib/branch-info.ps1 (je branch-prefix-tabel) in -- de VUL-IN-scaffolds staan klaar." -ForegroundColor Gray
+Write-Host "  3. Neem uit .claude/settings.suggested.jsonc over wat je wilt in settings.json en verwijder het voorstel." -ForegroundColor Gray
+Write-Host "  4. Herstart de Claude Code-sessie zodat de nieuwe @-imports + config actief worden." -ForegroundColor Gray
 exit 0

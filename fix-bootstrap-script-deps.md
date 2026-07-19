@@ -1,0 +1,18 @@
+### specialists-init scaffoldt repo-config + branch-info; open-pr/fold pre-flighten (schone consument) · Fix · 2026-07-19
+
+Dicht het script-afhankelijkheden-gat van de gedeelde workflow-skills op een schone consument (inbound
+[#86](https://github.com/DaveKJohn/davekjohns-workshop/issues/86), vervolg op [#81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81)).
+`open-pr`/`fold` leunen op twee repo-eigen bestanden in de consument-root (`scripts/repo-config.ps1` +
+`scripts/lib/branch-info.ps1`) die de bootstrap niet neerzette — bij een eerste install liep dat op een
+rauwe dot-source-fout.
+
+- **Bootstrap-scaffold:** `specialists-init/bootstrap.ps1` zet beide bestanden nu additief als
+  `VUL-IN`-scaffold neer (nooit overschrijven), met een **lege** branch-prefix-tabel — de taxonomie is
+  per repo anders en wordt bewust niet meegebakken.
+- **Pre-flight:** `open-pr` (beide bestanden) en `fold` (alleen `repo-config`) checken vóór de
+  dot-source op aanwezigheid én op niet-ingevulde `VUL-IN`-placeholders, en stoppen anders met een
+  duidelijke wegwijzer i.p.v. een rauwe fout. De spiegels zijn via de generator opnieuw gegenereerd.
+- **Tests:** bootstrap-drift dekt de scaffold + idempotentie; shared-scripts dekt het pre-flight-gedrag
+  van beide bron-scripts.
+- **Docs:** de skill-teksten (`specialists-init`, `open-pr`, `fold-changelog`) en de plugin-scripts-README
+  volgen het nieuwe gedrag; de fold-vereisten corrigeren meteen dat fold géén `branch-info` gebruikt.

@@ -48,6 +48,9 @@ een skill toe.
   **CI** vanaf een kale checkout — én de root-scripts dot-sourcen hem. Zolang `release-lib` van
   `branch-info` afhangt, zou verplaatsen de CI-poort breken.
 - **`repo-config.ps1`** is per definitie repo-data (repo-naam, blob-URL) en hoort per repo lokaal.
+  De `specialists-init`-bootstrap zet `repo-config.ps1` + `branch-info.ps1` als `VUL-IN`-scaffold neer,
+  zodat een schone consument de gedeelde skills niet op een ontbrekend bestand stukloopt; de scripts
+  pre-flighten er bovendien op ([#86](https://github.com/DaveKJohn/davekjohns-workshop/issues/86)).
 
 ## Precedent
 

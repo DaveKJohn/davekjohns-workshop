@@ -52,9 +52,13 @@ Het script doet alleen **veilige, additieve** handelingen — het overschrijft n
    `VUL-IN`-scaffold neer in `.claude/extensions/<g>-<id>-extension.md` (nooit overschrijven). Zo
    is vanaf de eerste install zichtbaar wáár de repo-specifieke taken per specialist worden
    aangevuld; de agent-def leest de lens automatisch mee zodra hij gevuld is.
-3. **De `@`-import** — zorgt dat `CLAUDE.md` onderaan `@.claude/extensions/01-01-extension.md`
+3. **Script-config-scaffolds (#86)** — zet `scripts/repo-config.ps1` en `scripts/lib/branch-info.ps1`
+   als `VUL-IN`-scaffold neer (nooit overschrijven, met een **lege** branch-tabel — de taxonomie is
+   per repo anders). Zonder deze twee bestanden lopen de gedeelde workflow-skills `open-pr`/`fold` op
+   een schone consument stuk op een ontbrekend bestand.
+4. **De `@`-import** — zorgt dat `CLAUDE.md` onderaan `@.claude/extensions/01-01-extension.md`
    draagt; maakt een minimale `CLAUDE.md`-scaffold als die ontbreekt.
-4. **Settings-voorstel** — schrijft `.claude/settings.suggested.jsonc` met de aanbevolen
+5. **Settings-voorstel** — schrijft `.claude/settings.suggested.jsonc` met de aanbevolen
    `permissions.deny` + een hooks-**stub**. Het raakt `settings.json` **niet** aan: een JSON-merge is
    repo-specifiek en risicovol, dus die beoordeling blijft bij jou.
 

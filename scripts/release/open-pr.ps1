@@ -60,12 +60,30 @@ $ErrorActionPreference = 'Stop'
 # byte-identiek (bewaakt door de shared-scripts-drift-lint).
 $repoRoot = if ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR } else { (git rev-parse --show-toplevel).Trim() }
 
+# Pre-flight (#86): de gedeelde scripts leunen op twee repo-eigen bestanden in de repo-root van de
+# consument. Ontbreken ze -- typisch op een schone consument waar ze nog niet zijn aangemaakt -- stop
+# dan met een duidelijke wegwijzer i.p.v. een rauwe dot-source-fout (het pad-niet-gevonden dat je
+# anders op de . (dot-source)-regels hieronder zou krijgen).
+$needed = @('scripts\repo-config.ps1', 'scripts\lib\branch-info.ps1')
+$absent = @($needed | Where-Object { -not (Test-Path -LiteralPath (Join-Path $repoRoot $_)) })
+if ($absent.Count -gt 0) {
+    Write-Error ("open-pr kan niet draaien -- ontbrekende repo-eigen configuratie in de repo-root ($repoRoot):`n  " + ($absent -join "`n  ") + "`n`nDeze bestanden zijn repo-specifiek en horen in de repo-root van de consument:`n  scripts\repo-config.ps1      -- Get-RepoName / Get-RepoBlobUrl / Get-LintScript`n  scripts\lib\branch-info.ps1  -- de repo-eigen branch-prefix-tabel`n`nMaak ze aan (de specialists-init-bootstrap zet een VUL-IN-scaffold neer, of neem een bestaande consument / de werkplaats-repo als model) en draai daarna opnieuw.")
+    exit 1
+}
+
 # Repo-eigen config + gedeelde branch-lib uit de repo-root (enige bron). Bewust vanuit $repoRoot en
 # niet $PSScriptRoot: vanuit de plugin-spiegel wijst $PSScriptRoot naar de plugin-cache, terwijl
 # repo-config/branch-info altijd in de repo-root van de consument wonen.
 . (Join-Path $repoRoot 'scripts\repo-config.ps1')
 . (Join-Path $repoRoot 'scripts\lib\branch-info.ps1')
 $repo = Get-RepoName
+
+# Pre-flight (#86): een niet-ingevulde scaffold (repo-config nog op VUL-IN) faalt anders pas verderop
+# met een onduidelijke gh-fout. Stop hier met een duidelijke wegwijzer.
+if ($repo -match 'VUL-IN' -or (Get-LintScript) -match 'VUL-IN') {
+    Write-Error "open-pr kan niet draaien -- scripts\repo-config.ps1 bevat nog VUL-IN-placeholders. Vul Get-RepoName en Get-LintScript in met de waarden van deze repo en draai opnieuw."
+    exit 1
+}
 
 $branch = (git rev-parse --abbrev-ref HEAD).Trim()
 if ($branch -eq 'main') { Write-Error "Je staat op main; een PR maak je vanaf een branch."; exit 1 }

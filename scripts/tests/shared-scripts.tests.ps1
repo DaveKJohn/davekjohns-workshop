@@ -75,6 +75,70 @@ Write-Host "build-shared-scripts.ps1 -Check -- repo in sync" -ForegroundColor Cy
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot 'scripts\sync\build-shared-scripts.ps1') -Check | Out-Null
 Assert-Equal 0 $LASTEXITCODE 'generator -Check groen op de repo'
 
+Write-Host "Pre-flight (#86): ontbrekende repo-config stopt met een duidelijke wegwijzer" -ForegroundColor Cyan
+# Draai elke bron tegen een LEGE repo-root (via CLAUDE_PROJECT_DIR) -- zonder repo-config/branch-info
+# hoort de pre-flight te stoppen met een wegwijzer i.p.v. een rauwe dot-source-fout. Kindproces, want
+# de scripts roepen zelf 'exit' aan.
+$pfDir = Join-Path ([System.IO.Path]::GetTempPath()) ("shared-scripts-preflight-$PID")
+New-Item -ItemType Directory -Path $pfDir -Force | Out-Null
+$prevPd = $env:CLAUDE_PROJECT_DIR
+$prevEap = $ErrorActionPreference
+$vfDir = $null
+try {
+    $env:CLAUDE_PROJECT_DIR = $pfDir
+    # Continue, niet Stop: de child schrijft zijn wegwijzer via Write-Error naar stderr; met 2>&1 zou
+    # Windows PowerShell 5.1 dat als terminating NativeCommandError behandelen en deze test afbreken.
+    $ErrorActionPreference = 'Continue'
+    $foldSrc = ($pairs | Where-Object { $_.Name -eq 'fold-changelog-entry' }).SourcePath
+    $foldOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File $foldSrc 2>&1 | Out-String)
+    $foldCode = $LASTEXITCODE
+    Assert-Equal 1 $foldCode 'fold stopt (exit 1) zonder repo-config'
+    Assert-True ($foldOut -match 'repo-config') 'fold noemt repo-config in de wegwijzer'
+    $prSrc = ($pairs | Where-Object { $_.Name -eq 'open-pr' }).SourcePath
+    $prOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File $prSrc -Title 'fix: preflight-test' 2>&1 | Out-String)
+    $prCode = $LASTEXITCODE
+    Assert-Equal 1 $prCode 'open-pr stopt (exit 1) zonder repo-config/branch-info'
+    Assert-True ($prOut -match 'branch-info') 'open-pr noemt branch-info in de wegwijzer'
+
+    # Tweede scenario: scaffolds AANWEZIG maar nog niet ingevuld (VUL-IN) -> ook stoppen met wegwijzer.
+    # Minimale scaffolds (repo-config met VUL-IN + een lege branch-info zodat open-pr's existence-check
+    # slaagt en de placeholder-check bereikt wordt).
+    $vfDir = Join-Path ([System.IO.Path]::GetTempPath()) ("shared-scripts-vulin-$PID")
+    New-Item -ItemType Directory -Path (Join-Path $vfDir 'scripts\lib') -Force | Out-Null
+    $Utf8 = New-Object System.Text.UTF8Encoding $false
+    $rcVulin = @'
+$script:RepoName = 'VUL-IN/repo'
+function Get-RepoName { return $script:RepoName }
+function Get-RepoBlobUrl { return "https://github.com/$($script:RepoName)/blob/main/" }
+$script:LintScript = 'VUL-IN'
+function Get-LintScript { return $script:LintScript }
+'@
+    $biVulin = @'
+$script:BranchTypeOrder = @()
+$script:BranchPrefixTable = @{}
+function Get-BranchTypes { return $script:BranchTypeOrder }
+function Get-BranchPrefix { param([string]$Branch) if ($Branch -match '/') { return ($Branch -split '/')[0] } return ($Branch -split '-')[0] }
+function Get-BranchInfo { param([string]$Branch) [pscustomobject]@{ Branch = $Branch; Prefix = (Get-BranchPrefix $Branch); IsKnown = $false; Label = $null; Type = $null; SafeName = ($Branch -replace '/', '-') } }
+'@
+    [System.IO.File]::WriteAllText((Join-Path $vfDir 'scripts\repo-config.ps1'), $rcVulin, $Utf8)
+    [System.IO.File]::WriteAllText((Join-Path $vfDir 'scripts\lib\branch-info.ps1'), $biVulin, $Utf8)
+    $env:CLAUDE_PROJECT_DIR = $vfDir
+    $foldV = (& powershell -NoProfile -ExecutionPolicy Bypass -File $foldSrc 2>&1 | Out-String)
+    $foldVCode = $LASTEXITCODE
+    Assert-Equal 1 $foldVCode 'fold stopt (exit 1) bij niet-ingevulde VUL-IN-scaffold'
+    Assert-True ($foldV -match 'VUL-IN') 'fold noemt VUL-IN in de wegwijzer'
+    $prV = (& powershell -NoProfile -ExecutionPolicy Bypass -File $prSrc -Title 'fix: vulin-test' 2>&1 | Out-String)
+    $prVCode = $LASTEXITCODE
+    Assert-Equal 1 $prVCode 'open-pr stopt (exit 1) bij niet-ingevulde VUL-IN-scaffold'
+    Assert-True ($prV -match 'VUL-IN') 'open-pr noemt VUL-IN in de wegwijzer'
+} finally {
+    $ErrorActionPreference = $prevEap
+    if ($null -eq $prevPd) { Remove-Item Env:\CLAUDE_PROJECT_DIR -ErrorAction SilentlyContinue }
+    else { $env:CLAUDE_PROJECT_DIR = $prevPd }
+    Remove-Item -Path $pfDir -Recurse -Force -ErrorAction SilentlyContinue
+    if ($vfDir) { Remove-Item -Path $vfDir -Recurse -Force -ErrorAction SilentlyContinue }
+}
+
 Write-Host ""
 if ($script:fail -gt 0) {
     Write-Host "FAALT: $($script:fail) fout, $($script:pass) goed." -ForegroundColor Red

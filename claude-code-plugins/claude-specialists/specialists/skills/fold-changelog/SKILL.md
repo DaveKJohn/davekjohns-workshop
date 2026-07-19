@@ -35,13 +35,16 @@ Commit het resultaat (`CHANGELOG.md` + de verwijderde entry-bestanden) daarna re
 Het script is repo-agnostisch, maar leest een klein blokje repo-data uit de **root** van de consument
 (dual-context: het lost de repo-root op via `${CLAUDE_PROJECT_DIR}`):
 
-- `scripts/repo-config.ps1` met `Get-RepoName` (voor de `gh --repo`-calls).
-- `scripts/lib/branch-info.ps1` (voor de branch-/type-afleiding).
+- `scripts/repo-config.ps1` met `Get-RepoName` (voor de `gh --repo`-calls). Dit is het enige
+  repo-eigen bestand dat fold nodig heeft -- het leidt het PR-nummer af via `gh pr list` en de
+  entry-bestandsnaam, en dot-sourcet dus géén `branch-info.ps1` (anders dan `open-pr`).
 - Een `CHANGELOG.md` met een `## Pull Requests`-sectie in het verwachte format.
 - `git` en een ingelogde `gh` CLI.
 
-Ontbreekt `repo-config.ps1` of `branch-info.ps1`, neem dan eerst het repo-config-patroon over (zie de
-werkplaats-repo als model) voordat je deze skill gebruikt.
+Ontbreekt `repo-config.ps1` -- typisch op een schone consument -- dan stopt het script vóór de
+dot-source met een duidelijke wegwijzer i.p.v. een rauwe fout (#86). De `specialists-init`-bootstrap
+zet het als `VUL-IN`-scaffold neer; vul het in (zie de werkplaats-repo als model) voordat je deze
+skill gebruikt.
 
 ## Belangrijk
 

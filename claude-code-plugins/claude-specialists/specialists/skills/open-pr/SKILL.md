@@ -42,6 +42,10 @@ Het script is repo-agnostisch, maar leest zijn repo-data uit de **root** van de 
 - `scripts/tests/*.tests.ps1` (de test-poort; conventie, geen config).
 - `.github/pull_request_template.md`, `git` en een ingelogde `gh` CLI.
 
+De `specialists-init`-bootstrap zet `repo-config.ps1` + `branch-info.ps1` als `VUL-IN`-scaffold neer.
+Ontbreken ze -- of staan ze nog op `VUL-IN` -- dan stopt het script vóór de dot-source met een
+duidelijke wegwijzer i.p.v. een rauwe fout (#86); vul ze eerst in (zie de werkplaats-repo als model).
+
 ## Belangrijk
 
 - **Een PR wordt alleen geopend op expliciet verzoek** -- dat blijft de governance-regel van de repo,

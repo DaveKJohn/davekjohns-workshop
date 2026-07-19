@@ -83,6 +83,18 @@ try {
     Assert-True ($mdText -match '(?m)^@[^\r\n]*personas/01-01-persona\.md') 'CLAUDE.md draagt de body-@-import (uit de plugin-install)'
     Assert-True (Test-Path -LiteralPath (Join-Path $Fixture '.claude\settings.suggested.jsonc')) 'settings.suggested.jsonc neergezet'
 
+    # --- 1c. scripts/-scaffolds voor de gedeelde workflow-skills (#86): repo-config + branch-info ----
+    Write-Host "bootstrap.ps1 -- script-config-scaffolds (#86)" -ForegroundColor Cyan
+    $rcScaffold = Join-Path $Fixture 'scripts\repo-config.ps1'
+    $biScaffold = Join-Path $Fixture 'scripts\lib\branch-info.ps1'
+    Assert-True (Test-Path -LiteralPath $rcScaffold) 'scripts/repo-config.ps1-scaffold neergezet'
+    Assert-True (Test-Path -LiteralPath $biScaffold) 'scripts/lib/branch-info.ps1-scaffold neergezet'
+    $rcText = [System.IO.File]::ReadAllText($rcScaffold, [System.Text.Encoding]::UTF8)
+    Assert-True ($rcText -match 'VUL-IN') 'repo-config-scaffold draagt de VUL-IN-markering'
+    Assert-True ($rcText -match 'function Get-RepoName') 'repo-config-scaffold levert Get-RepoName'
+    $biText = [System.IO.File]::ReadAllText($biScaffold, [System.Text.Encoding]::UTF8)
+    Assert-True ($biText -match '\$script:BranchPrefixTable = @\{\s*\}') 'branch-info-scaffold heeft een LEGE prefix-tabel (geen repo-taxonomie meegebakken)'
+
     # --- 1b. Persona-lens is LENS-ONLY: geen body-kopie, wel het VUL-IN-slot -------------------------
     Write-Host "persona-lens -- lens-only (geen body-kopie)" -ForegroundColor Cyan
     $srcPersona = [System.IO.File]::ReadAllText($PersonaSrc, [System.Text.Encoding]::UTF8)
@@ -98,6 +110,7 @@ try {
     Assert-Equal 0 $r2.Code 'tweede bootstrap exit 0'
     Assert-True ($r2.Out -match '0 persona-lens') 'tweede run zet 0 persona-lenzen (alles al aanwezig)'
     Assert-True ($r2.Out -match '0 lens-scaffold') 'tweede run zet 0 lens-scaffolds (alles al aanwezig)'
+    Assert-True ($r2.Out -match '0 script-scaffold') 'tweede run zet 0 script-scaffolds (#86, alles al aanwezig)'
     Assert-True ($r2.Out -match 'bestaat al') 'tweede run laat bestaande lens met rust'
 
     # --- 2b. Versie-cache-layout: de semantisch hoogste versie wint (vondst Victor) ------------------
