@@ -11,6 +11,7 @@ gesneden via [`scripts/release/cut-release.ps1`](../scripts/release/cut-release.
 
 | Versie | Datum | Type | Titel |
 |---|---|---|---|
+| [1.9.1](development/1.9/1.9.1.md) | 2026-07-19 | Patch | Schone-consument-fix: specialists-init scaffoldt de script-config en open-pr/fold pre-flighten (#86) |
 | [1.9.0](development/1.9/1.9.0.md) | 2026-07-19 | Minor | Gedeelde workflow-scripts (SSOT): repo-config, branch-type-bron en plugin-spiegels voor fold + open-pr |
 | [1.8.0](development/1.8/1.8.0.md) | 2026-07-18 | Minor | Adoptie-laag: bootstrap seedt het plugin-pad + lens-only |
 | [1.7.0](development/1.7/1.7.0.md) | 2026-07-18 | Minor | Ravi + lens-migratie: repo-lenzen op het plugin-pad, persona's lens-only |
