@@ -108,10 +108,22 @@ try {
         try {
             & git -C $gitFix init -q 2>$null | Out-Null
             if ($OriginUrl) { & git -C $gitFix remote add origin $OriginUrl 2>$null | Out-Null }
-            $childGet = (& powershell -NoProfile -Command "(& git -C '$gitFix' config --get remote.origin.url 2>`$null | Select-Object -First 1)") 2>&1
-            Write-Host "  [DIAG $Label] childcfg='$childGet'"
+            if ($Label -eq 'ssh') {
+                $probe = Join-Path $gitFix 'probe.ps1'
+                $probeBody = @'
+param([string]$Root)
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+try { $url = (& git -C $Root config --get remote.origin.url 2>$null | Select-Object -First 1) }
+catch { Write-Host "PROBE CATCH: $($_.Exception.Message)"; exit 0 }
+Write-Host "PROBE LASTEXIT=$LASTEXITCODE URL=[$url]"
+$m = [regex]::Match(($url).Trim(), '^(?:(?:https|ssh|git)://(?:[^/@]+@)?github\.com/|git@github\.com:)(?<owner>[A-Za-z0-9][A-Za-z0-9._-]*)/(?<repo>[A-Za-z0-9][A-Za-z0-9._-]*?)(?:\.git)?/?$')
+Write-Host "PROBE MATCH=$($m.Success) owner=[$($m.Groups['owner'].Value)] repo=[$($m.Groups['repo'].Value)]"
+'@
+                [System.IO.File]::WriteAllText($probe, $probeBody)
+                Write-Host "  [DIAG probe] $((& powershell -NoProfile -ExecutionPolicy Bypass -File $probe -Root $gitFix 2>&1) -join ' || ')"
+            }
             $rg = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $gitFix)
-            if ($Label -eq 'ssh') { Write-Host "  [DIAG ssh-out] $(($rg.Out -split "`n" | Where-Object { $_ -match 'repo-config' }) -join ' | ')" }
             Assert-Equal 0 $rg.Code "git-afleiding ($Label): bootstrap exit 0"
             $txt = [System.IO.File]::ReadAllText((Join-Path $gitFix 'scripts\repo-config.ps1'), [System.Text.Encoding]::UTF8)
             if ($ShouldDerive) {
