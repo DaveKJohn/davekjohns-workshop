@@ -108,21 +108,6 @@ try {
         try {
             & git -C $gitFix init -q 2>$null | Out-Null
             if ($OriginUrl) { & git -C $gitFix remote add origin $OriginUrl 2>$null | Out-Null }
-            if ($Label -eq 'ssh' -or $Label -eq 'https') {
-                $probe = Join-Path $gitFix 'probe.ps1'
-                $probeBody = @'
-param([string]$Root)
-Set-StrictMode -Version Latest
-$ErrorActionPreference = 'Stop'
-try { $url = (& git -C $Root config --get remote.origin.url 2>$null | Select-Object -First 1) }
-catch { Write-Host "PROBE CATCH: $($_.Exception.Message)"; exit 0 }
-Write-Host "PROBE rawLASTEXIT=$LASTEXITCODE URL=[$url]"
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($url)) { Write-Host 'PROBE would-return-null (guard tripped)'; exit 0 }
-Write-Host 'PROBE guard passed'
-'@
-                [System.IO.File]::WriteAllText($probe, $probeBody)
-                Write-Host "  [DIAG probe-$Label] $((& powershell -NoProfile -ExecutionPolicy Bypass -File $probe -Root $gitFix 2>&1) -join ' || ')"
-            }
             $rg = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $gitFix)
             Assert-Equal 0 $rg.Code "git-afleiding ($Label): bootstrap exit 0"
             $txt = [System.IO.File]::ReadAllText((Join-Path $gitFix 'scripts\repo-config.ps1'), [System.Text.Encoding]::UTF8)
