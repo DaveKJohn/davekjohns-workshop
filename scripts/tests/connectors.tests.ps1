@@ -171,6 +171,19 @@ try {
     Assert-Equal 0 $r.Code 'niet-geregistreerd op plugin-pad: exit-code 0'
     Assert-Match "\[INFO\].*'06-23'" $r.Out 'niet-geregistreerd op plugin-pad: INFO noemt het id'
 
+    # --- 5c. -OnlyConsumer zonder manifest in het register -> INFO, exit 0 -----------------------
+    #     Een verse/niet-geregistreerde consument (zoals de SessionStart-hook via -OnlyConsumer
+    #     doorgeeft) hoort een informatief "niet-geregistreerd"-signaal te zien -- NIET de
+    #     geruststellende "in sync"-tak. De manifest-checkout bestaat niet, dus geen enkel manifest
+    #     matcht deze consument -> matched=0 (regressie: dit was een kale Write-Host die niet als
+    #     info-signaal telde, waardoor de hook "alle connectors in sync" toonde).
+    New-FixtureConsumer -ExtensionIds @('06-16')
+    $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout 'onbestaand-fixture-pad'
+    $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-OnlyConsumer', $Fixture))
+    Assert-Equal 0 $r.Code 'onregistreerde consument: exit-code 0 (INFO, geen blokkade)'
+    Assert-Match '\[INFO\].*niet-geregistreerd' $r.Out 'onregistreerde consument: niet-geregistreerd-signaal'
+    Assert-Match '1 info-signa' $r.Out 'onregistreerde consument: telt als info-signaal'
+
     # --- 6. Echte manifesten van deze repo: het self-manifest checkt altijd ----------------------
     $selfManifest = Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\connectors\davekjohns-workshop.json'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $selfManifest))

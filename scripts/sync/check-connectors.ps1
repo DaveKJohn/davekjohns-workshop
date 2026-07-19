@@ -265,7 +265,7 @@ foreach ($mf in $manifestFiles) {
 }
 
 if ($OnlyConsumer -and $matched -eq 0) {
-    Write-Host "`nGeen manifest voor deze consument in het register." -ForegroundColor Yellow
+    Write-Info "niet-geregistreerd: geen manifest voor deze consument in het register."
 }
 
 # Content-drift per unieke consument (agent-defs = fout, persona's = informatief).
