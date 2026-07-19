@@ -5,6 +5,70 @@ raakten. Automatisch bijgeschreven door `cut-release.ps1` van de marketplace-rep
 (davekjohns-workshop); de volledige werkplaats-geschiedenis staat daar in `CHANGELOG.md` en
 `releases/`.
 
+## v1.10.0 — 2026-07-19
+
+### #92 · Bootstrap schrijft een durabel, versie-loos body-importpad · Fix · 2026-07-19
+
+Dicht een durability-gat dat een acceptatietest van consument djcylow-react aan het licht bracht
+(Gat C): bij een user-scope install schreef de `specialists-init`-bootstrap een **versie-gepind**
+body-importpad in `CLAUDE.md`
+(`@~/.claude/plugins/cache/<marketplace>/<plugin>/<versie>/personas/01-01-persona.md`). De cache is
+ephemeer — na een plugin-update wordt de oude versie-map opgeruimd (~7 dagen), waarna de `@`-import
+naar een niet-bestaand pad wijst en de **body van de orchestrator (Chris) stil niet meer laadt**.
+
+- **`bootstrap.ps1`**: nieuwe `Get-DurablePersonaDir` vertaalt een cache-pad
+  (`…/plugins/cache/<marketplace>/…`) naar de versie-loze marketplaces-clone
+  (`…/plugins/marketplaces/<marketplace>/…`) — het durabele anker dat een update overleeft (git-pull,
+  pad verandert niet). De marketplace-naam wordt uit het cache-pad gerecupereerd; de clone wordt
+  geverifieerd (bestaat, bevat de plugin-personas met `01-01-persona.md`) vóór hij wordt gebruikt.
+  Bij elke twijfel terugval op het oorspronkelijke pad — geen regressie voor de source/marketplaces-
+  layout (de bron die zichzelf consumeert verandert niet). De feitelijke *read* blijft de cache;
+  alleen het geschreven pad wordt durabel.
+- **Onderbouwing (research)**: `@`-imports in `CLAUDE.md` kennen géén variabele-expansie
+  (`${CLAUDE_PLUGIN_ROOT}` e.d. werken daar niet), dus een vast versie-loos pad is de enige route.
+- **`bootstrap-drift.tests.ps1`**: case (2c) toegevoegd die de user-scope layout nabootst
+  (`plugins/cache/<mp>/…` naast een `plugins/marketplaces/<mp>/`-clone) en assert dat de geschreven
+  `@`-import naar de clone wijst, niet naar de versie-gepinde cache.
+
+Meegenomen robuustheidsfix aan de RepoName-afleiding (#91), aan het licht gekomen doordat CI-runners
+een globale git-`insteadOf` zetten die `git@github.com:` naar een https-URL **mét token-userinfo**
+herschrijft (`git remote get-url` past dat toe):
+
+- **`bootstrap.ps1`**: de derivatie-regex tolereert nu optionele userinfo in de https-vorm
+  (`https://<userinfo>@github.com/owner/repo`); de userinfo wordt bewust niet gevangen — alleen
+  owner/repo, streng gevalideerd. Zo leidt ook een consument met credentials in de origin-URL correct af.
+- **`bootstrap-drift.tests.ps1`**: de git-afleiding-cases draaien nu met een geneutraliseerde
+  global/system git-config (zodat de ssh-case echt SSH test, immuun voor runner-`insteadOf`), plus een
+  expliciete `https-cred`-case die de userinfo-tolerantie vastlegt.
+
+[PR #92](https://github.com/DaveKJohn/davekjohns-workshop/pull/92)
+
+---
+
+### #91 · Bootstrap leidt RepoName automatisch af uit de git-remote · Feat · 2026-07-19
+
+Ergonomie-verbetering aan het `specialists-init`-bootstrap-adoptiepad (Gat B): een verse consument
+hoeft de repo-naam niet langer met de hand in te vullen.
+
+- **`bootstrap.ps1` (sectie 1c)**: nieuwe `Get-DerivedRepoName` leidt `owner/repo` af uit
+  `git remote get-url origin` van de consument en vult daarmee `$script:RepoName` in de neergezette
+  `scripts/repo-config.ps1`-scaffold, in plaats van de `VUL-IN/repo`-placeholder. Ondersteunt de
+  HTTPS- én SSH-vorm en stript het `.git`-suffix.
+- **Guardrails (advies Sean)**: de remote-URL is externe input die in een geschreven `.ps1` én in
+  `gh --repo` belandt — daarom een verankerde regex, owner/repo beperkt tot een strikte slug, alleen
+  `github.com`, en bij elke twijfel (niet-github host, geen remote, git niet beschikbaar) terugval op
+  de `VUL-IN`-placeholder. De git-aanroep zit in een `try/catch` + `2>$null`/`$LASTEXITCODE` en laat
+  de bootstrap nooit crashen (blijft additief, exit 0). `Get-LintScript` en de branch-prefix-tabel
+  blijven bewust VUL-IN — die zijn niet af te leiden.
+- **Schonere scaffold-kop + slotrapport**: de kop van de repo-config-scaffold en stap 2 van het
+  bootstrap-rapport melden nu wat er nog handmatig moet als RepoName al is afgeleid.
+- **`bootstrap-drift.tests.ps1`**: cases toegevoegd voor de afleiding (HTTPS + SSH → afgeleid, geen
+  VUL-IN op de RepoName-regel) en de terugval (niet-github host + geen remote → `VUL-IN/repo`).
+
+[PR #91](https://github.com/DaveKJohn/davekjohns-workshop/pull/91)
+
+---
+
 ## v1.9.2 — 2026-07-19
 
 ### #88 · specialists-init SKILL.md beschrijft het plugin-pad/lens-only-model (was: oude .claude/extensions-kopie) · Docs · 2026-07-19

@@ -11,6 +11,7 @@ gesneden via [`scripts/release/cut-release.ps1`](../scripts/release/cut-release.
 
 | Versie | Datum | Type | Titel |
 |---|---|---|---|
+| [1.10.0](development/1.10/1.10.0.md) | 2026-07-19 | Minor | RepoName-afleiding uit de git-remote, durabele body-import en een niet-geregistreerd-signaal voor onregistreerde consumenten |
 | [1.9.2](development/1.9/1.9.2.md) | 2026-07-19 | Patch | Documentatie: specialists-init SKILL.md uitgelijnd met het plugin-pad/lens-only-model (#88) |
 | [1.9.1](development/1.9/1.9.1.md) | 2026-07-19 | Patch | Schone-consument-fix: specialists-init scaffoldt de script-config en open-pr/fold pre-flighten (#86) |
 | [1.9.0](development/1.9/1.9.0.md) | 2026-07-19 | Minor | Gedeelde workflow-scripts (SSOT): repo-config, branch-type-bron en plugin-spiegels voor fold + open-pr |
