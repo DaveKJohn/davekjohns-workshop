@@ -20,3 +20,14 @@ naar een niet-bestaand pad wijst en de **body van de orchestrator (Chris) stil n
 - **`bootstrap-drift.tests.ps1`**: case (2c) toegevoegd die de user-scope layout nabootst
   (`plugins/cache/<mp>/…` naast een `plugins/marketplaces/<mp>/`-clone) en assert dat de geschreven
   `@`-import naar de clone wijst, niet naar de versie-gepinde cache.
+
+Meegenomen robuustheidsfix aan de RepoName-afleiding (#91), aan het licht gekomen doordat CI-runners
+een globale git-`insteadOf` zetten die `git@github.com:` naar een https-URL **mét token-userinfo**
+herschrijft (`git remote get-url` past dat toe):
+
+- **`bootstrap.ps1`**: de derivatie-regex tolereert nu optionele userinfo in de https-vorm
+  (`https://<userinfo>@github.com/owner/repo`); de userinfo wordt bewust niet gevangen — alleen
+  owner/repo, streng gevalideerd. Zo leidt ook een consument met credentials in de origin-URL correct af.
+- **`bootstrap-drift.tests.ps1`**: de git-afleiding-cases draaien nu met een geneutraliseerde
+  global/system git-config (zodat de ssh-case echt SSH test, immuun voor runner-`insteadOf`), plus een
+  expliciete `https-cred`-case die de userinfo-tolerantie vastlegt.

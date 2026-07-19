@@ -398,7 +398,10 @@ function Get-DerivedRepoName([string]$Root) {
     }
     if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($url)) { return $null }
     # Alleen github.com, beide vormen (HTTPS + SSH); owner/repo als strikte slug; .git-suffix eraf.
-    $m = [regex]::Match($url.Trim(), '^(?:https://github\.com/|git@github\.com:)(?<owner>[A-Za-z0-9][A-Za-z0-9._-]*)/(?<repo>[A-Za-z0-9][A-Za-z0-9._-]*?)(?:\.git)?/?$')
+    # De https-vorm mag optionele userinfo dragen (bv. 'x-access-token:TOKEN@' -- zo herschrijft een
+    # git insteadOf-regel een SSH-remote, en zo ziet een consument met credentials in de origin-URL
+    # eruit). Die userinfo wordt bewust NIET gevangen -- alleen owner/repo, streng gevalideerd.
+    $m = [regex]::Match($url.Trim(), '^(?:https://(?:[^/@]+@)?github\.com/|git@github\.com:)(?<owner>[A-Za-z0-9][A-Za-z0-9._-]*)/(?<repo>[A-Za-z0-9][A-Za-z0-9._-]*?)(?:\.git)?/?$')
     if (-not $m.Success) { return $null }
     return "$($m.Groups['owner'].Value)/$($m.Groups['repo'].Value)"
 }
