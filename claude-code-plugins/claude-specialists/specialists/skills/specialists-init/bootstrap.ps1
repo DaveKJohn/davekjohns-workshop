@@ -90,11 +90,41 @@ if ($ccpIdx -ge 0 -and ($ccpIdx + 2) -lt $segs.Count) {
         $family        = Split-Path (Split-Path $pdParent -Parent) -Leaf
     }
 }
+# Durabel body-pad: de geschreven @-import mag NOOIT naar de versie-gepinde cache wijzen. De cache
+# (~/.claude/plugins/cache/<marketplace>/<plugin>/<versie>/) is ephemeer -- na een plugin-update wordt
+# de oude versie-map opgeruimd (~7 dagen) en breekt een import die erheen wees; de body van de
+# orchestrator laadt dan niet meer. De marketplaces-clone (~/.claude/plugins/marketplaces/<marketplace>/)
+# is versie-loos en wordt bij update gepulld: dat is het durabele anker. @-imports kennen GEEN
+# variabele-expansie (${CLAUDE_PLUGIN_ROOT} e.d. werken daar niet), dus we schrijven een vast,
+# versie-loos pad. Draait de bootstrap al vanuit de marketplaces-clone of een niet-cache-locatie
+# (bv. de bron-repo die zichzelf consumeert), dan is $personaDir al durabel en verandert er niets.
+function Get-DurablePersonaDir([string]$PersonaDir, [string]$Plugin) {
+    $parts = ($PersonaDir -replace '/', '\') -split '\\' | Where-Object { $_ }
+    $cacheIdx = [array]::IndexOf([string[]]$parts, 'cache')
+    # Alleen ingrijpen op de echte cache-layout .../plugins/cache/<mp>/<plugin>/<versie>/personas.
+    if ($cacheIdx -lt 1 -or ($cacheIdx + 1) -ge $parts.Count) { return $PersonaDir }
+    if ($parts[$cacheIdx - 1] -ne 'plugins') { return $PersonaDir }
+    $marketplace = $parts[$cacheIdx + 1]
+    if ($marketplace -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*$') { return $PersonaDir }
+    $clone = Join-Path (($parts[0..($cacheIdx - 1)] -join '\')) (Join-Path 'marketplaces' $marketplace)
+    if (-not (Test-Path -LiteralPath $clone -PathType Container)) { return $PersonaDir }
+    # Zoek in de clone de personas-map onder een map die exact zo heet als de plugin en die de
+    # orchestrator-body draagt (01-01-persona.md is de import-target -- die moet er echt zijn).
+    $hit = Get-ChildItem -LiteralPath $clone -Recurse -Directory -Filter 'personas' -ErrorAction SilentlyContinue |
+        Where-Object {
+            (Split-Path $_.Parent.FullName -Leaf) -eq $Plugin -and
+            (Test-Path -LiteralPath (Join-Path $_.FullName '01-01-persona.md'))
+        } | Select-Object -First 1
+    if ($hit) { return $hit.FullName }
+    return $PersonaDir
+}
+$durablePersonaDir = Get-DurablePersonaDir -PersonaDir $personaDir -Plugin $personaPlugin
+
 $homeDir = $HOME
-if ($personaDir.StartsWith($homeDir, [System.StringComparison]::OrdinalIgnoreCase)) {
-    $personaTilde = '~' + $personaDir.Substring($homeDir.Length)
+if ($durablePersonaDir.StartsWith($homeDir, [System.StringComparison]::OrdinalIgnoreCase)) {
+    $personaTilde = '~' + $durablePersonaDir.Substring($homeDir.Length)
 } else {
-    $personaTilde = $personaDir
+    $personaTilde = $durablePersonaDir
 }
 $personaTilde = $personaTilde -replace '\\', '/'
 
@@ -368,7 +398,10 @@ function Get-DerivedRepoName([string]$Root) {
     }
     if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($url)) { return $null }
     # Alleen github.com, beide vormen (HTTPS + SSH); owner/repo als strikte slug; .git-suffix eraf.
-    $m = [regex]::Match($url.Trim(), '^(?:https://github\.com/|git@github\.com:)(?<owner>[A-Za-z0-9][A-Za-z0-9._-]*)/(?<repo>[A-Za-z0-9][A-Za-z0-9._-]*?)(?:\.git)?/?$')
+    # De https-vorm mag optionele userinfo dragen (bv. 'x-access-token:TOKEN@' -- zo herschrijft een
+    # git insteadOf-regel een SSH-remote, en zo ziet een consument met credentials in de origin-URL
+    # eruit). Die userinfo wordt bewust NIET gevangen -- alleen owner/repo, streng gevalideerd.
+    $m = [regex]::Match($url.Trim(), '^(?:https://(?:[^/@]+@)?github\.com/|git@github\.com:)(?<owner>[A-Za-z0-9][A-Za-z0-9._-]*)/(?<repo>[A-Za-z0-9][A-Za-z0-9._-]*?)(?:\.git)?/?$')
     if (-not $m.Success) { return $null }
     return "$($m.Groups['owner'].Value)/$($m.Groups['repo'].Value)"
 }
