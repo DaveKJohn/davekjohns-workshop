@@ -1,9 +1,11 @@
 ---
 name: specialists-init
 description: >-
-  Bootstrap het Claude-Specialists-systeem in een nieuwe consumerende repo: zet de orchestrator
-  (Chris) en de hoofdloop-persona's (Derek, Rendall) op via de @-import in CLAUDE.md, kopieer hun
-  draagbare sjablonen naar .claude/extensions/, en zet een governance-/safety-hooks-voorstel neer.
+  Bootstrap het Claude-Specialists-systeem in een nieuwe consumerende repo: haak de orchestrator
+  (Chris) aan via twee @-imports in CLAUDE.md (de draagbare body uit de plugin-install + zijn
+  lens-only repo-lens op het plugin-pad), zet de overige hoofdloop-persona's (Derek, Rendall) en de
+  subagents als lens-only scaffolds op het plugin-pad neer plus de script-config-scaffolds, en lever
+  een governance-/safety-hooks-voorstel.
   Gebruik dit wanneer de gedeelde `specialists`-plugin wél is ingeschakeld maar de dirigent en de
   governance-laag nog ontbreken ("de werkers zijn er, Chris niet").
 ---
@@ -12,9 +14,10 @@ description: >-
 
 De gedeelde `specialists`-plugin levert de **werker-subagents** (Sylvester, Tessa, Edith, Victor,
 Tycho, …). Wat een plugin **niet** kan, is altijd-aan-hoofdloop-context injecteren of de `CLAUDE.md`
-van een consument bewerken. Precies daar zit het gat: **Chris** (de orchestrator) en de andere
-hoofdloop-persona's (**Derek**, **Rendall**) worden geladen via een `@`-import onderaan de
-repo-`CLAUDE.md`, plus de governance- en safety-laag die per repo verschilt. Deze skill dicht dat gat.
+van een consument bewerken. Precies daar zit het gat: **Chris** (de orchestrator) wordt geladen via
+een `@`-import onderaan de repo-`CLAUDE.md`; **Derek** en **Rendall** staan als lens-only persona op
+het plugin-pad klaar en worden on-demand ingelezen. Deze skill zet dat op, plus de governance- en
+safety-laag die per repo verschilt.
 
 ## Kip-en-ei — stap 0 doet de gebruiker zelf
 
@@ -45,19 +48,24 @@ powershell -NoProfile -File "${CLAUDE_PLUGIN_ROOT}/skills/specialists-init/boots
 
 Het script doet alleen **veilige, additieve** handelingen — het overschrijft nooit bestaande inhoud:
 
-1. **Persona-sjablonen** — kopieert `${CLAUDE_PLUGIN_ROOT}/personas/<g>-<id>-persona.md` naar
-   `.claude/extensions/<g>-<id>-extension.md` van de consument (Chris `01-01`, Derek `05-05`,
-   Rendall `05-06`), alleen als die er nog niet staat.
+1. **Persona-lenzen (lens-only)** — zet per hoofdloop-persona (Chris `01-01`, Derek `05-05`,
+   Rendall `05-06`) een `*-extension.md` neer op het **plugin-pad**
+   `.claude/plugins/<familie>/<plugin>/` van de consument, alleen als die er nog niet staat. De lens
+   draagt **geen bodykopie** — alleen het repo-lens-slot; de draagbare body komt via een `@`-import
+   rechtstreeks uit de plugin-install.
 2. **Lege lens-scaffolds** — zet voor elke subagent van de **ingeschakelde** plugin(s) een lege
-   `VUL-IN`-scaffold neer in `.claude/extensions/<g>-<id>-extension.md` (nooit overschrijven). Zo
-   is vanaf de eerste install zichtbaar wáár de repo-specifieke taken per specialist worden
-   aangevuld; de agent-def leest de lens automatisch mee zodra hij gevuld is.
+   `VUL-IN`-scaffold neer op datzelfde plugin-pad
+   (`.claude/plugins/<familie>/<plugin>/<g>-<id>-extension.md`, nooit overschrijven). Zo is vanaf de
+   eerste install zichtbaar wáár de repo-specifieke taken per specialist worden aangevuld; de
+   agent-def leest de lens automatisch mee zodra hij gevuld is.
 3. **Script-config-scaffolds (#86)** — zet `scripts/repo-config.ps1` en `scripts/lib/branch-info.ps1`
    als `VUL-IN`-scaffold neer (nooit overschrijven, met een **lege** branch-tabel — de taxonomie is
    per repo anders). Zonder deze twee bestanden lopen de gedeelde workflow-skills `open-pr`/`fold` op
    een schone consument stuk op een ontbrekend bestand.
-4. **De `@`-import** — zorgt dat `CLAUDE.md` onderaan `@.claude/extensions/01-01-extension.md`
-   draagt; maakt een minimale `CLAUDE.md`-scaffold als die ontbreekt.
+4. **De twee `@`-imports** — zorgt dat `CLAUDE.md` de orchestrator onderaan draagt via twee imports:
+   de draagbare body uit de plugin-install én de repo-lens
+   (`@.claude/plugins/<familie>/<plugin>/01-01-extension.md`). Maakt een minimale `CLAUDE.md`-scaffold
+   als die ontbreekt.
 5. **Settings-voorstel** — schrijft `.claude/settings.suggested.jsonc` met de aanbevolen
    `permissions.deny` + een hooks-**stub**. Het raakt `settings.json` **niet** aan: een JSON-merge is
    repo-specifiek en risicovol, dus die beoordeling blijft bij jou.
@@ -66,10 +74,11 @@ Het script doet alleen **veilige, additieve** handelingen — het overschrijft n
 
 Na het script:
 
-1. **Vul de repo-lens.** Elk gekopieerd `*-extension.md` heeft een `## Eigen aan deze repo (VUL-IN)`-slot.
-   Vervang dat door de repo-eigen context: het roster/de routing (Chris), de branch-/PR-conventies
-   (Derek), het release-mechaniek (Rendall). De draagbare body erboven laat je staan — de drift-lint
-   van de marketplace bewaakt die tegen de canonieke bron.
+1. **Vul de repo-lens.** Elk neergezet `*-extension.md` op het plugin-pad heeft een
+   `## Eigen aan deze repo (VUL-IN)`-slot. Vervang dat door de repo-eigen context: het roster/de
+   routing (Chris), de branch-/PR-conventies (Derek), het release-mechaniek (Rendall). De draagbare
+   body woont in de plugin-install (niet in de lens) en wordt via de `@`-import meegeladen — de
+   drift-lint van de marketplace bewaakt de lenzen tegen de canonieke bron.
 2. **Neem de settings over.** Kopieer uit `.claude/settings.suggested.jsonc` wat past naar
    `settings.json` (of `settings.local.json`), pas de hooks-stub aan naar echte repo-scripts (of laat
    ze weg), en verwijder daarna het voorstel-bestand.
@@ -80,8 +89,8 @@ Na het script:
 
 ## Belangrijk
 
-- **Niet overschrijven.** Bestaat een `*-extension.md` of de `@`-import al, dan laat het script het
-  met rust. De skill is veilig herhaald aan te roepen.
+- **Niet overschrijven.** Bestaat een `*-extension.md`, een scaffold of de `@`-imports al, dan laat
+  het script het met rust. De skill is veilig herhaald aan te roepen.
 - **De persona's zijn sjablonen, geen subagents.** Ze hebben bewust geen agent-def; ze draaien in de
   hoofdloop. Wijzig de draagbare body niet lokaal — een bodywijziging landt eerst in de marketplace
   (`personas/`), niet in een consument (net als een gedeelde agent-def).
