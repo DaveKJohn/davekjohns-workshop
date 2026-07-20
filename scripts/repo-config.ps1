@@ -46,3 +46,26 @@ function Get-LintScript {
     <# Repo-root-relatief pad naar de lint-poort die open-pr.ps1 voor de PR draait. #>
     return $script:LintScript
 }
+
+# The file that holds the roster (the specialists table/list). check-roster-sync.ps1 reads this to
+# decide which agent ids are "present in the roster". Repo-root-relative; 'CLAUDE.md' by default.
+# There is deliberately NO Get-RosterFormat: the check is format-agnostic (it scans the text for each
+# <group>-<id> token), so it works whether the roster is a table or a list.
+$script:RosterPath = 'CLAUDE.md'
+
+function Get-RosterPath {
+    <# Repo-root-relative path to the file that holds the roster (specialists table/list). #>
+    return $script:RosterPath
+}
+
+# Agent ids ('<group>-<id>') that are ENABLED but deliberately have no roster row and no lens, so
+# check-roster-sync.ps1 must not flag them as drift. In this workshop, Paula (02-09), Vera (04-11),
+# Gwen (04-12) and Cody (04-13) are enabled from the `specialists` plugin but have (as yet) no
+# repo work here, hence no lens and no roster row -- a documented choice in CLAUDE.md, not drift.
+# A fresh consumer leaves this empty (every enabled agent belongs in its roster).
+$script:RosterIgnoredIds = @('02-09', '04-11', '04-12', '04-13')
+
+function Get-RosterIgnoredIds {
+    <# Ids of enabled agents intentionally kept out of the roster/lenses (skipped by the check). #>
+    return $script:RosterIgnoredIds
+}

@@ -48,6 +48,12 @@ $lint = Get-LintScript
 Assert-Match $lint '\.ps1$' 'Get-LintScript wijst naar een .ps1'
 Assert-Match $lint '^scripts[\\/]' 'Get-LintScript is repo-root-relatief onder scripts/'
 
+# Roster-config voor check-roster-sync.ps1 (het roster-bestand + de bewust-genegeerde agent-ids).
+$roster = Get-RosterPath
+Assert-Match $roster '\.md$' 'Get-RosterPath wijst naar een .md'
+$ignored = @(Get-RosterIgnoredIds)
+foreach ($id in $ignored) { Assert-Match $id '^\d{2}-\d{2}$' "Get-RosterIgnoredIds: '$id' is een geldig <group>-<id>" }
+
 Write-Host ""
 if ($script:fail -gt 0) {
     Write-Host "FAALT: $($script:fail) fout, $($script:pass) goed." -ForegroundColor Red

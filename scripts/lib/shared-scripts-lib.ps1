@@ -38,6 +38,11 @@ function Get-SharedScriptPairs {
             Name   = 'open-pr'
             Source = 'scripts\release\open-pr.ps1'
             Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\release\open-pr.ps1'
+        },
+        @{
+            Name   = 'check-roster-sync'
+            Source = 'scripts\sync\check-roster-sync.ps1'
+            Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\sync\check-roster-sync.ps1'
         }
     )
 
