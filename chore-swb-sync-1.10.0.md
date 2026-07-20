@@ -1,0 +1,3 @@
+### swb gesynct naar v1.10.0 -- manifest bijgewerkt · Chore · 2026-07-20
+
+De connector `davekokbwj/smartwatchbanden` is op deze machine via `claude plugin update` naar v1.10.0 gehaald (machine-record op v1.10.0, content-drift 0). Het register liep administratief achter: `syncedVersion` stond voor beide plugins (`specialists` en `specialists-shopify`) nog op v1.4.1. Bijgewerkt naar v1.10.0, `status` van `attentie` naar `in-sync`, `lastChecked` naar 2026-07-20 en de verlopen ATTENTIE-notitie opgeschoond.
