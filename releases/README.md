@@ -11,6 +11,7 @@ gesneden via [`scripts/release/cut-release.ps1`](../scripts/release/cut-release.
 
 | Versie | Datum | Type | Titel |
 |---|---|---|---|
+| [1.12.1](development/1.12/1.12.1.md) | 2026-07-20 | Patch | Ship the git/gh stderr-under-Stop sweep to consumers (the open-pr + fold shared-script mirrors from #113) |
 | [1.12.0](development/1.12/1.12.0.md) | 2026-07-20 | Minor | Workshop switched to English (phases A-C) and the roster-sync feature (detect, signal, stage recovery); plus the open-pr push-stderr fix and the shared language-directive block |
 | [1.11.0](development/1.11/1.11.0.md) | 2026-07-20 | Minor | Stillere sessiestart (alleen FOUT/DRIFTED) en een afgeslankt connectors-register zonder versie-boekhouding |
 | [1.10.0](development/1.10/1.10.0.md) | 2026-07-19 | Minor | RepoName-afleiding uit de git-remote, durabele body-import en een niet-geregistreerd-signaal voor onregistreerde consumenten |
