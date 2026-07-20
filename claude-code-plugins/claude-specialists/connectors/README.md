@@ -141,7 +141,7 @@ silent at session start (decision by Dave, July 20, 2026); they are visible on a
 a classification rule for extensions of the check (security review advice, July 20, 2026): a new
 signal category that may be security-relevant (e.g. an indication of tampering) must never be
 classified as `[INFO]`, but as `[ERROR]` — otherwise it silently stays out of sight at session
-start. This hook is — next to the `specialists-init` skill — the second named, repo-neutral
-exception to the rule that plugins carry no hooks/skills (see the root README). Mind the **version
-gate**: consumers only receive the hook after a release bump plus a `claude plugin update` +
-session restart on their side.
+start. This hook is — alongside the `specialists-init` skill and the `roster-sessioncheck` hook
+(the roster-sync feature) — one of the named, repo-neutral exceptions to the rule that plugins
+carry no hooks/skills (see the root README). Mind the **version gate**: consumers only receive the
+hook after a release bump plus a `claude plugin update` + session restart on their side.

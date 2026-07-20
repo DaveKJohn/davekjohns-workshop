@@ -247,6 +247,38 @@ try {
     Assert-Match "\[INFO\].*'04-11'.*deliberately kept out" $r.Out 'ignore-list: 04-11 reported as skipped'
     Assert-NotMatch "'04-11'.*no roster row" $r.Out 'ignore-list: 04-11 not an ERROR'
 
+    # --- Hook (roster-sessioncheck.ps1): soft, surfaces only [ERROR], always exit 0 ---------------
+    $Hook = Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\specialists\hooks\roster-sessioncheck.ps1'
+    # A stub "check" script with fixed output + exit code, so the hook is tested in isolation.
+    function New-StubCheck {
+        param([string]$Name, [string[]]$OutputLines, [int]$ExitCode)
+        $p = Join-Path $Fixture "$Name.ps1"
+        $body = (($OutputLines | ForEach-Object { 'Write-Host "' + $_ + '"' }) -join "`r`n") + "`r`nexit $ExitCode`r`n"
+        [System.IO.File]::WriteAllText($p, $body)
+        return $p
+    }
+    function Invoke-Hook { param([string[]]$A) $o = & powershell -NoProfile -ExecutionPolicy Bypass -File $Hook @A; return [pscustomobject]@{ Code = $LASTEXITCODE; Out = ($o -join "`n") } }
+
+    # H1. Check script not found -> soft notice, exit 0.
+    $r = Invoke-Hook @('-CheckScriptOverride', (Join-Path $Fixture 'does-not-exist.ps1'))
+    Assert-Equal 0 $r.Code 'hook: exit 0 when check script missing'
+    Assert-Match 'check skipped' $r.Out 'hook: missing-script notice'
+
+    # H2. Stub emits an [ERROR] (roster drift) -> surfaced, exit 0 (never blocks the session).
+    $stub = New-StubCheck -Name 'stub-drift' -ExitCode 1 -OutputLines @("  [ERROR]  agent '06-24' has no roster row", '  [INFO]  orphan 09-99')
+    $r = Invoke-Hook @('-CheckScriptOverride', $stub)
+    Assert-Equal 0 $r.Code 'hook: exit 0 even on drift (never blocks)'
+    Assert-Match 'roster drift found' $r.Out 'hook: drift summary shown'
+    Assert-Match "06-24" $r.Out 'hook: the ERROR line is surfaced'
+    Assert-NotMatch 'orphan 09-99' $r.Out 'hook: [INFO] stays silent at session start'
+
+    # H3. Stub emits only [INFO]/[OK] -> silent in-sync message, exit 0.
+    $stub = New-StubCheck -Name 'stub-clean' -ExitCode 0 -OutputLines @('  [OK]    all present', '  [INFO]  orphan 09-99')
+    $r = Invoke-Hook @('-CheckScriptOverride', $stub)
+    Assert-Equal 0 $r.Code 'hook: exit 0 when clean'
+    Assert-Match 'in sync' $r.Out 'hook: in-sync message'
+    Assert-NotMatch 'roster drift found' $r.Out 'hook: no drift summary when clean'
+
     # --- 11. Guardrail: a malformed plugin id in settings.json is rejected before filesystem access ---
     #     An uppercase/underscore plugin name fails the slug regex; the script must ERROR ("invalid
     #     plugin id") and skip it rather than build a path from it. Security-relevant branch (Sean/Victor).
