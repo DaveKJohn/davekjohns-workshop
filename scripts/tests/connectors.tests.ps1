@@ -286,6 +286,16 @@ try {
     Assert-Match 'signalen gevonden' $r.Out 'stub fout: signalen-tak'
     Assert-Match 'fixture-fout' $r.Out 'stub fout: FOUT-regel doorgegeven'
 
+    # 9d2. Stub met FOUT én INFO in dezelfde run -> de FOUT komt door, de INFO blijft weg
+    #      (het gevoeligste regressie-scenario voor de scheiding, vondst Victor).
+    $stub = New-StubWorkshop -Name 'stub-mix' -ExitCode 1 -OutputLines @(
+        '  [FOUT]  fixture-mix-fout',
+        '  [INFO]  fixture-mix-info'
+    )
+    $r = Invoke-Ps $Hook @('-WorkshopPathOverride', $stub)
+    Assert-Match 'fixture-mix-fout' $r.Out 'stub mix: FOUT-regel doorgegeven'
+    Assert-NotMatch 'fixture-mix-info' $r.Out 'stub mix: INFO-regel NIET doorgegeven'
+
     # 9e. Marker-check (guardrail Sean): kandidaat-pad zonder geldige marker wordt NIET uitgevoerd.
     $stub = New-StubWorkshop -Name 'stub-nep' -ExitCode 0 -ValidMarker $false -OutputLines @(
         'FAKE-EXECUTED'

@@ -15,9 +15,10 @@
     De hook is bewust zacht:
       - geen (geverifieerde) workshop-checkout -> een melding en klaar (exit 0);
       - alleen blokkerende signalen ([FOUT]/[DRIFTED]) -> compacte samenvatting in de
-        sessie-context, nooit een blokkade. [INFO] is registeradministratie over de sync-stand
-        van consumenten -- vaak een andere machine of gebruiker waar deze sessie niets aan kan
-        doen -- en blijft bij sessiestart bewust stil; die is zichtbaar bij een bewuste run van
+        sessie-context, nooit een blokkade; [INFO] is registeradministratie (de sync-stand en
+        registratie van consumenten) -- soms hier bij te werken, vaak de zaak van een andere
+        machine of gebruiker, maar nooit werk waarvoor een sessiestart onderbroken hoeft te
+        worden -- en blijft daarom bewust stil; zichtbaar bij een bewuste run van
         check-connectors.ps1;
       - het script eindigt ALTIJD met exit 0 -- een sessiestart mag hier nooit op stranden.
 
@@ -97,8 +98,9 @@ try {
 
     # -cmatch + blokhaken (vondst Victor): de kale samenvattingsregels van de drift-check
     # bevatten het woord 'drifted' in kleine letters en zijn geen signaal.
-    # [INFO] telt hier bewust NIET mee: registeradministratie (sync-stand van consumenten,
-    # vaak een andere machine/gebruiker) hoort niet bij elke sessiestart gemeld te worden.
+    # [INFO] telt hier bewust NIET mee (wens Dave): registeradministratie -- de sync-stand of
+    # registratie van consumenten, soms hier bij te werken, vaak een andere machine/gebruiker --
+    # hoort niet bij elke sessiestart gemeld te worden; een bewuste run toont alles.
     $signals = @($out | Where-Object { $_ -cmatch '\[FOUT\]|\[DRIFTED\]' })
     if ($code -eq 0 -and $signals.Count -eq 0) {
         Write-Host 'connectors-sessiecheck: geen fouten.'

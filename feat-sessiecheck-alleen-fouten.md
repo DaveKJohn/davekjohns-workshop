@@ -3,10 +3,11 @@
 De SessionStart-hook toonde bij elke sessiestart óók de `[INFO]`-signalen uit de connectors-check:
 registeradministratie over de sync-stand van consumenten (manifest achter op de bronversie, een
 niet-geregistreerde extension). Die stand leeft vaak op een andere machine of bij een andere
-gebruiker — daar kan de lopende sessie niets aan doen, en het schaalt niet naarmate meer repo's
-de plugin installeren (wens Dave).
+gebruiker, en ook waar hij hier bij te werken is, is het administratie op eigen tempo — geen
+sessiestart-werk. Het schaalt bovendien niet naarmate meer repo's de plugin installeren (wens
+Dave).
 
-- **`connector-sessioncheck.ps1`**: het signaalfilter beperkt tot `[FOUT]`/`[DRIFTED]` — alleen
+- **`connector-sessioncheck.ps1`**: het signaalfilter is beperkt tot `[FOUT]`/`[DRIFTED]` — alleen
   wat hier en nu oplosbaar is bereikt de sessie-context. De OK-melding is daarop aangepast
   ("geen fouten"). `[INFO]` blijft volledig zichtbaar bij een bewuste run van
   `scripts/sync/check-connectors.ps1` in de workshop; aan de check zelf verandert niets.
