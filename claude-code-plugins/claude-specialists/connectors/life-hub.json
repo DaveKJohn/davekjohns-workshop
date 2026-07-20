@@ -17,5 +17,5 @@
       ]
     }
   ],
-  "notes": "life-hub hanteert het lens-only-model voor de vier persona's (01-01, 03-02, 05-05, 05-06): geen body-kopie in de consument. Openstaand voor de life-hub-sessie (andere machine): de plugins daar nog naar v1.10.0 halen via `claude plugin update`, en de 06-24 (Ravi)-lens -- aanwezig in de checkout -- vanuit de authoritative life-hub-sessie in dit register opnemen."
+  "notes": "life-hub uses the lens-only model for the four personas (01-01, 03-02, 05-05, 05-06): no body copy in the consumer. Open for the life-hub session (other machine): still bring the plugins there up to v1.10.0 via `claude plugin update`, and register the 06-24 (Ravi) lens -- present in the checkout -- in this registry from the authoritative life-hub session."
 }

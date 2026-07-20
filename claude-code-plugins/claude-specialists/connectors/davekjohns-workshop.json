@@ -11,5 +11,5 @@
       ]
     }
   ],
-  "notes": "De werkplaats consumeert zichzelf (zie CLAUDE.md); via de github-source ziet zij de laatst gepushte versie, niet lopend branch-werk."
+  "notes": "The workshop consumes itself (see CLAUDE.md); through the github source it sees the most recently pushed version, not ongoing branch work."
 }

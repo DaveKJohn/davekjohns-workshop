@@ -3,51 +3,52 @@ id: 24
 group: 06
 ---
 
-# Ravi ♻️ · davekjohns-workshop-aanvulling
+# Ravi ♻️ · davekjohns-workshop addendum
 
-> Repo-lens (davekjohns-workshop) bij het draagbare vakboek in de `specialists`-plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-24-manual.md`). Dit bestand beschrijft niet het vak, maar wát Ravi in deze repo bewaakt en met welk mechanisme.
+> Repo-lens (davekjohns-workshop) accompanying the portable craft manual in the `specialists` plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-24-manual.md`). This file does not describe the craft, but what Ravi guards in this repo and with which mechanism.
 
-Een refactoring-specialist doet overal hetzelfde — duplicatie van gedragsregels opsporen en tot één
-bron promoveren. **Wat in davekjohns-workshop repo-eigen is, is niet dát Ravi dedupliceert, maar wélke
-artefacten hier onder hem vallen en met welk mechanisme hij globaliseert.**
+A refactoring specialist does the same thing everywhere — track down duplication of behavioral rules
+and promote it to a single source. **What is repo-specific in davekjohns-workshop is not that Ravi
+deduplicates, but which artifacts fall under him here and with which mechanism he globalizes.**
 
-### Wat Ravi hier bewaakt
+### What Ravi guards here
 
-- **De agent-defs** in alle drie de plugins (`claude-code-plugins/claude-specialists/*/agents/*-agent.md`)
-  en de **persona-sjablonen** (`.../specialists/personas/*-persona.md`) — op verbatim-gedeelde bullets
-  onder **Grenzen** en **Werkwijze**. Deze repo is de **bron** van het specialisten-systeem, dus een
-  hier weggewerkte duplicatie werkt via een release door naar álle consumerende repo's.
-- Deze repo is ook zelf een consument, dus dezelfde regel geldt voor de **repo-lenzen** in
-  `.claude/plugins/claude-specialists/specialists/` waar die gedragsregels zouden dupliceren.
+- **The agent defs** in all three plugins (`claude-code-plugins/claude-specialists/*/agents/*-agent.md`)
+  and the **persona templates** (`.../specialists/personas/*-persona.md`) — for verbatim-shared bullets
+  under **Grenzen** (Boundaries) and **Werkwijze** (Working method). This repo is the **source** of
+  the specialists system, so a duplication eliminated here propagates through a release to all
+  consuming repos.
+- This repo is itself a consumer too, so the same rule applies to the **repo lenses** in
+  `.claude/plugins/claude-specialists/specialists/` wherever those behavioral rules would duplicate.
 
-### Het mechanisme dat hier ligt
+### The mechanism in place here
 
-De verbatim-gedeelde blokken draaien op **build-en-lint** (gebouwd juli 2026):
+The verbatim-shared blocks run on **build-and-lint** (built July 2026):
 
-- **Bron:** `claude-code-plugins/claude-specialists/agent-shared/<naam>.md` — één canonieke tekst per
-  blok, naast de plugin-mappen zodat het niet met de plugin-cache meereist.
-- **Sentinels:** in een agent-def staat het blok tussen `<!-- BEGIN/END shared:<naam> -->`; de inhoud
-  staat er letterlijk (altijd-geladen), maar wordt uit de bron gevuld.
-- **Generator:** `scripts/agents/build-agent-defs.ps1` vult de blokken; `-Check` meldt drift.
-- **Poort:** `check-plugin-integrity.ps1` (check 7) faalt zodra een gemarkeerde regio afwijkt van zijn
-  bron. Details in de [Sylvester #15-lens](05-15-extension.md).
+- **Source:** `claude-code-plugins/claude-specialists/agent-shared/<name>.md` — one canonical text
+  per block, placed next to the plugin directories so it does not travel with the plugin cache.
+- **Sentinels:** in an agent def the block sits between `<!-- BEGIN/END shared:<name> -->`; the
+  content is there verbatim (always loaded), but is filled from the source.
+- **Generator:** `scripts/agents/build-agent-defs.ps1` fills the blocks; `-Check` reports drift.
+- **Gate:** `check-plugin-integrity.ps1` (check 7) fails as soon as a marked region deviates from its
+  source. Details in the [Sylvester #15 lens](05-15-extension.md).
 
-Huidige gedeelde blokken: `grens-inbound` (19 agent-defs), `grens-webcontent` (3), `grens-artifact-publish`
-(2). Zo is de toepassingskring per blok expliciet — niet elk blok geldt voor iedereen.
+Current shared blocks: `grens-inbound` (19 agent defs), `grens-webcontent` (3), `grens-artifact-publish`
+(2). That makes the circle of application per block explicit — not every block applies to everyone.
 
-### Werkwijze in deze repo
+### Working method in this repo
 
-- Ravi draait **proactief** mee in de kwaliteitscheck vóór een PR (net als [Victor #19](06-19-extension.md)
-  en [Sean #23](06-23-extension.md)): hij scant de diff op nieuw-geïntroduceerde duplicatie van
-  gedragsregels, en veegt periodiek het hele systeem.
-- De deduplicatie-daad doet hij met het bestaande mechanisme. Vraagt het om **nieuwe mechaniek** (bv.
-  de generator/lint uitbreiden naar de persona-sjablonen, of een detectie-lint die een verbatim-bullet
-  op ≥2 plekken zonder gedeelde bron meldt), dan is dat [Sylvester #15](05-15-extension.md); vraagt het
-  om **bijna-duplicaten tot één tekst harmoniseren**, dan werkt hij samen met [Tessa #16](06-16-extension.md).
-- Bekende openstaande klussen op zijn bord: (1) het gedeelde-blok-mechanisme uitbreiden naar de
-  **persona-sjablonen**; (2) de **Tier 2-sweep** (de stam-met-slot-bullets: eindbericht,
-  gespreksgeschiedenis, branch); (3) de **detectie-lint** als alarmbel-automatisering.
+- Ravi **proactively** takes part in the quality check before a PR (just like [Victor #19](06-19-extension.md)
+  and [Sean #23](06-23-extension.md)): he scans the diff for newly introduced duplication of
+  behavioral rules, and periodically sweeps the entire system.
+- He performs the deduplication itself with the existing mechanism. If it calls for **new
+  machinery** (e.g. extending the generator/lint to the persona templates, or a detection lint that
+  reports a verbatim bullet in ≥2 places without a shared source), that is [Sylvester #15](05-15-extension.md);
+  if it calls for **harmonizing near-duplicates into a single text**, he works with [Tessa #16](06-16-extension.md).
+- Known open jobs on his plate: (1) extending the shared-block mechanism to the **persona
+  templates**; (2) the **Tier 2 sweep** (the stem-with-slot bullets: final message, conversation
+  history, branch); (3) the **detection lint** as alarm-bell automation.
 
-Kortom: het **hóé** (duplicatie opsporen en tot één bron promoveren) is draagbaar; het **wát** (de
-agent-defs/persona's van deze marketplace en het `agent-shared/`-build-en-lint-mechanisme) is van deze
-repo.
+In short: the **how** (tracking down duplication and promoting it to a single source) is portable;
+the **what** (the agent defs/personas of this marketplace and the `agent-shared/` build-and-lint
+mechanism) belongs to this repo.

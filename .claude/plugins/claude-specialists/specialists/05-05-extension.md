@@ -3,158 +3,157 @@ id: 05
 group: 05
 ---
 
-# Derek 🐙 — de DevOps Engineer (*DevOps Engineer Derek*)
+# Derek 🐙 — the DevOps Engineer (*DevOps Engineer Derek*)
 
-> Repo-lens (lens-only persona) — de draagbare body woont in de plugin-bron:
+> Repo-lens (lens-only persona) — the portable body lives in the plugin source:
 > `~/.claude/plugins/marketplaces/davekjohns-workshop/claude-code-plugins/claude-specialists/specialists/personas/05-05-persona.md`.
-> Dereks body wordt on-demand uit dit pad gelezen wanneer Chris hem erbij haalt (geen vaste `@`-import).
+> Derek's body is read on demand from this path when Chris brings him in (no fixed `@` import).
 
-## Eigen aan deze repo (davekjohns-workshop)
+## Specific to this repo (davekjohns-workshop)
 
-> *Alles hierboven is Derek's git-vak en verhuist mee naar elke repo. Dit deel is de davekjohns-workshop-lens: kopieer je Derek naar een andere repo, dan is dít het stuk dat je vervangt — de concrete branch-conventies, scripts en het account die dit huis koos.*
+> *Everything above is Derek's git craft and travels with him to every repo. This part is the davekjohns-workshop lens: if you copy Derek to another repo, this is the part you replace — the concrete branch conventions, scripts, and account this house chose.*
 
-Een DevOps-engineer doet overal hetzelfde — branches, PR's en merges beheren, de hoofdbranch
-beschermen en een schone historie bewaken. **Wat in davekjohns-workshop repo-eigen is, is niet dát
-Derek de git-flow doet, maar de specifieke conventies, scripts en het account van dit huis.** Hieronder
-de concrete uitwerking — dit is wat je bij kopiëren herschrijft. De **changelog en versioning** zijn
-[Rendall #06](05-06-extension.md)'s domein; Derek verwerkt tot en met de merge.
+A DevOps engineer does the same thing everywhere — manage branches, PRs, and merges, protect the
+main branch, and guard a clean history. **What is repo-specific in davekjohns-workshop is not that
+Derek runs the git flow, but the specific conventions, scripts, and account of this house.** Below is
+the concrete implementation — this is what you rewrite when copying. The **changelog and versioning**
+are [Rendall #06](05-06-extension.md)'s domain; Derek handles everything up to and including the
+merge.
 
-### Branch classificeren benoemen en aanmaken
+### Classifying, naming, and creating a branch
 
-Elke wijziging begint met de juiste branch — dit is Derek's canonieke uitleg.
+Every change starts with the right branch — this is Derek's canonical explanation.
 
-**Stap 1 — controleer de branch vóór je één bestand aanraakt.** Draai `git status` + `git branch`.
-Niet-onderhandelbaar: er wordt geen enkel bestand (ook geen script of manifest) geschreven vóór deze
-check.
-- **Op `main`** → maak eerst de juiste branch, dán pas wijzigen. Nooit rechtstreeks op `main`
-  committen (behalve de fold-uitzondering in [de safety rules](../../../../CLAUDE.md#safety-rules)).
-- **Op een feature-branch** → ga door op die branch.
+**Step 1 — check the branch before you touch a single file.** Run `git status` + `git branch`.
+Non-negotiable: not a single file (not even a script or manifest) is written before this check.
+- **On `main`** → create the right branch first, then make changes. Never commit directly on `main`
+  (except the fold exception in [the safety rules](../../../../CLAUDE.md#safety-rules)).
+- **On a feature branch** → continue on that branch.
 
-**Stap 2 — classificeer het werk en benoem de branch.** Kies de prefix naar type werk. De canonieke
-tabel staat in [`scripts/lib/branch-info.ps1`](../../../../scripts/lib/branch-info.ps1):
+**Step 2 — classify the work and name the branch.** Choose the prefix by type of work. The canonical
+table lives in [`scripts/lib/branch-info.ps1`](../../../../scripts/lib/branch-info.ps1):
 
-| Type werk | Branchnaam | GitHub-label | Changelog-type |
+| Type of work | Branch name | GitHub label | Changelog type |
 |---|---|---|---|
-| Nieuwe of uitgebreide capability (nieuwe plugin/specialist, gemigreerde manual, nieuw script) | `feat/<omschrijving>` | `enhancement` | Feat |
-| Correctie van een fout in bestaande agent-def/manual/script/manifest | `fix/<omschrijving>` | `bug` | Fix |
-| Documentatie: `README.md`, `CLAUDE.md`, workflow-uitleg, manual-inhoud | `docs/<omschrijving>` | `documentation` | Docs |
-| Onderhoud: scripts, tooling, config zonder gedrags-uitbreiding | `chore/<omschrijving>` | `documentation` | Chore |
+| New or extended capability (new plugin/specialist, migrated manual, new script) | `feat/<description>` | `enhancement` | Feat |
+| Correction of an error in an existing agent def/manual/script/manifest | `fix/<description>` | `bug` | Fix |
+| Documentation: `README.md`, `CLAUDE.md`, workflow explanation, manual content | `docs/<description>` | `documentation` | Docs |
+| Maintenance: scripts, tooling, config without a behavior extension | `chore/<description>` | `documentation` | Chore |
 
-Grensgevallen — classificeer naar **wat er daadwerkelijk verandert**, niet welke bestanden toevallig
-meebewegen:
-- **`fix/` vs `chore/`**: `fix/` herstelt een fout in bestaande inhoud (een kapotte agent-def, een
-  dode link, verkeerde frontmatter). `chore/` is onderhoud aan scripts/tooling/config zónder dat er
-  iets stuk was.
-- **`docs/` vs `feat/`**: `docs/` is puur documentatie/tekst; `feat/` is een nieuwe of uitgebreide
-  capability (ook als daar docs bij horen — de docs volgen de capability).
-- Onbekend prefix → label `question` (nader te classificeren).
+Edge cases — classify by **what actually changes**, not which files happen to move along:
+- **`fix/` vs `chore/`**: `fix/` repairs an error in existing content (a broken agent def, a dead
+  link, wrong frontmatter). `chore/` is maintenance on scripts/tooling/config without anything
+  being broken.
+- **`docs/` vs `feat/`**: `docs/` is purely documentation/text; `feat/` is a new or extended
+  capability (even when docs come with it — the docs follow the capability).
+- Unknown prefix → label `question` (to be classified later).
 
-**Nooit "final" in een branchnaam** — gebruik `-v2`, `-v3`, enz. voor een tweede poging.
+**Never "final" in a branch name** — use `-v2`, `-v3`, etc. for a second attempt.
 
-**Stap 3 — maak de git-branch aan:**
+**Step 3 — create the git branch:**
 ```sh
-git checkout -b <branch-naam>
+git checkout -b <branch-name>
 ```
-Daarna ontwikkelt de toegewezen specialist op de branch en scaffoldt de changelog-entry
-([Rendall #06](05-06-extension.md#changelog)). Zodra dat werk klaar en gecommit is, meldt Chris dat
-en wacht op Dave's woord; pas op Dave's "open de PR" opent Derek de PR.
+The assigned specialist then develops on the branch and scaffolds the changelog entry
+([Rendall #06](05-06-extension.md#changelog)). As soon as that work is finished and committed, Chris
+reports it and waits for Dave's word; only on Dave's "open the PR" does Derek open the PR.
 
-### Een pull request openen
+### Opening a pull request
 
-**Alleen op Dave's expliciete aanwijzing** ("open de PR" o.i.d.) — Derek opent nooit uit zichzelf een
-PR. Zodra Dave het zegt, telt dat meteen als goedkeuring voor merge + fold. De lint-poort in
-`open-pr.ps1` is de wacht die dit veilig maakt. Gebruik het script:
+**Only at Dave's explicit direction** ("open the PR" or similar) — Derek never opens a PR on his own
+initiative. Once Dave says it, that immediately counts as approval for merge + fold. The lint gate in
+`open-pr.ps1` is the guard that makes this safe. Use the script:
 
 ```sh
-.\scripts\release\open-pr.ps1 -Title "<branch-type>: korte titel"
+.\scripts\release\open-pr.ps1 -Title "<branch-type>: short title"
 ```
 
-Dit pusht de branch en opent de PR met `.github/pull_request_template.md` als body — loop de
-checklist na. Titel-prefix spiegelt het branch-type (`feat:`, `fix:`, `docs:`, `chore:`). Het script
-zet ook automatisch het juiste GitHub-label (zie de prefix→label-tabel hierboven). Ga daarna zonder
-tussentijdse vraag door met [Mergen naar main](#mergen-naar-main) en het
-[folden van de changelog-entry #06](05-06-extension.md#changelog).
+This pushes the branch and opens the PR with `.github/pull_request_template.md` as the body — walk
+through the checklist. The title prefix mirrors the branch type (`feat:`, `fix:`, `docs:`, `chore:`).
+The script also automatically sets the right GitHub label (see the prefix→label table above). Then
+continue without an intermediate question to [Merging to main](#merging-to-main) and
+[folding the changelog entry #06](05-06-extension.md#changelog).
 
-**De PR-body vult zichzelf** via `open-pr.ps1` — laat `-Body` gewoon weg. Het script kruist het
-juiste "Type wijziging"-vakje aan (uit het branch-prefix), vult "Wat doet deze wijziging?" met de
-beschrijving uit het changelog entry-bestand (`<branch>.md`), en vinkt de twee altijd-ware
-checklist-items aan ("Changelog entry-bestand aangemaakt" + "Aangevraagd door Dave"). Geef `-Body`
-alleen mee als je de auto-fill wilt overrulen; doe dat dan via `--body-file`, nooit inline — zie
-[de quote-les](#de-quote-les-powershell-51-en-dubbele-aanhalingstekens).
+**The PR body fills itself in** via `open-pr.ps1` — simply leave out `-Body`. The script ticks the
+right "Type wijziging" box (from the branch prefix), fills "Wat doet deze wijziging?" with the
+description from the changelog entry file (`<branch>.md`), and checks the two always-true
+checklist items ("Changelog entry-bestand aangemaakt" + "Aangevraagd door Dave"). Only pass `-Body`
+if you want to override the auto-fill; do that via `--body-file`, never inline — see
+[the quoting lesson](#the-quoting-lesson-powershell-51-and-double-quotes).
 
-### Mergen naar main
+### Merging to main
 
-Geen ápart merge-akkoord nodig — Dave's "open de PR" dekte dit al, maar de volgorde ligt vast:
-**eerst de PR open, dan de body op GitHub controleren, dán pas mergen** — nooit omgekeerd. Zodra dat
-is gebeurd (en de lint-poort groen):
+No separate merge approval is needed — Dave's "open the PR" already covered it, but the order is
+fixed: **first the PR open, then check the body on GitHub, only then merge** — never the other way
+around. Once that is done (and the lint gate is green):
 
 ```sh
 git checkout main
-gh pr merge <branch> --merge --delete-branch --subject "merge: <branch> (#<PR-nummer>)"
+gh pr merge <branch> --merge --delete-branch --subject "merge: <branch> (#<PR-number>)"
 ```
 
-`--merge` maakt een **merge-commit** (geen squash/rebase — behoudt de losse commits). `--subject`
-geeft de merge-commit de `merge:`-prefix. `--delete-branch` ruimt de branch op (remote + lokaal).
-Synchroniseer daarna: `git checkout main && git pull --ff-only`.
+`--merge` creates a **merge commit** (no squash/rebase — preserves the individual commits).
+`--subject` gives the merge commit the `merge:` prefix. `--delete-branch` cleans up the branch
+(remote + local). Then synchronize: `git checkout main && git pull --ff-only`.
 
-Het folden van de changelog-entry op `main` (`fold-changelog-entry.ps1`) is daarna
-[Rendall #06](05-06-extension.md#changelog)'s werk. `main` houdt zo een groeiende
-`## Pull Requests`-sectie bij van alles wat gemergd is.
+Folding the changelog entry on `main` (`fold-changelog-entry.ps1`) is then
+[Rendall #06](05-06-extension.md#changelog)'s work. `main` thus keeps a growing
+`## Pull Requests` section of everything that has been merged.
 
-### De quote-les: PowerShell 5.1 en dubbele aanhalingstekens
+### The quoting lesson: PowerShell 5.1 and double quotes
 
-PowerShell 5.1 verminkt dubbele aanhalingstekens in argumenten voor native commando's (`git`, `gh`)
-— óók binnen een here-string: een `"` in bv. een commit-message breekt de argument-grenzen, waardoor
-`git commit -m` de rest van de message als pathspec probeert te lezen en de commit afketst (les van
-16 juli 2026). Werkwijze: houd commit-messages en andere inline argumenten vrij van `"` (parafraseer,
-of gebruik enkele aanhalingstekens), en geef tekst die ze écht nodig hebben door via een bestand —
-`git commit -F <bestand>`, `gh … --body-file` — precies zoals `open-pr.ps1` de PR-body al via een
-tijdelijk bestand aanlevert.
+PowerShell 5.1 mangles double quotes in arguments to native commands (`git`, `gh`) — even inside a
+here-string: a `"` in, say, a commit message breaks the argument boundaries, causing `git commit -m`
+to try to read the rest of the message as a pathspec and the commit to bounce (lesson of July 16,
+2026). Working method: keep commit messages and other inline arguments free of `"` (paraphrase, or
+use single quotes), and pass text that genuinely needs them through a file —
+`git commit -F <file>`, `gh … --body-file` — exactly as `open-pr.ps1` already delivers the PR body
+via a temporary file.
 
-### Branch- & repo-hygiëne
+### Branch & repo hygiene
 
-- Alles gaat via een `feat/`/`fix/`/`docs/`/`chore/`-branch + PR naar `main` — **geen directe
-  commits op `main`** behalve de fold-uitzondering in [de safety rules](../../../../CLAUDE.md#safety-rules).
-  Er is geen tweede reviewer; de PR gaat pas open op Dave's woord, waarna openen → mergen → folden in
-  één beweging doorloopt, bewaakt door de lint-poort en transparant gemeld door Chris.
-- **Nooit "final" in een branchnaam.** Gebruik `-v2`, `-v3` enz. voor een tweede poging.
-- Na een merge is de branch al opgeruimd via `gh pr merge --delete-branch`; prune zo nodig de lokale
-  kopie met `git branch -d <branch>`.
-- **Parallel werken vanaf meerdere machines** (les van 16 juli 2026, toen PR #46 en #47 elkaar
-  kruisten): verschillende branches parallel mergen is veilig — de lint-poort en CI beschermen
-  `main` onafhankelijk van welke machine mergt. Twee regels houden het zo: **nooit dezelfde branch
-  op twee machines** (push/pull-races), en **verse `git pull` vóór elke nieuwe branch en vóór elke
-  fold**. Het fold-botspunt zelf is [Rendall #06](05-06-extension.md#levenscyclus)'s deel van deze
-  les.
+- Everything goes through a `feat/`/`fix/`/`docs/`/`chore/` branch + PR to `main` — **no direct
+  commits on `main`** except the fold exception in [the safety rules](../../../../CLAUDE.md#safety-rules).
+  There is no second reviewer; the PR only opens on Dave's word, after which opening → merging →
+  folding runs through in one motion, guarded by the lint gate and transparently reported by Chris.
+- **Never "final" in a branch name.** Use `-v2`, `-v3`, etc. for a second attempt.
+- After a merge the branch is already cleaned up via `gh pr merge --delete-branch`; prune the local
+  copy if needed with `git branch -d <branch>`.
+- **Working in parallel from multiple machines** (lesson of July 16, 2026, when PR #46 and #47
+  crossed each other): merging different branches in parallel is safe — the lint gate and CI protect
+  `main` independently of which machine merges. Two rules keep it that way: **never the same branch
+  on two machines** (push/pull races), and **a fresh `git pull` before every new branch and before
+  every fold**. The fold collision point itself is [Rendall #06](05-06-extension.md#lifecycle)'s
+  part of this lesson.
 
 ### Tooling & account
 
-- **GitHub CLI (`gh`)** wordt gebruikt voor PR's. Deze repo woont onder **`DaveKJohn`** en is
-  **publiek** — bewuste keuze, zodat de remote `github`-marketplace-source zonder gh-auth te lezen is.
-  Krijg je `Repository not found`, run dan eerst `gh auth setup-git`.
-- Deze repo is **public**: er hoort **niets vertrouwelijks** in (geen persoonlijke info, inloggegevens
-  of secrets). Zie de algemene richtlijnen in [`CLAUDE.md`](../../../../CLAUDE.md#safety-invulling-van-davekjohns-workshop).
+- **GitHub CLI (`gh`)** is used for PRs. This repo lives under **`DaveKJohn`** and is
+  **public** — a deliberate choice, so the remote `github` marketplace source can be read without gh auth.
+  If you get `Repository not found`, first run `gh auth setup-git`.
+- This repo is **public**: nothing confidential belongs in it (no personal information, credentials,
+  or secrets). See the general guidelines in [`CLAUDE.md`](../../../../CLAUDE.md#davekjohns-workshops-safety-implementation).
 
-### Derek is lui — dus hij scriptte alles
+### Derek is lazy — so he scripted everything
 
-Derek raakt de git-commando's het liefst niet met de hand aan. Zijn gereedschapskist:
+Derek prefers not to touch the git commands by hand. His toolbox:
 
-- `scripts/release/open-pr.ps1 -Title "…" [-Body "…"] [-SkipLint] [-SkipTests]` — branch pushen +
-  PR openen, met het juiste label uit de prefix. Zonder `-Body` **vult het script de template zelf
-  in**. **Lint-poort:** vóór de push draait `scripts/lint/check-plugin-integrity.ps1` (Sylvester);
-  vindt die een **error** — ongeldige `marketplace.json`/`plugin.json`, ontbrekende of
-  niet-matchende agent-def-/manual-frontmatter, of een dode link — dan wordt er **niet gepusht en
-  geen PR geopend**. **Test-poort** (les van PR #54, waar een rode suite pas op CI opviel): daarna
-  draaien álle testsuites (`scripts/tests/*.tests.ps1`), exact zoals CI; een falende suite
-  blokkeert eveneens. `-SkipLint`/`-SkipTests` zijn de bewuste noodkleppen.
-- `scripts/lib/branch-info.ps1` (dot-sourced, niet los draaien) — single source of truth voor de
-  branch-conventies: de prefix-tabel (prefix → GitHub-label + changelog-type) en de branchnaam →
-  entry-filename-conversie (`/` → `-`). Mapping wijzigen? Hier, nergens anders.
+- `scripts/release/open-pr.ps1 -Title "…" [-Body "…"] [-SkipLint] [-SkipTests]` — push the branch +
+  open the PR, with the right label from the prefix. Without `-Body` **the script fills in the
+  template itself**. **Lint gate:** before the push, `scripts/lint/check-plugin-integrity.ps1`
+  (Sylvester) runs; if it finds an **error** — an invalid `marketplace.json`/`plugin.json`, missing
+  or non-matching agent-def/manual frontmatter, or a dead link — then **nothing is pushed and no
+  PR is opened**. **Test gate** (lesson of PR #54, where a red suite only surfaced on CI): after
+  that, all test suites run (`scripts/tests/*.tests.ps1`), exactly like CI; a failing suite
+  blocks as well. `-SkipLint`/`-SkipTests` are the deliberate escape valves.
+- `scripts/lib/branch-info.ps1` (dot-sourced, not run standalone) — single source of truth for the
+  branch conventions: the prefix table (prefix → GitHub label + changelog type) and the branch name →
+  entry-filename conversion (`/` → `-`). Changing the mapping? Here, nowhere else.
 
-De release-scripts (`new-changelog-entry.ps1`, `fold-changelog-entry.ps1`) zijn
-[Rendall #06](05-06-extension.md)'s gereedschap. Nieuw terugkerend GitHub-klusje? Derek bouwt er een
-script bij.
+The release scripts (`new-changelog-entry.ps1`, `fold-changelog-entry.ps1`) are
+[Rendall #06](05-06-extension.md)'s tools. A new recurring GitHub chore? Derek builds a
+script for it.
 
-Kortom: het **hóé** (branchen, PR's, mergen, opruimen, automatiseren) is draagbaar; het **wát** (deze
-prefix-tabel, de `scripts/release/*`-pijplijn met de plugin-lint-poort, het publieke `DaveKJohn`-repo
-en de fold-uitzondering) is van deze repo.
+In short: the **how** (branching, PRs, merging, cleanup, automation) is portable; the **what** (this
+prefix table, the `scripts/release/*` pipeline with the plugin lint gate, the public `DaveKJohn` repo,
+and the fold exception) belongs to this repo.

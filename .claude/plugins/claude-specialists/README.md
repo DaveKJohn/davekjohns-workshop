@@ -1,131 +1,131 @@
 # .claude/plugins/claude-specialists
 
-Het thuis van het **Claude Specialists**-systeem *zoals deze repo het zelf consumeert*, plus het
-harnas waarin het draait. Dit document is zowel de plattegrond van deze map als het
-**specialisten-handboek** — Chris' naslagwerk bij twijfel. Het legt drie dingen vast: (1) de
-**lay-out** van `.claude/` zelf; (2) **hoe een specialist is opgebouwd** — als persona of subagent, de
-tweedeling van elke manual, en het stabiel-id-systeem; en (3) **hoe de specialisten hier onderling
-georganiseerd zijn**. Het is **geen vervanging** van de safety-rules of de routing.
+The home of the **Claude Specialists** system *as this repo consumes it itself*, plus the harness it
+runs in. This document is both the floor plan of this directory and the **specialists handbook** —
+Chris's reference work in case of doubt. It records three things: (1) the **layout** of `.claude/`
+itself; (2) **how a specialist is structured** — as persona or subagent, the two-part split of every
+manual, and the stable-id system; and (3) **how the specialists here are organized among
+themselves**. It is **not a replacement** for the safety rules or the routing.
 
-> **Deze repo is een buitenbeentje.** davekjohns-workshop is de werkplaats-marketplace van Dave;
-> het specialisten-systeem woont hier als eerste product-familie in `claude-code-plugins/claude-specialists/`
-> (zie [`../../../README.md`](../../../README.md)) — en de repo consumeert dat systeem hier
-> ook zélf, via de `specialists`-plugin (groep 1). Het team hier is daarom klein en toegespitst op het
-> onderhoud van dít product (agent-defs, manuals, docs, tooling), niet het brede team van een
-> content-repo.
+> **This repo is an outlier.** davekjohns-workshop is Dave's workshop marketplace; the specialists
+> system lives here as the first product family in `claude-code-plugins/claude-specialists/`
+> (see [`../../../README.md`](../../../README.md)) — and the repo also consumes that system here
+> **itself**, via the `specialists` plugin (group 1). The team here is therefore small and focused on
+> maintaining this product (agent defs, manuals, docs, tooling), not the broad team of a
+> content repo.
 
-- De grondwet blijft [`../../../CLAUDE.md#safety-rules`](../../../CLAUDE.md#safety-rules).
-- **Chris blijft elke opdracht aannemen en routeren** — zie zijn vaste ritueel in
+- The constitution remains [`../../../CLAUDE.md#safety-rules`](../../../CLAUDE.md#safety-rules).
+- **Chris still takes in and routes every assignment** — see his fixed ritual in
   [`specialists/01-01-extension.md`](specialists/01-01-extension.md).
 
-## Lay-out van deze map
+## Layout of this directory
 
-- **`plugins/claude-specialists/specialists/`** — de **repo-laag** van het specialisten-systeem (de
-  repo-lenzen op het **plugin-pad**, de standaard-locatie): één bestand per specialist,
-  `<group>-<id>-extension.md`. Er zijn twee soorten:
-  - **Subagent-lens** — voor de specialisten die als subagent uit de `specialists`-plugin komen
-    (Sylvester, Tessa, Edith, Victor, Tycho): alleen het `## Eigen aan deze repo`-deel, dat het
-    draagbare vakboek in de plugin aanvult met de context van déze repo. De subagent leest
-    plugin-vakboek + deze lens samen; de agent-def verwijst naar beide.
-  - **Persona-lens (lens-only)** — voor de persona-only specialisten (Chris, Derek, Rendall), die in
-    het hoofdgesprek draaien i.p.v. als subagent. De main-loop laadt geen plugin-subagents, dus de
-    **draagbare body** komt via een `@`-import rechtstreeks uit de plugin-install: Chris altijd
+- **`plugins/claude-specialists/specialists/`** — the **repo layer** of the specialists system (the
+  repo lenses on the **plugin path**, the standard location): one file per specialist,
+  `<group>-<id>-extension.md`. There are two kinds:
+  - **Subagent lens** — for the specialists that come out of the `specialists` plugin as subagents
+    (Sylvester, Tessa, Edith, Victor, Tycho): only the `## Specific to this repo` part, which
+    supplements the portable craft manual in the plugin with the context of this repo. The subagent
+    reads the plugin craft manual + this lens together; the agent def points to both.
+  - **Persona lens (lens-only)** — for the persona-only specialists (Chris, Derek, Rendall), who run
+    in the main conversation instead of as subagents. The main loop loads no plugin subagents, so the
+    **portable body** comes straight from the plugin install via an `@` import: Chris always
     (`@~/.claude/plugins/marketplaces/davekjohns-workshop/claude-code-plugins/claude-specialists/specialists/personas/01-01-persona.md`
-    onderaan `../../../CLAUDE.md`), Derek en Rendall on-demand van datzelfde pad. De extension zelf is
-    daardoor **lens-only**: alleen het repo-eigen `## Eigen aan deze repo`-deel, géén body-kopie — net
-    als de subagent-lens. Zo woont elke draagbare gedragsregel op één plek (de plugin), niet
-    gedupliceerd.
-- **Subagent-definities — uit de eigen `specialists`-plugin, niet lokaal.** De compacte, uitvoerbare
-  vorm van een specialist (`<group>-<id>-agent.md`) bewaart deze repo **niet** in een lokale
-  `.claude/agents/`-map: ze komen uit de `specialists`-plugin van deze marketplace zelf, ingeschakeld
-  via [`settings.json`](../../settings.json) en aanroepbaar als `@specialists:<naam>`.
-- **`settings.json`** — de harness-config: `extraKnownMarketplaces` (de `github`-source
-  `DaveKJohn/davekjohns-workshop` — de repo wijst naar zichzelf) + `enabledPlugins`
-  (`specialists@davekjohns-workshop`). [Sylvester #15](specialists/05-15-extension.md)'s domein.
+    at the bottom of `../../../CLAUDE.md`), Derek and Rendall on demand from that same path. The
+    extension itself is therefore **lens-only**: only the repo-specific `## Specific to this repo`
+    part, no copy of the body — just like the subagent lens. That way every portable behavioral rule
+    lives in one place (the plugin), not duplicated.
+- **Subagent definitions — from the repo's own `specialists` plugin, not local.** The compact,
+  executable form of a specialist (`<group>-<id>-agent.md`) is **not** kept by this repo in a local
+  `.claude/agents/` directory: they come from the `specialists` plugin of this very marketplace,
+  enabled via [`settings.json`](../../settings.json) and invocable as `@specialists:<name>`.
+- **`settings.json`** — the harness config: `extraKnownMarketplaces` (the `github` source
+  `DaveKJohn/davekjohns-workshop` — the repo points to itself) + `enabledPlugins`
+  (`specialists@davekjohns-workshop`). [Sylvester #15](specialists/05-15-extension.md)'s domain.
 
-## Hoe een specialist is opgebouwd
+## How a specialist is structured
 
-### Persona of subagent — één specialist, twee representaties
+### Persona or subagent — one specialist, two representations
 
-1. **Vakboek + repo-lens.** Het volledige, draagbare vakboek (craft, harde regels, toon) woont in de
-   marketplace-plugin (`<plugin>/manuals/<group>-<id>-manual.md`); de repo-specifieke aanvulling staat
-   lokaal in `.claude/extensions/<group>-<id>-extension.md`. Voor een **persona-only** specialist
-   (die in het hoofdgesprek draait) staat de vólledige manual juist lokaal in `specialists/` — hij kan
-   niet uit een plugin geladen worden.
-2. **Agent-definitie** — `<group>-<id>-agent.md`, hier afkomstig uit de `specialists`-plugin. Dit is de
-   compacte, uitvoerbare vorm (eigen context-venster, ingeperkte tools, eigen model) die de specialist
-   tot een échte, parallel-aanroepbare subagent maakt. Ze **verwijst naar** het plugin-vakboek + de
-   repo-lens en herhaalt de regels niet — zo blijft er één bron van waarheid.
+1. **Craft manual + repo lens.** The complete, portable craft manual (craft, hard rules, tone) lives
+   in the marketplace plugin (`<plugin>/manuals/<group>-<id>-manual.md`); the repo-specific
+   supplement lives locally in `.claude/extensions/<group>-<id>-extension.md`. For a **persona-only**
+   specialist (who runs in the main conversation), the *full* manual instead lives locally in
+   `specialists/` — it cannot be loaded from a plugin.
+2. **Agent definition** — `<group>-<id>-agent.md`, here sourced from the `specialists` plugin. This
+   is the compact, executable form (its own context window, restricted tools, its own model) that
+   turns the specialist into a real, parallel-invocable subagent. It **points to** the plugin craft
+   manual + the repo lens and does not repeat the rules — so there stays one source of truth.
 
-**Regels:** bestaan beide, dan is de **manual leidend**; de agent-def is de uitvoerbare verkorting.
-Een vakregel wijzig je in de manual; de agent-def alleen als de operationele kern of tool-set
-verandert. Het *principe* en de manuals horen bij [Tessa #16](specialists/06-16-extension.md); de
-agent-def-config (frontmatter, tools, model) bij [Sylvester #15](specialists/05-15-extension.md).
-**Chris blijft een persona** — hij is de enige die Dave iets kan **vrágen**.
+**Rules:** where both exist, the **manual is leading**; the agent def is the executable
+abbreviation. You change a craft rule in the manual; the agent def only when the operational core or
+tool set changes. The *principle* and the manuals belong to [Tessa #16](specialists/06-16-extension.md);
+the agent-def config (frontmatter, tools, model) belongs to [Sylvester #15](specialists/05-15-extension.md).
+**Chris remains a persona** — he is the only one who can **ask** Dave anything.
 
-### Elke manual: draagbaar vak en repo-eigen slot
+### Every manual: portable craft and a repo-specific section
 
-Elk vakboek is in tweeën opgebouwd, en die twee helften wonen fysiek apart:
+Every craft manual is built in two parts, and those two halves live physically apart:
 
-1. **De body — het draagbare vak** (in de plugin-manual): het beroep generiek, zónder repo-termen
-   ("hoofdbranch" i.p.v. `main`, geen concrete scriptnamen, geen `#id`-verwijzingen).
-2. **`## Eigen aan deze repo (davekjohns-workshop)` — het repo-eigen slot** (de lens in `specialists/`):
-   álles wat repo-specifiek is. Vaste opbouw: cursieve lens-regel → kernclaim → repo-secties → een
-   "**hóé** (draagbaar) vs. **wát** (repo-eigen)"-slot.
+1. **The body — the portable craft** (in the plugin manual): the profession in generic terms, without
+   repo terms ("main branch" rather than `main`, no concrete script names, no `#id` references).
+2. **`## Specific to this repo (davekjohns-workshop)` — the repo-specific section** (the lens in
+   `specialists/`): everything that is repo-specific. Fixed structure: italic lens line → core claim
+   → repo sections → a "**how** (portable) vs. **what** (repo-specific)" closing.
 
-[Tessa #16](specialists/06-16-extension.md) bewaakt deze tweedeling bij elke wijziging.
+[Tessa #16](specialists/06-16-extension.md) guards this two-part split on every change.
 
-### Stabiel id + group — de bestandsnaam is `<group>-<id>`
+### Stable id + group — the filename is `<group>-<id>`
 
-Elke specialist heeft een vast, numeriek **`id`** (permanente identiteit, verandert nooit) en zit in
-een **group** (organisatie-eenheid: **01 = Leiding, 02 = Staf, 03+ = teams**). De repo-laag heet
-`<group>-<id>-extension.md`; het draagbare vakboek `<group>-<id>-manual.md` en de agent-def
-`<group>-<id>-agent.md` wonen in de plugin. **Naam, emoji en titel zijn labels** — die mogen vrij
-wijzigen; bestandsnaam en linkpaden hangen aan `id`/`group`, niet aan de naam. **De lint-poort bewaakt
-het** ([Sylvester #15](specialists/05-15-extension.md)): elke bestandsnaam matcht de frontmatter
-(`id:` én `group:`).
+Every specialist has a fixed, numeric **`id`** (permanent identity, never changes) and belongs to a
+**group** (organizational unit: **01 = Leadership, 02 = Staff, 03+ = teams**). The repo layer is
+named `<group>-<id>-extension.md`; the portable craft manual `<group>-<id>-manual.md` and the
+agent def `<group>-<id>-agent.md` live in the plugin. **Name, emoji, and title are labels** — they
+may change freely; the filename and link paths hang off `id`/`group`, not the name. **The lint gate
+guards this** ([Sylvester #15](specialists/05-15-extension.md)): every filename matches the
+frontmatter (`id:` and `group:`).
 
-## Het team hier
+## The team here
 
-Klein en onderhoud-gericht. Chris leidt; de rest voert uit.
+Small and maintenance-focused. Chris leads; the rest executes.
 
 ```
 [group 01] Chris 🧭 #01  (Chief of Staff — orchestrator, persona)
 │
 ├─ [group 03] Rebecca 🔬 #07  (research specialist)
 ├─ [group 04] Tycho 🧪 #18  (test engineer)
-├─ [group 05] Derek 🐙 #05 (DevOps, persona) · Rendall 🎬 #06 (release, persona) · Sylvester ⚙️ #15 (systeembeheer)
-└─ [group 06] Tessa 📜 #16 (technical writer) · Edith 🔍 #17 (eindredacteur) · Victor 🧐 #19 (code reviewer) · Sean 🛡️ #23 (security engineer) · Ravi ♻️ #24 (refactoring-specialist)
+├─ [group 05] Derek 🐙 #05 (DevOps, persona) · Rendall 🎬 #06 (release, persona) · Sylvester ⚙️ #15 (system administration)
+└─ [group 06] Tessa 📜 #16 (technical writer) · Edith 🔍 #17 (copy editor) · Victor 🧐 #19 (code reviewer) · Sean 🛡️ #23 (security engineer) · Ravi ♻️ #24 (refactoring specialist)
 ```
 
-## Index van de aanwezige extensions
+## Index of the extensions present
 
-Het volledige roster + de routing staat in [`../../../CLAUDE.md`](../../../CLAUDE.md#het-team-roster--routing);
-onderstaande lijst is puur navigatie naar de repo-extensies zelf.
+The full roster + routing lives in [`../../../CLAUDE.md`](../../../CLAUDE.md#the-team-roster--routing);
+the list below is purely navigation to the repo extensions themselves.
 
-| # | Specialist | Repo-extensie | Agent-def |
+| # | Specialist | Repo extension | Agent def |
 |---|---|---|---|
 | 01 | Chris 🧭 — Chief of Staff | [`specialists/01-01-extension.md`](specialists/01-01-extension.md) | — (persona-only) |
 | 05 | Derek 🐙 — DevOps Engineer | [`specialists/05-05-extension.md`](specialists/05-05-extension.md) | — (persona-only) |
 | 06 | Rendall 🎬 — Release Manager | [`specialists/05-06-extension.md`](specialists/05-06-extension.md) | — (persona-only) |
 | 07 | Rebecca 🔬 — Research Specialist | [`specialists/03-07-extension.md`](specialists/03-07-extension.md) | `@specialists:rebecca` |
-| 15 | Sylvester ⚙️ — Systeembeheerder | [`specialists/05-15-extension.md`](specialists/05-15-extension.md) | `@specialists:sylvester` |
+| 15 | Sylvester ⚙️ — System Administrator | [`specialists/05-15-extension.md`](specialists/05-15-extension.md) | `@specialists:sylvester` |
 | 16 | Tessa 📜 — Technical Writer | [`specialists/06-16-extension.md`](specialists/06-16-extension.md) | `@specialists:tessa` |
-| 17 | Edith 🔍 — Eindredacteur | [`specialists/06-17-extension.md`](specialists/06-17-extension.md) | `@specialists:edith` |
+| 17 | Edith 🔍 — Copy Editor | [`specialists/06-17-extension.md`](specialists/06-17-extension.md) | `@specialists:edith` |
 | 18 | Tycho 🧪 — Test Engineer | [`specialists/04-18-extension.md`](specialists/04-18-extension.md) | `@specialists:tycho` |
 | 19 | Victor 🧐 — Code Reviewer | [`specialists/06-19-extension.md`](specialists/06-19-extension.md) | `@specialists:victor` |
 | 23 | Sean 🛡️ — Security Engineer | [`specialists/06-23-extension.md`](specialists/06-23-extension.md) | `@specialists:sean` |
-| 24 | Ravi ♻️ — Refactoring-specialist | [`specialists/06-24-extension.md`](specialists/06-24-extension.md) | `@specialists:ravi` |
+| 24 | Ravi ♻️ — Refactoring Specialist | [`specialists/06-24-extension.md`](specialists/06-24-extension.md) | `@specialists:ravi` |
 
-De rest van de `specialists`-plugin (Paula #09, Vera #11, Gwen #12, Cody #13) is óók
-ingeschakeld en aanroepbaar als `@specialists:<naam>`, maar heeft in deze repo zelden werk en dus
-(nog) geen repo-lens. Duikt zulk werk op, dan schrijft [Tessa #16](specialists/06-16-extension.md)
-eerst de lens. De domein-plugins `specialists-lifehub` en `specialists-shopify` staan hier **uit** —
-deze repo is geen life-hub-achtige of Shopify-repo.
+The rest of the `specialists` plugin (Paula #09, Vera #11, Gwen #12, Cody #13) is also enabled and
+invocable as `@specialists:<name>`, but rarely has work in this repo and therefore has no repo lens
+(yet). If such work does come up, [Tessa #16](specialists/06-16-extension.md) writes the lens first.
+The domain plugins `specialists-lifehub` and `specialists-shopify` are **off** here — this repo is
+not a life-hub-like or Shopify repo.
 
-## Deze indeling verandert mee
+## This organization changes with the team
 
-Het team en de teamindeling komen **in overleg met Dave** tot stand en kunnen wijzigen — precies zoals
-nieuwe specialisten alleen in overleg ontstaan (zie
-[Chris #01](specialists/01-01-extension.md#nieuwe-specialisten--alleen-in-overleg)). Wijzigt de
-indeling, dan werkt Tessa dit document bij.
+The team and its organization come about **in consultation with Dave** and may change — exactly as
+new specialists only come about by agreement (see
+[Chris #01](specialists/01-01-extension.md#new-specialists--only-by-agreement)). If the organization
+changes, Tessa updates this document.

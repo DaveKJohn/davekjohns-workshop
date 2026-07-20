@@ -1,243 +1,242 @@
 # davekjohns-workshop
 
-De **werkplaats van Dave (DaveKJohn)**: de marketplace-repo waar al zijn Claude-Code-plugins worden
-gebouwd en onderhouden — ontworpen door een mens, uitgevoerd met zijn team van specialisten. De
-eerste product-familie is het **Claude-Specialists-systeem** in
-[`claude-code-plugins/claude-specialists/`](claude-code-plugins/claude-specialists/), opgedeeld in **drie plugins**: de gedeelde,
-draagbare kern plus twee domein-groepen. Deze repo is de **single source of truth** voor alle
-deelbare subagent-definities — elke consumerende repo wijst ernaar toe in plaats van eigen kopieën
-te onderhouden, en schakelt **per plugin aan of uit** welke groepen hij nodig heeft.
+The **workshop of Dave (DaveKJohn)**: the marketplace repo where all of his Claude Code plugins are
+built and maintained — designed by a human, executed with his team of specialists. The first
+product family is the **Claude Specialists system** in
+[`claude-code-plugins/claude-specialists/`](claude-code-plugins/claude-specialists/), split into **three plugins**: the shared,
+portable core plus two domain groups. This repo is the **single source of truth** for all shareable
+subagent definitions — every consuming repo points to it instead of maintaining its own copies, and
+enables or disables **per plugin** which groups it needs.
 
-## De plugin-families
+## The plugin families
 
-Elke plugin-familie woont in een eigen map onder `claude-code-plugins/`, met een **eigen README** die
-uitlegt wat de familie doet en wat de verschillen tussen haar sub-plugins zijn. Vooralsnog is er één
-familie:
+Every plugin family lives in its own folder under `claude-code-plugins/`, with its **own README**
+that explains what the family does and how its sub-plugins differ. For now there is one family:
 
-- **[`claude-specialists/`](claude-code-plugins/claude-specialists/README.md)** — het
-  Claude-Specialists-systeem: de gedeelde, repo-neutrale kern `specialists` (groep 1, voor elke
-  repo) plus de twee bewust domein-gekleurde groepen `specialists-lifehub` (groep 2) en
-  `specialists-shopify` (groep 3). Wélke specialisten in welke sub-plugin zitten, voor wie ze
-  bedoeld zijn en hoe je ze aanroept, staat in die README — dit bestand herhaalt dat niet.
+- **[`claude-specialists/`](claude-code-plugins/claude-specialists/README.md)** — the
+  Claude Specialists system: the shared, repo-neutral core `specialists` (group 1, for every
+  repo) plus the two deliberately domain-flavored groups `specialists-lifehub` (group 2) and
+  `specialists-shopify` (group 3). Which specialists sit in which sub-plugin, who they are
+  meant for, and how to invoke them is in that README — this file doesn't repeat it.
 
-## Wat hier wél en niet woont
+## What lives here and what doesn't
 
-**Wél:** de drie plugin-mappen met **subagent-definities** (`agents/`); voor een gemigreerde
-domein-groep ook het **draagbare vakboek** (`manuals/<group>-<id>-manual.md`) dat de agent-def via
-`${CLAUDE_PLUGIN_ROOT}/manuals/` inleest. Groep 1 draagt daarnaast twee dingen die de
-**hoofdloop-laag** dekken (zie [Adoptie: het bootstrap-pad](#adoptie-het-bootstrap-pad)): de
-**persona-sjablonen** (`personas/<group>-<id>-persona.md`) van de orchestrator + hoofdloop-specialisten
-(Chris, Bianca, Derek, Rendall), en de **repo-neutrale bootstrap-skill** `specialists-init`.
+**Does live here:** the three plugin folders with **subagent definitions** (`agents/`); for a
+migrated domain group also the **portable handbook** (`manuals/<group>-<id>-manual.md`) that the
+agent def reads in via `${CLAUDE_PLUGIN_ROOT}/manuals/`. Group 1 additionally carries two things
+that cover the **main-loop layer** (see [Adoption: the bootstrap path](#adoption-the-bootstrap-path)): the
+**persona templates** (`personas/<group>-<id>-persona.md`) of the orchestrator + main-loop specialists
+(Chris, Bianca, Derek, Rendall), and the **repo-neutral bootstrap skill** `specialists-init`.
 
-**Niet:** governance (`CLAUDE.md`, de workflow-regels), safety-hooks of MCP-config. Die blijven
-bewust op repo-niveau, want ze zijn per repo verschillend (of veiligheidskritisch). De plugins
-dragen bewust **geen safety-/guardrail-hooks** en **geen repo-specifieke skills** — met twee
-benoemde, repo-neutrale uitzonderingen: de skill `specialists-init` (het adoptiepad zelf) en de
-informatieve SessionStart-hook `connector-sessioncheck` (read-only sync-signalering, blokkeert
-nooit — zie het
-[connectors-README](claude-code-plugins/claude-specialists/connectors/README.md)); domein-groep
-2/3 mogen wél domein-skills meedragen als een repo die deelt.
+**Doesn't:** governance (`CLAUDE.md`, the workflow rules), safety hooks, or MCP config. Those stay
+at repo level deliberately, because they differ per repo (or are safety-critical). The plugins
+deliberately carry **no safety/guardrail hooks** and **no repo-specific skills** — with two named,
+repo-neutral exceptions: the skill `specialists-init` (the adoption path itself) and the
+informational SessionStart hook `connector-sessioncheck` (read-only sync signaling, never blocks —
+see the
+[connectors README](claude-code-plugins/claude-specialists/connectors/README.md)); domain groups
+2/3 may carry domain skills that a repo shares.
 
-### Manuals — het gesplitste model
+### Manuals — the split model
 
-Een specialist-vakboek valt uiteen in een **draagbaar** deel (repo-neutraal, identiek in elke repo:
-het vak, de harde regels, de toon) en een **repo-lens** (het `## Eigen aan deze repo`-deel: wélke
-content/context van díe repo de specialist bedient). Het draagbare deel woont in
-`<plugin>/manuals/<group>-<id>-manual.md` in deze marketplace; de consumerende repo houdt alleen de
-lens in `.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md`. De agent-def verwijst naar beide.
+A specialist handbook splits into a **portable** part (repo-neutral, identical in every repo: the
+craft, the hard rules, the tone) and a **repo lens** (the `## Eigen aan deze repo` part: which
+content/context of that repo the specialist serves). The portable part lives in
+`<plugin>/manuals/<group>-<id>-manual.md` in this marketplace; the consuming repo keeps only the
+lens in `.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md`. The agent def points to both.
 
-**Alle drie de groepen zijn inmiddels gemigreerd** — elk vakboek woont hier in de `manuals/`-map van
-zijn plugin, en elke consumerende repo houdt daarvan enkel nog de repo-lens in `.claude/plugins/claude-specialists/specialists/`:
+**All three groups have now been migrated** — every handbook lives here in the `manuals/` folder of
+its plugin, and every consuming repo keeps only its repo lens in `.claude/plugins/claude-specialists/specialists/`:
 
-- **`specialists` (groep 1)** → `claude-code-plugins/claude-specialists/specialists/manuals/` (Paula, Rebecca, Vera, Gwen, Cody, Tycho,
+- **`specialists` (group 1)** → `claude-code-plugins/claude-specialists/specialists/manuals/` (Paula, Rebecca, Vera, Gwen, Cody, Tycho,
   Sylvester, Tessa, Edith, Victor, Sean, Ravi).
-- **`specialists-lifehub` (groep 2)** → `claude-code-plugins/claude-specialists/specialists-lifehub/manuals/` (Astrid, Fiona, Hugo, Ian, Onyx).
-- **`specialists-shopify` (groep 3)** → `claude-code-plugins/claude-specialists/specialists-shopify/manuals/` (Liam, Sandra, Steven).
+- **`specialists-lifehub` (group 2)** → `claude-code-plugins/claude-specialists/specialists-lifehub/manuals/` (Astrid, Fiona, Hugo, Ian, Onyx).
+- **`specialists-shopify` (group 3)** → `claude-code-plugins/claude-specialists/specialists-shopify/manuals/` (Liam, Sandra, Steven).
 
-**Persona-sjablonen — een derde artefact naast agent-def en manual.** De orchestrator en de
-hoofdloop-specialisten (Chris #01, Bianca #02, Derek #05, Rendall #06) draaien in de **hoofdloop**, niet als
-subagent — een plugin kan geen altijd-aan-hoofdloop-context injecteren, en een intake-gesprek vergt
-bovendien directe heen-en-weer met de opdrachtgever. Ze hebben daarom bewust
-**geen** agent-def; hun draagbare bron woont in `claude-code-plugins/claude-specialists/specialists/personas/<group>-<id>-persona.md` als
-**self-contained sjabloon** (draagbare body + een repo-lens-placeholder). De consument laadt de
-**draagbare body rechtstreeks uit de plugin-install** via een `@`-import in zijn `CLAUDE.md` (de
-orchestrator altijd, de overige persona's on-demand). De lokale extension
-`.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md` is daardoor **lens-only**:
-alleen het repo-eigen `## Eigen aan deze repo`-deel, géén body-kopie. De [drift-lint](#onderhoud-drift-lint)
-herkent zo'n lens-only-extension en meldt hem als `LENS-ONLY`. De agent-def↔manual-koppeling van de
-lint laat persona's bewust met rust (ze hebben geen agent-def).
+**Persona templates — a third artifact alongside agent def and manual.** The orchestrator and the
+main-loop specialists (Chris #01, Bianca #02, Derek #05, Rendall #06) run in the **main loop**, not as
+subagents — a plugin cannot inject always-on main-loop context, and an intake conversation moreover
+requires direct back-and-forth with the client. They therefore deliberately have
+**no** agent def; their portable source lives in `claude-code-plugins/claude-specialists/specialists/personas/<group>-<id>-persona.md` as a
+**self-contained template** (portable body + a repo-lens placeholder). The consumer loads the
+**portable body straight from the plugin install** via an `@` import in its `CLAUDE.md` (the
+orchestrator always, the other personas on demand). The local extension
+`.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md` is therefore **lens-only**:
+only the repo-specific `## Eigen aan deze repo` part, no body copy. The [drift lint](#maintenance-drift-lint)
+recognizes such a lens-only extension and reports it as `LENS-ONLY`. The lint's agent-def↔manual
+coupling deliberately leaves personas alone (they have no agent def).
 
-### Gedeelde agent-def-blokken — één bron voor de verbatim-grenzen
+### Shared agent-def blocks — one source for the verbatim boundaries
 
-Een aantal bullets onder **Grenzen** is woord-voor-woord identiek over veel agent-defs — de
-**inbound-regel** zelfs in alle 19. Zulke governance hoort *in* de agent-def-body (altijd-geladen,
-ook voor een rechtstreeks aangeroepen werker-subagent), maar Claude Code kent geen native transclusie
-in een agent-def — wat er staat, staat er letterlijk. Om die blokken tóch op **één plek** te
-onderhouden i.p.v. in elke agent-def, geldt een **build-en-lint**-model:
+A number of bullets under **Grenzen** (the boundaries section) are word-for-word identical across
+many agent defs — the **inbound rule** even across all 19. Such governance belongs *in* the
+agent-def body (always loaded, also for a directly invoked worker subagent), but Claude Code has no
+native transclusion in an agent def — what's written there is there, literally. To still maintain
+those blocks in **one place** instead of in every agent def, a **build-and-lint** model applies:
 
-- De canonieke tekst van elk gedeeld blok woont in
-  `claude-code-plugins/claude-specialists/agent-shared/<naam>.md`.
-- In een agent-def verschijnt het blok tussen sentinels:
-  `<!-- BEGIN shared:<naam> … -->` … `<!-- END shared:<naam> -->`. De inhoud staat er echt (self-contained), maar is als gegenereerd gemarkeerd.
-- **Bewerk nooit tussen de sentinels.** Wijzig het bronbestand en draai
-  [`scripts/agents/build-agent-defs.ps1`](scripts/agents/build-agent-defs.ps1) — alle agent-defs die
-  het blok dragen worden bijgewerkt. De [lint-poort](#onderhoud-drift-lint) (`check-plugin-integrity.ps1`,
-  check 7) faalt zodra een gemarkeerde regio afwijkt van zijn bron (hand-edit of vergeten rebuild),
-  net als de drift-lint voor consumenten.
+- The canonical text of each shared block lives in
+  `claude-code-plugins/claude-specialists/agent-shared/<name>.md`.
+- In an agent def the block appears between sentinels:
+  `<!-- BEGIN shared:<name> … -->` … `<!-- END shared:<name> -->`. The content really is there (self-contained), but is marked as generated.
+- **Never edit between the sentinels.** Change the source file and run
+  [`scripts/agents/build-agent-defs.ps1`](scripts/agents/build-agent-defs.ps1) — all agent defs
+  carrying the block are updated. The [lint gate](#maintenance-drift-lint) (`check-plugin-integrity.ps1`,
+  check 7) fails as soon as a marked region deviates from its source (a hand edit or a forgotten
+  rebuild), just like the drift lint for consumers.
 
-Huidige blokken: `grens-inbound` (19 agent-defs), `grens-webcontent` (3) en `grens-artifact-publish`
-(2). Zo kost het aanpassen van een gedeelde grens nog één edit + één build, niet 19 handmatige
-wijzigingen.
+Current blocks: `grens-inbound` (19 agent defs), `grens-webcontent` (3), and `grens-artifact-publish`
+(2). This way changing a shared boundary costs one edit + one build, not 19 manual
+changes.
 
-## Consumptie
+## Consumption
 
-Een consumerende repo voegt deze marketplace toe via `extraKnownMarketplaces` in
-`.claude/settings.json` en schakelt de gewenste plugins in via `enabledPlugins`. Beide huidige
-consumenten (life-hub en smartwatchbanden) gebruiken een remote **`github`-marketplace-source**
-(`"source": "github", "repo": "DaveKJohn/davekjohns-workshop"`) — machine-onafhankelijk, want de
-Claude Code CLI clonet en cachet dit repo zelf; een verse clone van de consumerende repo krijgt de
-plugins zonder handmatige lokale stap.
+A consuming repo adds this marketplace via `extraKnownMarketplaces` in
+`.claude/settings.json` and enables the desired plugins via `enabledPlugins`. Both current
+consumers (life-hub and smartwatchbanden) use a remote **`github` marketplace source**
+(`"source": "github", "repo": "DaveKJohn/davekjohns-workshop"`) — machine-independent, because the
+Claude Code CLI clones and caches this repo itself; a fresh clone of the consuming repo gets the
+plugins without a manual local step.
 
 ```jsonc
-// .claude/settings.json (consumerende repo)
+// .claude/settings.json (consuming repo)
 "extraKnownMarketplaces": {
   "davekjohns-workshop": {
     "source": { "source": "github", "repo": "DaveKJohn/davekjohns-workshop" }
   }
 },
 "enabledPlugins": {
-  "specialists@davekjohns-workshop": true,          // groep 1 — altijd
-  "specialists-lifehub@davekjohns-workshop": true   // óf specialists-shopify@… , naar keuze
+  "specialists@davekjohns-workshop": true,          // group 1 — always
+  "specialists-lifehub@davekjohns-workshop": true   // or specialists-shopify@… , as needed
 }
 ```
 
-Een nieuw ingeschakelde plugin is pas in een **volgende** Claude Code-sessie zichtbaar.
+A newly enabled plugin only becomes visible in the **next** Claude Code session.
 
-**Eén canoniek kanaal — let op de oude repo-naam.** De marketplace heet `davekjohns-workshop`
-(repo `DaveKJohn/davekjohns-workshop`) en dat is het enige kanaal; gebruik die naam in
-`extraKnownMarketplaces` (zoals hierboven). Deze repo heette vroeger `claude-specialists`: die oude
-naam blijft via een **GitHub-rename-redirect** naar dezelfde repo wijzen, dus een marketplace die nog
-onder `claude-specialists` staat geregistreerd, verwijst naar exact hetzelfde repo — er is **geen
-tweede bron** om naartoe te spiegelen. Wél kan de lokale marketplace-clone van zo'n oude registratie
-achterlopen (hij is ooit op een oudere commit gecloned en convergeert niet vanzelf naar de nieuwe
-`HEAD`), waardoor een install op dat kanaal stil een oudere plugin-versie oplevert. Loop je hier
-tegenaan: werk de marketplace-registratie bij (een marketplace-update) of voeg hem opnieuw toe onder
-`davekjohns-workshop` — een verse install hoort altijd `DaveKJohn/davekjohns-workshop` te gebruiken.
+**One canonical channel — mind the old repo name.** The marketplace is named `davekjohns-workshop`
+(repo `DaveKJohn/davekjohns-workshop`) and that is the only channel; use that name in
+`extraKnownMarketplaces` (as above). This repo used to be named `claude-specialists`: that old
+name keeps pointing to the same repo via a **GitHub rename redirect**, so a marketplace still
+registered under `claude-specialists` refers to exactly the same repo — there is **no
+second source** to mirror to. However, the local marketplace clone of such an old registration can
+lag behind (it was once cloned at an older commit and doesn't converge to the new
+`HEAD` on its own), so an install on that channel silently yields an older plugin version. If you
+run into this: update the marketplace registration (a marketplace update) or re-add it under
+`davekjohns-workshop` — a fresh install should always use `DaveKJohn/davekjohns-workshop`.
 
-## Adoptie: het bootstrap-pad
+## Adoption: the bootstrap path
 
-> **Nieuw hier?** De deelbare beginnerroute staat in de
-> [Quickstart](claude-code-plugins/claude-specialists/QUICKSTART.md) — aansluiten in drie stappen,
-> voor wie het systeem niet gebouwd heeft. Hieronder staat de achterliggende uitleg.
+> **New here?** The shareable beginner route is in the
+> [Quickstart](claude-code-plugins/claude-specialists/QUICKSTART.md) — get connected in three steps,
+> for those who didn't build the system. Below is the underlying explanation.
 
-De plugin inschakelen levert de **werker-subagents**, maar niet de **dirigent** (Chris) of de
-governance-/hooks-laag — die kunnen niet uit een plugin komen (een plugin injecteert geen
-hoofdloop-context en bewerkt geen `CLAUDE.md`). De skill **`specialists-init`** (groep 1) dicht dat
-gat in een consumerende repo. Omdat een plugin-skill zichzelf niet kan aanhaken, is het pad
-tweetraps:
+Enabling the plugin delivers the **worker subagents**, but not the **conductor** (Chris) or the
+governance/hooks layer — those cannot come from a plugin (a plugin injects no
+main-loop context and edits no `CLAUDE.md`). The skill **`specialists-init`** (group 1) closes that
+gap in a consuming repo. Because a plugin skill cannot hook itself in, the path is
+two-stage:
 
-- **Stap 0 (handmatig).** Zet de marketplace-source + `enabledPlugins` in `.claude/settings.json`
-  (zie [Consumptie](#consumptie)) en **herstart** de sessie — pas dán is de skill beschikbaar.
-- **Stap 1 (de skill).** Roep `specialists-init` aan. Het bijgeleverde
-  [`bootstrap.ps1`](claude-code-plugins/claude-specialists/specialists/skills/specialists-init/bootstrap.ps1) doet alleen **additieve**
-  handelingen: het kopieert de persona-sjablonen naar `.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md`
-  (nooit overschrijven), zet voor elke subagent van de ingeschakelde plugin(s) een **lege
-  lens-scaffold** neer (`VUL-IN` — de plek waar repo-specifieke taken per specialist worden
-  aangevuld), zet de `@.claude/plugins/claude-specialists/specialists/01-01-extension.md`-import onderaan `CLAUDE.md`
-  (of maakt een scaffold), en schrijft een `settings.suggested.jsonc` met een `permissions.deny` +
-  hooks-**stub**. Het raakt `settings.json` niet aan — die merge en de repo-lens invullen zijn
-  daarna handwerk (repo-specifiek), waarna nog één **herstart** de nieuwe context activeert.
+- **Step 0 (manual).** Put the marketplace source + `enabledPlugins` in `.claude/settings.json`
+  (see [Consumption](#consumption)) and **restart** the session — only then is the skill available.
+- **Step 1 (the skill).** Invoke `specialists-init`. The bundled
+  [`bootstrap.ps1`](claude-code-plugins/claude-specialists/specialists/skills/specialists-init/bootstrap.ps1) performs only **additive**
+  actions: it copies the persona templates to `.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md`
+  (never overwriting), places an **empty lens scaffold** for every subagent of the enabled
+  plugin(s) (`VUL-IN` — the spot where repo-specific tasks per specialist are
+  filled in), adds the `@.claude/plugins/claude-specialists/specialists/01-01-extension.md` import at the bottom of `CLAUDE.md`
+  (or creates a scaffold), and writes a `settings.suggested.jsonc` with a `permissions.deny` +
+  hooks **stub**. It does not touch `settings.json` — that merge and filling in the repo lens are
+  manual work afterwards (repo-specific), after which one more **restart** activates the new context.
 
-## Versiebeheer
+## Versioning
 
-Elke plugin (`claude-code-plugins/claude-specialists/specialists/…`, `claude-code-plugins/claude-specialists/specialists-lifehub/…`, `claude-code-plugins/claude-specialists/specialists-shopify/…`) draagt een eigen
-`version` in zijn `plugin.json`. Bij een release bewegen die versies **in lockstep** — ze krijgen
-allemaal hetzelfde nummer en één repo-brede tag `vX.Y.Z` (zie [Een release snijden](#een-release-snijden)).
-**Dat versienummer is óók de update-poort**: `claude plugin update` vergelijkt uitsluitend
-versienummers, dus een consumerende repo (inclusief deze repo zelf, die zichzelf consumeert) haalt
-gemergde wijzigingen pas binnen nadat de `version` is gebumpt — een merge zonder release blijft voor
-consumenten onzichtbaar. Moet werk naar consumenten propageren, dan hoort daar dus een release bij
-(op Dave's expliciete verzoek, zoals altijd).
-Wijzigingen aan een gedeelde agent-def landen hier eerst, worden hier gecommit, en pas daarna door de
-consumerende repo's opgehaald — nooit andersom (geen repo mag een gedeelde agent-def lokaal
-overschrijven zonder dat hier terug te leggen).
+Every plugin (`claude-code-plugins/claude-specialists/specialists/…`, `claude-code-plugins/claude-specialists/specialists-lifehub/…`, `claude-code-plugins/claude-specialists/specialists-shopify/…`) carries its own
+`version` in its `plugin.json`. On a release those versions move **in lockstep** — they all get the
+same number and one repo-wide tag `vX.Y.Z` (see [Cutting a release](#cutting-a-release)).
+**That version number is also the update gate**: `claude plugin update` compares nothing but
+version numbers, so a consuming repo (including this repo itself, which consumes itself) only pulls
+in merged changes after the `version` has been bumped — a merge without a release stays invisible
+to consumers. So if work must propagate to consumers, a release belongs with it
+(on Dave's explicit request, as always).
+Changes to a shared agent def land here first, are committed here, and only then picked up by the
+consuming repos — never the other way around (no repo may overwrite a shared agent def locally
+without contributing it back here).
 
-## Onderhoud: drift-lint
+## Maintenance: drift lint
 
-Via de `github`-marketplace-source clonet en cachet de Claude Code CLI dit repo zelf voor elke
-consument, dus is er geen fysieke kopie in de consumerende repo nodig en dus ook geen sync-stap —
-elke consument consumeert letterlijk dezelfde bestanden. Uit een overgang kan een consumerende repo
-echter nog een verouderde lokale kopie van een agent-def hebben die inmiddels hier gedeeld is.
-[`scripts/lint/check-consumer-drift.ps1`](scripts/lint/check-consumer-drift.ps1) vergelijkt zo'n
-lokale kopie (read-only, wijzigt niets) met de canonieke versie hier en meldt `MISSING` (al
-gemigreerd), `IDENTICAL` (dode kopie, veilig te verwijderen) of `DRIFTED` (eerst bekijken vóór
-verwijderen). Opruimen zelf gebeurt in de consumerende repo, niet door dit script.
+Through the `github` marketplace source, the Claude Code CLI clones and caches this repo itself for
+every consumer, so no physical copy in the consuming repo is needed and thus no sync step either —
+every consumer literally consumes the same files. Left over from a transition, however, a consuming
+repo may still have an outdated local copy of an agent def that is by now shared here.
+[`scripts/lint/check-consumer-drift.ps1`](scripts/lint/check-consumer-drift.ps1) compares such a
+local copy (read-only, changes nothing) with the canonical version here and reports `MISSING`
+(already migrated), `IDENTICAL` (dead copy, safe to remove), or `DRIFTED` (inspect first before
+removing). The cleanup itself happens in the consuming repo, not by this script.
 
-Hetzelfde script vergelijkt ook de **persona's**: het legt de draagbare body van elke
-`personas/<group>-<id>-persona.md` naast de body van de consument-kopie in
-`.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md` (alles boven de `## Eigen aan deze repo`-marker; de
-repo-lens eronder is per repo verschillend en wordt niet vergeleken). Die persona-bevindingen zijn
-**informatief** — ze tellen niet mee in de exit-code, want een consument met een handgeschreven
-persona is per definitie `DRIFTED` tot hij gecoördineerd is gereconcilieerd.
+The same script also compares the **personas**: it lays the portable body of each
+`personas/<group>-<id>-persona.md` next to the body of the consumer copy in
+`.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md` (everything above the `## Eigen aan deze repo` marker; the
+repo lens below it differs per repo and is not compared). Those persona findings are
+**informational** — they don't count toward the exit code, because a consumer with a handwritten
+persona is by definition `DRIFTED` until it has been reconciled in a coordinated way.
 
 ```powershell
-./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\pad\naar\life-hub
-./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\pad\naar\smartwatchbanden
+./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\path\to\life-hub
+./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\path\to\smartwatchbanden
 ```
 
-## Bijdragen — changelog & PR-workflow
+## Contributing — changelog & PR workflow
 
-Wijzigingen aan dit repo gaan via een branch + Pull Request naar `main`, met een gevouwen
-changelog-entry — dezelfde workflow als de consumerende repo's. De stappen:
+Changes to this repo go through a branch + Pull Request to `main`, with a folded
+changelog entry — the same workflow as the consuming repos. The steps:
 
-1. **Branch** met een `<prefix>/<korte-naam>`-naam. Geldige prefixes (prefix → label → changelog-type):
+1. **Branch** with a `<prefix>/<short-name>` name. Valid prefixes (prefix → label → changelog type):
    `feat/` → enhancement → Feat · `fix/` → bug → Fix · `docs/` → documentation → Docs ·
-   `chore/` → documentation → Chore (onderhoud: scripts, tooling, config). De tabel staat in
+   `chore/` → documentation → Chore (maintenance: scripts, tooling, config). The table is in
    [`scripts/lib/branch-info.ps1`](scripts/lib/branch-info.ps1).
-2. **Changelog-entry aanmaken:** [`scripts/release/new-changelog-entry.ps1`](scripts/release/new-changelog-entry.ps1)`-Title "…"`
-   maakt `<branch-naam>.md` in de repo-root met kop + datum + type al ingevuld; vul de beschrijving in.
-3. **Werk + commit** op de branch (entry-bestand meecommitten).
-4. **PR openen:** [`scripts/release/open-pr.ps1`](scripts/release/open-pr.ps1)`-Title "…"` draait eerst
-   de **lint-poort** [`scripts/lint/check-plugin-integrity.ps1`](scripts/lint/check-plugin-integrity.ps1)
-   (geldige manifesten, agent-def-frontmatter, geen dode links) en daarna de **test-poort** (alle
-   `scripts/tests/*.tests.ps1`, exact zoals CI); bij een error of falende suite wordt er niet gepusht en
-   geen PR geopend. Slagen beide poorten, dan pusht het script en opent de PR met label + auto-ingevulde body.
-   Dezelfde poort draait óók als **CI** op GitHub ([`.github/workflows/ci.yml`](.github/workflows/ci.yml):
-   lint + alle testsuites, bij elke PR en elke push naar `main`) — een PR die buiten de scripts om
-   ontstaat, komt er dus evengoed langs.
-5. **Merge** (op Dave's woord).
-6. **Folden:** op `main`, direct na de merge,
-   [`scripts/release/fold-changelog-entry.ps1`](scripts/release/fold-changelog-entry.ps1)`-Branch <naam>`
-   vouwt het entry-bestand in de `## Pull Requests`-sectie van [`CHANGELOG.md`](CHANGELOG.md) (met
-   `#NN` + PR-link), leidt daarbij een `Plugins:`-regel af uit de PR-bestanden (voor de per-plugin
-   CHANGELOGs — zie [Een release snijden](#een-release-snijden)) en verwijdert het entry-bestand;
-   commit dat rechtstreeks op `main`.
+2. **Create the changelog entry:** [`scripts/release/new-changelog-entry.ps1`](scripts/release/new-changelog-entry.ps1)`-Title "…"`
+   creates `<branch-name>.md` in the repo root with heading + date + type already filled in; write the description.
+3. **Work + commit** on the branch (commit the entry file along with it).
+4. **Open the PR:** [`scripts/release/open-pr.ps1`](scripts/release/open-pr.ps1)`-Title "…"` first runs
+   the **lint gate** [`scripts/lint/check-plugin-integrity.ps1`](scripts/lint/check-plugin-integrity.ps1)
+   (valid manifests, agent-def frontmatter, no dead links) and then the **test gate** (all
+   `scripts/tests/*.tests.ps1`, exactly as CI does); on an error or a failing suite nothing is pushed and
+   no PR is opened. If both gates pass, the script pushes and opens the PR with label + auto-filled body.
+   The same gate also runs as **CI** on GitHub ([`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+   lint + all test suites, on every PR and every push to `main`) — so a PR created outside the
+   scripts still passes through it all the same.
+5. **Merge** (on Dave's word).
+6. **Fold:** on `main`, right after the merge,
+   [`scripts/release/fold-changelog-entry.ps1`](scripts/release/fold-changelog-entry.ps1)`-Branch <name>`
+   folds the entry file into the `## Pull Requests` section of [`CHANGELOG.md`](CHANGELOG.md) (with
+   `#NN` + PR link), derives a `Plugins:` line from the PR's files along the way (for the per-plugin
+   CHANGELOGs — see [Cutting a release](#cutting-a-release)), and removes the entry file;
+   commits that directly on `main`.
 
-### Een release snijden
+### Cutting a release
 
-Een release is een **vastgelegd moment**: alle drie de plugins krijgen hetzelfde versienummer
-(**lockstep, repo-breed**) en de staat wordt getagd als `vX.Y.Z`. Er wordt niets naar GitHub Releases
-gepubliceerd — alleen een git-tag, de volledige notes in [`releases/`](releases/README.md), en een
-verwijzing daarnaartoe in [`CHANGELOG.md`](CHANGELOG.md). Een release wordt **alleen op Dave's
-expliciete verzoek** gesneden en loopt bewust **niet via een branch + PR**: net als de fold-commit is
-de release-commit een toegestane directe-op-`main`-actie (de tweede uitzondering op "alles via
+A release is a **captured moment**: all three plugins get the same version number
+(**lockstep, repo-wide**) and the state is tagged as `vX.Y.Z`. Nothing is published to GitHub Releases
+— only a git tag, the full notes in [`releases/`](releases/README.md), and a reference to them in
+[`CHANGELOG.md`](CHANGELOG.md). A release is cut **only on Dave's explicit
+request** and deliberately does **not** go through a branch + PR: like the fold commit, the
+release commit is a permitted direct-on-`main` action (the second exception to "everything via
 branch + PR").
 
-In één beweging, op een schone `main`:
+In one motion, on a clean `main`:
 [`scripts/release/cut-release.ps1`](scripts/release/cut-release.ps1)`(-Version <X.Y.Z> | -Bump <major|minor|patch>) [-Title "…"]`
 
-1. bumpt alle `plugin.json`-versies in lockstep naar `X.Y.Z`;
-2. genereert de volledige release-notes in `releases/development/<X.Y>/<X.Y.Z>.md` (uit de gevouwen
-   `## Pull Requests`-entries, per branch-type), voegt een rij toe aan `releases/README.md`, en zet in
-   `CHANGELOG.md` een verwijzing onder `## Releases` (de Pull-Requests-sectie wordt geleegd tot zijn intro);
-3. schrijft per plugin de entries die díe plugin raakten (geselecteerd via de `Plugins:`-regel die
-   de fold uit de PR-bestanden afleidt; de regel zelf reist als interne administratie niet mee) bij
-   in de **per-plugin `CHANGELOG.md`** — de consument-gerichte geschiedenis die met de
-   plugin-cache meereist;
-4. commit dat rechtstreeks op `main` (`release: vX.Y.Z`) en zet een annotated tag `vX.Y.Z`;
-5. pusht `main` + de tag (tenzij `-NoPush` voor inspectie vooraf).
+1. bumps all `plugin.json` versions in lockstep to `X.Y.Z`;
+2. generates the full release notes in `releases/development/<X.Y>/<X.Y.Z>.md` (from the folded
+   `## Pull Requests` entries, per branch type), adds a row to `releases/README.md`, and places in
+   `CHANGELOG.md` a reference under `## Releases` (the Pull Requests section is emptied down to its intro);
+3. appends, per plugin, the entries that touched that plugin (selected via the `Plugins:` line that
+   the fold derives from the PR's files; as internal bookkeeping, the line itself doesn't travel along)
+   to the **per-plugin `CHANGELOG.md`** — the consumer-facing history that travels along with the
+   plugin cache;
+4. commits that directly on `main` (`release: vX.Y.Z`) and sets an annotated tag `vX.Y.Z`;
+5. pushes `main` + the tag (unless `-NoPush` for inspection first).
 
-Vangrails: schone `main`, geen ongevouwen entry-bestanden, lint-poort groen, tag bestaat nog niet.
-De pure logica (versie-bump, CHANGELOG-transformatie, notes-opbouw) woont in
-[`scripts/lib/release-lib.ps1`](scripts/lib/release-lib.ps1) en wordt gedekt door
+Guardrails: a clean `main`, no unfolded entry files, lint gate green, tag doesn't exist yet.
+The pure logic (version bump, CHANGELOG transformation, notes construction) lives in
+[`scripts/lib/release-lib.ps1`](scripts/lib/release-lib.ps1) and is covered by
 [`scripts/tests/release-lib.tests.ps1`](scripts/tests/release-lib.tests.ps1).

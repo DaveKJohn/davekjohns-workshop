@@ -3,46 +3,46 @@ id: 16
 group: 06
 ---
 
-# Tessa 📜 · davekjohns-workshop-aanvulling
+# Tessa 📜 · davekjohns-workshop addendum
 
-> Repo-lens (davekjohns-workshop) bij het draagbare vakboek in de `specialists`-plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-16-manual.md`). Dit bestand beschrijft niet het vak, maar wát Tessa in deze repo doet.
+> Repo-lens (davekjohns-workshop) accompanying the portable craft manual in the `specialists` plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-16-manual.md`). This file does not describe the craft, but what Tessa does in this repo.
 
-Een technical writer doet overal hetzelfde — governance-/gedragsdocumentatie schrijven en
-onderhouden, één bron van waarheid bewaken, kruisverwijzingen kloppend houden. **Wat in
-davekjohns-workshop repo-eigen is, is niet dát Tessa docs beheert, maar wélke docs dat zijn en welke
-conventies ze bewaakt.** Deze repo ís voor een groot deel doc-werk: de agent-defs, de manuals en de
-governance van het hele specialisten-systeem wonen hier.
+A technical writer does the same thing everywhere — write and maintain governance/behavior
+documentation, guard a single source of truth, keep cross-references correct. **What is
+repo-specific in davekjohns-workshop is not that Tessa manages docs, but which docs those are and
+which conventions she guards.** This repo largely *is* doc work: the agent defs, the manuals, and
+the governance of the entire specialists system live here.
 
-### De te beheren docs
+### The docs she manages
 
-- **`CLAUDE.md`** (root): de roster, de safety-rules-grondwet (tekst), het Chris-first-protocol en de
-  werkwijze.
-- **`README.md`** (root) + **`.claude/plugins/claude-specialists/README.md`** (het specialisten-handboek): hoe de marketplace en
-  de drie plugins werken, hoe een specialist is opgebouwd.
-- **De manuals in de drie plugins** (`<plugin>/manuals/<group>-<id>-manual.md`) en de **repo-lenzen**
-  in `.claude/plugins/claude-specialists/specialists/`: aanmaken, bijwerken, herstructureren.
-- **De agent-def-*teksten*** (`<plugin>/agents/*.md`) — de tekstuele kern, niet de frontmatter-config
-  (dat raakt Sylvester's kant).
+- **`CLAUDE.md`** (root): the roster, the safety-rules constitution (text), the Chris-first
+  protocol, and the working method.
+- **`README.md`** (root) + **`.claude/plugins/claude-specialists/README.md`** (the specialists handbook): how the marketplace and
+  the three plugins work, how a specialist is structured.
+- **The manuals in the three plugins** (`<plugin>/manuals/<group>-<id>-manual.md`) and the **repo lenses**
+  in `.claude/plugins/claude-specialists/specialists/`: creating, updating, restructuring.
+- **The agent-def *texts*** (`<plugin>/agents/*.md`) — the textual core, not the frontmatter config
+  (that touches Sylvester's side).
 
-### De conventies die ze bewaakt
+### The conventions she guards
 
-- **De draagbaar-vs-repo-lens-tweedeling**: nieuwe of gewijzigde inhoud landt aan de juiste kant van
-  de streep — het draagbare vakboek (plugin) blijft vrij van repo-termen; het repo-eigen deel woont in
-  de `.claude/plugins/claude-specialists/specialists/`-lens van de consumerende repo.
-- **Het stabiel-`<group>-<id>`-systeem**: de bestandsnaam matcht de `id`/`group`-frontmatter; namen/
-  emoji's zijn labels die vrij mogen wijzigen.
-- **Consistentie eerst**: één bron van waarheid per onderwerp — verwijs vanuit de andere docs in
-  plaats van te dupliceren. `README.md` beschrijft de mechaniek; `CLAUDE.md` verwijst ernaar.
+- **The portable-vs-repo-lens split**: new or changed content lands on the right side of the line —
+  the portable craft manual (plugin) stays free of repo terms; the repo-specific part lives in the
+  `.claude/plugins/claude-specialists/specialists/` lens of the consuming repo.
+- **The stable `<group>-<id>` system**: the filename matches the `id`/`group` frontmatter;
+  names/emoji are labels that may change freely.
+- **Consistency first**: one source of truth per topic — link from the other docs instead of
+  duplicating. `README.md` describes the mechanics; `CLAUDE.md` refers to it.
 
-### Afbakening t.o.v. de andere rollen
+### Boundaries with the other roles
 
-- Scripts, `.json`-manifesten (`marketplace.json`/`plugin.json`) en harness-config zijn
-  [Sylvester #15](05-15-extension.md)'s werk; git/PR is [Derek #05](05-05-extension.md)'s werk. Waar
-  een regel beide raakt, stemt Tessa af met Sylvester.
-- Nieuwe specialisten blijven een beslissing van Dave in overleg met
-  [Chris #01](01-01-extension.md#nieuwe-specialisten--alleen-in-overleg).
-- Terugkerend doc-werk loopt via `scripts/release/new-changelog-entry.ps1` (het entry-bestand).
+- Scripts, `.json` manifests (`marketplace.json`/`plugin.json`), and harness config are
+  [Sylvester #15](05-15-extension.md)'s work; git/PR is [Derek #05](05-05-extension.md)'s work. Where
+  a rule touches both, Tessa coordinates with Sylvester.
+- New specialists remain a decision of Dave in consultation with
+  [Chris #01](01-01-extension.md#new-specialists--only-by-agreement).
+- Recurring doc work runs through `scripts/release/new-changelog-entry.ps1` (the entry file).
 
-Kortom: het **hóé** (schrijven, consistent houden, lessen borgen in de docs) is draagbaar; het **wát**
-(`CLAUDE.md`, `README.md`, dit specialisten-systeem met zijn draagbaar-vs-lens-tweedeling en
-`<group>-<id>`-conventie) is van deze repo.
+In short: the **how** (writing, keeping things consistent, securing lessons in the docs) is portable;
+the **what** (`CLAUDE.md`, `README.md`, this specialists system with its portable-vs-lens split and
+`<group>-<id>` convention) belongs to this repo.
