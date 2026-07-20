@@ -133,9 +133,19 @@ security-review: het gevonden pad wordt eerst **geverifieerd** (marker-check op 
 marketplace-naam in `.claude-plugin/marketplace.json` — nooit code draaien op een padgok), en
 buiten de workshop is de check **gescoped** tot het manifest van de eigen repo, zodat een sessie
 nooit de registerdata van een andere consument in zijn context krijgt. De hook is verder bewust
-zacht: geen geverifieerde workshop-checkout betekent een melding en verder niets, signalen komen
-als compacte samenvatting in de sessie-context, en de hook blokkeert nooit een sessiestart
-(altijd exit 0, read-only). Deze hook is — naast de skill `specialists-init` — de tweede
-benoemde, repo-neutrale uitzondering op de regel dat plugins geen hooks/skills dragen (zie de
-root-README). Let op de **versie-poort**: consumenten ontvangen de hook pas na een release-bump
-én een `claude plugin update` + sessie-herstart aan hun kant.
+zacht: geen geverifieerde workshop-checkout betekent een melding en verder niets, alleen
+**blokkerende signalen** (`[FOUT]`/`[DRIFTED]`) komen als compacte samenvatting in de
+sessie-context, en de hook blokkeert nooit een sessiestart (altijd exit 0, read-only).
+`[INFO]`-signalen — registeradministratie over de sync-stand en registratie van consumenten:
+soms hier bij te werken, vaak de zaak van een andere machine of gebruiker, maar in geen geval
+werk waarvoor een sessiestart onderbroken hoeft te worden — blijven bij sessiestart bewust stil
+(besluit Dave, 20 juli 2026); ze zijn zichtbaar bij een bewuste run van `check-connectors.ps1`
+in de workshop. Daaruit
+volgt een classificatie-regel voor uitbreidingen van de check (advies security-review, 20 juli
+2026): een nieuwe signaal-categorie die veiligheidsrelevant kan zijn (bv. een aanwijzing van
+manipulatie) hoort nooit als `[INFO]` geclassificeerd te worden, maar als `[FOUT]` — anders
+blijft ze bij sessiestart stilzwijgend buiten beeld. Deze hook
+is — naast de skill `specialists-init` — de tweede benoemde, repo-neutrale uitzondering op de
+regel dat plugins geen hooks/skills dragen (zie de root-README). Let op de **versie-poort**:
+consumenten ontvangen de hook pas na een release-bump én een `claude plugin update` +
+sessie-herstart aan hun kant.
