@@ -9,6 +9,34 @@ folden) staat in [`README.md`](README.md#contributing--changelog--pr-workflow).
 Alles wat sinds de laatste release naar `main` is gemergd — nieuwste bovenaan, één blok per pull
 request.
 
+### #111 · Roster-sync SessionStart hook (layer 2 of the feature) · Feat · 2026-07-20
+
+Layer 2 of the roster-sync feature: the detection from layer 1 (#110) now surfaces itself at
+session start, so a specialist missing from a consumer's roster is visible right after a plugin
+update instead of only when someone happens to run the check.
+
+- **`hooks/roster-sessioncheck.ps1` (new):** a SessionStart hook that runs the mirrored
+  `check-roster-sync.ps1` against the current repo and, like `connector-sessioncheck.ps1`, is
+  deliberately soft — it surfaces only blocking `[ERROR]` signals (a missing specialist) as a
+  compact summary, keeps `[INFO]` (orphans, ignore-list skips, uncached plugins) silent, and always
+  exits 0 (a session start never strands here). Read-only.
+- **`hooks/hooks.json`:** a second command is added to the existing `SessionStart` (startup) entry,
+  so the new hook runs alongside the connector check.
+- **`connectors/README.md`:** the named-exception note now covers this second hook.
+- **Tests:** `roster-sync.tests.ps1` gains hook cases (missing check script → skipped; an `[ERROR]`
+  stub → drift summary + exit 0, never blocking; an `[INFO]`/`[OK]`-only stub → silent in-sync
+  message).
+
+Version gate as usual: consumers receive the hook only after a release bump + `claude plugin
+update` + session restart. Layer 3 (the semi-automatic `sync-roster` recovery skill) and the full
+feature docs follow.
+
+Plugins: specialists
+
+[PR #111](https://github.com/DaveKJohn/davekjohns-workshop/pull/111)
+
+---
+
 ### #110 · Roster-sync detection (layer 1 of the feature) · Feat · 2026-07-20
 
 When a plugin release adds a new specialist (e.g. Ravi 06-24), a consumer that updates the plugin
