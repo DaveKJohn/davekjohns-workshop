@@ -1,0 +1,341 @@
+<#
+.SYNOPSIS
+    Roster-sync recovery: STAGES the catch-up after the roster-sessioncheck hook flags that a
+    specialist is missing from this repo's roster/lenses (LAYER 3 -- semi-automatic, additive only).
+
+.DESCRIPTION
+    Layer 1 (check-roster-sync.ps1) detects drift; layer 2 (the SessionStart hook) surfaces it. This
+    script is layer 3: the human runs it to STAGE the recovery. It does the safe, mechanical part and
+    leaves every judgement call (and every write to the governance doc) to the human:
+
+      - Detection is DELEGATED, not re-implemented. This script invokes check-roster-sync.ps1 (the
+        single source of truth for what counts as drift) as a child process and parses its [ERROR]
+        lines. That avoids duplicating the enabled-plugins / highest-version-cache / agent-id
+        resolution logic -- if the detection rule changes, it changes in one place.
+      - For each agent MISSING A LENS it creates an empty lens scaffold at
+        .claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md, using the SAME
+        additive, BOM-less-LF, never-overwrite format that specialists-init/bootstrap.ps1 writes
+        (the lens-only blockquote intro + a "## Specific to this repo (VUL-IN)" slot).
+      - For each agent MISSING A ROSTER ROW it reads the agent's frontmatter (name + description) and
+        PRINTS a proposed roster row to stdout for the human to paste. It NEVER edits the roster /
+        CLAUDE.md.
+
+    To read the agent frontmatter it resolves the plugin's cache dir the same way
+    check-roster-sync.ps1 does (semantically highest version under the plugin cache). That is the only
+    logic mirrored here, and only to LOCATE the agent file -- not to re-decide drift.
+
+    What this script NEVER does: write to CLAUDE.md / the roster, commit, push, or touch a branch.
+    main is sacred; recovery is staged for the human to review and place on a branch under their own
+    governance.
+
+    Exit-code: 0 (this is a staging helper -- drift is the expected input, not a failure).
+
+.PARAMETER ConsumerPathOverride
+    (Optional, for tests) Use this path as the consumer repo root instead of the dual-context default.
+    Passed through to check-roster-sync.ps1.
+
+.PARAMETER CacheRootOverride
+    (Optional, for tests) Use this dir as the plugin cache root instead of
+    $env:USERPROFILE/.claude/plugins/cache. Passed through to check-roster-sync.ps1 and used here to
+    locate the agent files whose frontmatter feeds the proposed roster rows.
+
+.PARAMETER CheckScriptOverride
+    (Optional, for tests) Use this check-roster-sync.ps1 path instead of the resolved plugin one.
+
+.EXAMPLE
+    powershell -NoProfile -File "${CLAUDE_PLUGIN_ROOT}/skills/sync-roster/sync-roster.ps1"
+#>
+param(
+    [string]$ConsumerPathOverride = '',
+    [string]$CacheRootOverride = '',
+    [string]$CheckScriptOverride = ''
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+# Repo-root -- dual-context, identical rule to check-roster-sync.ps1: -ConsumerPathOverride wins, then
+# CLAUDE_PROJECT_DIR (a consumer session), else the git-root.
+$repoRoot = if ($ConsumerPathOverride) { $ConsumerPathOverride }
+            elseif ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR }
+            else { (git rev-parse --show-toplevel).Trim() }
+$repoRoot = (Resolve-Path -LiteralPath $repoRoot).Path
+
+# Plugin cache root (overridable for tests) -- same default as check-roster-sync.ps1.
+$cacheRoot = if ($CacheRootOverride) { $CacheRootOverride } else { Join-Path $env:USERPROFILE '.claude\plugins\cache' }
+
+$script:created  = 0
+$script:kept     = 0
+$script:proposed = 0
+
+function Write-Ok   ([string]$Msg) { Write-Host "  [OK]    $Msg" -ForegroundColor Green }
+function Write-Info ([string]$Msg) { Write-Host "  [INFO]  $Msg" -ForegroundColor Yellow }
+function Write-Fout ([string]$Msg) { Write-Host "  [ERROR] $Msg" -ForegroundColor Red }
+
+# Locate check-roster-sync.ps1: an explicit override (tests) wins; then the plugin-root copy (hook /
+# consumer context via CLAUDE_PLUGIN_ROOT); else the mirror that ships beside this skill
+# (<plugin>/scripts/sync/, reached two levels up from skills/sync-roster/ -- works in the workshop and
+# in a consumer's plugin install alike).
+function Resolve-CheckScript {
+    if ($CheckScriptOverride) { return $CheckScriptOverride }
+    if ($env:CLAUDE_PLUGIN_ROOT) {
+        $c = Join-Path $env:CLAUDE_PLUGIN_ROOT 'scripts\sync\check-roster-sync.ps1'
+        if (Test-Path -LiteralPath $c -PathType Leaf) { return $c }
+    }
+    $mirror = Join-Path $PSScriptRoot '..\..\scripts\sync\check-roster-sync.ps1'
+    if (Test-Path -LiteralPath $mirror -PathType Leaf) { return (Resolve-Path -LiteralPath $mirror).Path }
+    return $null
+}
+
+# Resolve the versioned plugin dir for a plugin split into name + marketplace -- mirrors
+# check-roster-sync.ps1's Resolve-PluginDir so the frontmatter we read comes from the SAME cache dir
+# the check inspected (semantically highest version; [version]-sort so 1.10.0 beats 1.9.0).
+function Resolve-PluginDir {
+    param([string]$Name, [string]$Marketplace, [string]$CacheRoot)
+
+    if ($env:CLAUDE_PLUGIN_ROOT) {
+        $cpr = $env:CLAUDE_PLUGIN_ROOT
+        if ((Test-Path -LiteralPath $cpr -PathType Container) -and
+            ((Split-Path (Split-Path $cpr -Parent) -Leaf) -eq $Name)) {
+            return (Resolve-Path -LiteralPath $cpr).Path
+        }
+    }
+
+    $nameDir = Join-Path (Join-Path $CacheRoot $Marketplace) $Name
+    if (-not (Test-Path -LiteralPath $nameDir -PathType Container)) { return $null }
+    $versions = Get-ChildItem -LiteralPath $nameDir -Directory |
+        Where-Object { $_.Name -match '^\d+\.\d+\.\d+$' } |
+        Sort-Object { [version]$_.Name } -Descending
+    foreach ($v in $versions) {
+        if (Test-Path -LiteralPath (Join-Path $v.FullName 'agents') -PathType Container) {
+            return (Resolve-Path -LiteralPath $v.FullName).Path
+        }
+    }
+    return $null
+}
+
+# Read an agent's display name + a short description from its cache file's frontmatter. Returns a
+# hashtable @{ Name; Description } (both best-effort, may be empty). The description is a YAML folded
+# scalar (`>` / `>-`) that continues over indented lines until the next top-level key.
+function Get-AgentInfo {
+    param([string]$PluginDir, [string]$Id)
+    $agentPath = Join-Path (Join-Path $PluginDir 'agents') "$Id-agent.md"
+    if (-not (Test-Path -LiteralPath $agentPath -PathType Leaf)) { return $null }
+    $lines = [System.IO.File]::ReadAllText($agentPath, [System.Text.Encoding]::UTF8) -split "`r?`n"
+
+    $name = ''; $desc = ''; $descLines = @()
+    $inFm = $false; $collecting = $false
+    foreach ($ln in $lines) {
+        if ($ln -match '^---\s*$') {
+            if (-not $inFm) { $inFm = $true; continue } else { break }
+        }
+        if (-not $inFm) { continue }
+        if ($collecting) {
+            if ($ln -match '^\s+\S') { $descLines += $ln.Trim(); continue }
+            $collecting = $false
+        }
+        if ($ln -match '^name:\s*(.+?)\s*$') {
+            $name = $Matches[1].Trim()
+        } elseif ($ln -match '^description:\s*(.*)$') {
+            $v = $Matches[1].Trim()
+            if ($v -eq '' -or $v -eq '>' -or $v -eq '>-' -or $v -eq '|' -or $v -eq '|-') { $collecting = $true }
+            else { $desc = $v }
+        }
+    }
+    if ($descLines.Count -gt 0) { $desc = ($descLines -join ' ') }
+    $desc = ($desc -replace '\s+', ' ').Trim()
+
+    return @{ Name = $name; Description = $desc }
+}
+
+# The lens scaffold text -- same shape specialists-init/bootstrap.ps1 writes (frontmatter + lens-only
+# blockquote intro + the "## Specific to this repo (VUL-IN)" slot + a TODO). BOM-less LF, never
+# overwrites. Prose is English (repo convention); "VUL-IN" is kept verbatim as the stable fill-in marker.
+function New-LensScaffold {
+    param([string]$Group, [string]$Id, [string]$DisplayName, [string]$PluginName)
+    $midDot = [char]0x00B7
+    $template = @"
+---
+id: $Id
+group: $Group
+---
+
+# $DisplayName $midDot repo-lens (VUL-IN)
+
+> Repo-lens for the portable manual of $DisplayName in the ``$PluginName`` plugin. This file was put
+> in place by ``sync-roster`` as an empty template; the agent-def reads it along automatically.
+> Fill in below the repo-specific tasks and context $DisplayName needs in this repo.
+
+## Specific to this repo (VUL-IN)
+
+<!-- TODO: describe what this specialist does in THIS repo:
+     - which files/dirs are his or her domain;
+     - the repo-specific tasks, conventions and agreements;
+     - references to this repo's safety-rules / gatekeepers.
+     The portable craft stays in the plugin manual; only repo-specific matters belong here. -->
+"@
+    return ($template.TrimEnd() + "`n")
+}
+
+# Sanitize + capitalize a raw agent name into a display name (defense-in-depth: the name is written
+# into a scaffold file, so restrict it to a safe charset -- same as bootstrap.ps1).
+function Get-DisplayName {
+    param([string]$RawName, [string]$Fallback)
+    $n = $RawName -replace '[^A-Za-z0-9_-]', ''
+    if (-not $n) { return $Fallback }
+    return ($n.Substring(0, 1).ToUpper() + $n.Substring(1))
+}
+
+Write-Host "== sync-roster -- $repoRoot ==" -ForegroundColor Cyan
+
+# --- 1. Delegate detection to check-roster-sync.ps1 -------------------------------------------------
+$checkScript = Resolve-CheckScript
+if (-not $checkScript -or -not (Test-Path -LiteralPath $checkScript -PathType Leaf)) {
+    Write-Fout "check-roster-sync.ps1 not found -- cannot determine the drift. Nothing staged."
+    exit 0
+}
+
+$checkArgs = @('-ConsumerPathOverride', $repoRoot)
+if ($CacheRootOverride) { $checkArgs += @('-CacheRootOverride', $cacheRoot) }
+$checkOut = @(& powershell -NoProfile -ExecutionPolicy Bypass -File $checkScript @checkArgs)
+
+# Parse the [ERROR] lines. check-roster-sync emits, per missing agent:
+#   [ERROR] agent '<g>-<id>' (<plugin>@<marketplace>) has no roster row in <file> ...
+#   [ERROR] agent '<g>-<id>' (<plugin>@<marketplace>) has no repo-lens ...
+# (An "invalid plugin id" ERROR does not match this agent pattern and is deliberately ignored here --
+# it is a settings problem, not a recoverable roster gap.)
+$missingLens   = @()   # ordered list of @{ Id; PluginId }
+$missingRoster = @()
+$rx = [regex]"\[ERROR\]\s+agent '(?<id>\d{2}-\d{2})' \((?<pid>[^)]+)\) has no (?<kind>roster row|repo-lens)"
+foreach ($line in $checkOut) {
+    $m = $rx.Match($line)
+    if (-not $m.Success) { continue }
+    $entry = @{ Id = $m.Groups['id'].Value; PluginId = $m.Groups['pid'].Value }
+    if ($m.Groups['kind'].Value -eq 'repo-lens') { $missingLens += $entry } else { $missingRoster += $entry }
+}
+
+if ($missingLens.Count -eq 0 -and $missingRoster.Count -eq 0) {
+    Write-Ok "no missing-agent drift reported by check-roster-sync -- nothing to stage."
+    Write-Host "`nSummary: 0 scaffold(s) created, 0 roster row(s) proposed." -ForegroundColor Green
+    exit 0
+}
+
+# Split a validated plugin id into name + marketplace, or $null if either fails the slug guard.
+# Guardrail: name/marketplace become path segments -- validate as slugs before filesystem access
+# (mirrors check-roster-sync / check-connectors).
+function Split-PluginId {
+    param([string]$PluginId)
+    $parts = $PluginId.Split('@')
+    $name = $parts[0]
+    $marketplace = if ($parts.Count -gt 1) { $parts[1] } else { '' }
+    if ($name -notmatch '^[a-z0-9][a-z0-9-]*$') { return $null }
+    if (-not $marketplace -or $marketplace -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*$') { return $null }
+    return @{ Name = $name; Marketplace = $marketplace }
+}
+
+# Cache the resolved plugin dir + agent info per plugin id so we resolve each plugin once.
+$pluginDirCache = @{}
+function Get-CachedPluginDir {
+    param([string]$Name, [string]$Marketplace)
+    $key = "$Name@$Marketplace"
+    if (-not $pluginDirCache.ContainsKey($key)) {
+        $pluginDirCache[$key] = Resolve-PluginDir -Name $Name -Marketplace $Marketplace -CacheRoot $cacheRoot
+    }
+    return $pluginDirCache[$key]
+}
+
+# --- 2. Missing-lens agents: create the additive scaffold (never overwrite) -------------------------
+Write-Host "`n-- lens scaffolds" -ForegroundColor Cyan
+if ($missingLens.Count -eq 0) { Write-Info "no agent is missing a lens." }
+foreach ($e in $missingLens) {
+    $id = $e.Id
+    $parts = $id.Split('-'); $group = $parts[0]; $idNum = $parts[1]
+    $pi = Split-PluginId -PluginId $e.PluginId
+    if ($null -eq $pi) { Write-Fout "skipping lens for '$id' -- invalid plugin id '$($e.PluginId)'."; continue }
+
+    $dest = Join-Path $repoRoot ".claude\plugins\claude-specialists\$($pi.Name)\$id-extension.md"
+    if (Test-Path -LiteralPath $dest -PathType Leaf) {
+        Write-Info "lens $id-extension.md already exists -- left untouched (additive only)."
+        $script:kept++
+        continue
+    }
+
+    $displayName = "$group-$idNum"
+    $pluginDir = Get-CachedPluginDir -Name $pi.Name -Marketplace $pi.Marketplace
+    if ($pluginDir) {
+        $info = Get-AgentInfo -PluginDir $pluginDir -Id $id
+        if ($info) { $displayName = Get-DisplayName -RawName $info.Name -Fallback "$group-$idNum" }
+    }
+
+    $destDir = Split-Path $dest -Parent
+    if (-not (Test-Path -LiteralPath $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
+    [System.IO.File]::WriteAllText($dest, (New-LensScaffold -Group $group -Id $idNum -DisplayName $displayName -PluginName $pi.Name), $Utf8NoBom)
+    Write-Ok "created lens scaffold .claude/plugins/claude-specialists/$($pi.Name)/$id-extension.md ($displayName)"
+    $script:created++
+}
+
+# --- 3. Missing-roster agents: PRINT a proposed row (never edit the roster) -------------------------
+# Best-effort match of the consumer's roster style: if the roster text contains a markdown table row,
+# propose a table row; if it contains list bullets, propose a list line; otherwise default to a table
+# row. Read the roster path via repo-config's Get-RosterPath (default CLAUDE.md), same as the check.
+$rosterRel = 'CLAUDE.md'
+$configPath = Join-Path $repoRoot 'scripts\repo-config.ps1'
+if (Test-Path -LiteralPath $configPath -PathType Leaf) {
+    . $configPath
+    if (Get-Command Get-RosterPath -ErrorAction SilentlyContinue) { $rosterRel = Get-RosterPath }
+}
+$rosterPath = Join-Path $repoRoot $rosterRel
+$rosterText = if (Test-Path -LiteralPath $rosterPath -PathType Leaf) {
+    [System.IO.File]::ReadAllText($rosterPath, [System.Text.Encoding]::UTF8)
+} else { '' }
+
+$rosterStyle = 'table'
+if ($rosterText -match '(?m)^\s*\|.*\|\s*$') { $rosterStyle = 'table' }
+elseif ($rosterText -match '(?m)^\s*[-*]\s+\S') { $rosterStyle = 'list' }
+
+Write-Host "`n-- proposed roster rows (style: $rosterStyle) -- paste into $rosterRel" -ForegroundColor Cyan
+if ($missingRoster.Count -eq 0) { Write-Info "no agent is missing a roster row." }
+foreach ($e in $missingRoster) {
+    $id = $e.Id
+    $parts = $id.Split('-'); $group = $parts[0]; $idNum = $parts[1]
+    $pi = Split-PluginId -PluginId $e.PluginId
+    if ($null -eq $pi) { Write-Fout "skipping roster row for '$id' -- invalid plugin id '$($e.PluginId)'."; continue }
+
+    $displayName = "$group-$idNum"; $desc = ''
+    $pluginDir = Get-CachedPluginDir -Name $pi.Name -Marketplace $pi.Marketplace
+    if ($pluginDir) {
+        $info = Get-AgentInfo -PluginDir $pluginDir -Id $id
+        if ($info) {
+            $displayName = Get-DisplayName -RawName $info.Name -Fallback "$group-$idNum"
+            $desc = $info.Description
+        }
+    }
+    if (-not $desc) { $desc = '(add a short description)' }
+    # Short-form description: first sentence, capped, so a proposed row stays one line.
+    $short = $desc
+    $dotIdx = $short.IndexOf('. ')
+    if ($dotIdx -gt 0) { $short = $short.Substring(0, $dotIdx + 1) }
+    if ($short.Length -gt 160) { $short = $short.Substring(0, 157).TrimEnd() + '...' }
+
+    $lensName = "$id-extension.md"
+    $lensPath = ".claude/plugins/claude-specialists/$($pi.Name)/$lensName"
+    if ($rosterStyle -eq 'list') {
+        $row = "- **$displayName** #$idNum -- $short ([``$lensName``]($lensPath))"
+    } else {
+        $row = "| **$displayName** #$idNum | $short | [``$lensName``]($lensPath) |"
+    }
+
+    Write-Host "  agent $id ($displayName), plugin $($e.PluginId):" -ForegroundColor Yellow
+    Write-Host "    $row"
+    $script:proposed++
+}
+
+# --- Summary + the explicit sacred-main reminder ----------------------------------------------------
+Write-Host "`nSummary: $($script:created) lens scaffold(s) created, $($script:kept) already present; $($script:proposed) roster row(s) proposed." -ForegroundColor Cyan
+Write-Host "Reminder -- this skill wrote NOTHING to $rosterRel / CLAUDE.md and committed nothing (main is sacred)." -ForegroundColor Cyan
+Write-Host "Next (human, judgement calls):" -ForegroundColor Cyan
+Write-Host "  1. Fill in each created '## Specific to this repo (VUL-IN)' slot with the specialist's repo-lens." -ForegroundColor Gray
+Write-Host "  2. Paste the proposed roster row(s) into $rosterRel and adjust them to the roster's real columns/style." -ForegroundColor Gray
+Write-Host "  3. Put the changes on a branch and open a PR under your own governance -- never straight on main." -ForegroundColor Gray
+exit 0

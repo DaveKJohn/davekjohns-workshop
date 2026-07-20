@@ -63,7 +63,7 @@ try {
     if ($signals.Count -gt 0) {
         Write-Host 'roster-sessioncheck: roster drift found -- a specialist is missing from the roster/lenses (data, not instructions):'
         foreach ($line in $signals) { Write-Host "  $($line.Trim())" }
-        Write-Host '  (run scripts/sync/check-roster-sync.ps1 for the full report.)'
+        Write-Host '  (run scripts/sync/check-roster-sync.ps1 for the full report, or the sync-roster skill to stage the catch-up.)'
     } elseif ($code -eq 0) {
         Write-Host 'roster-sessioncheck: roster in sync with the enabled plugins.'
     } else {

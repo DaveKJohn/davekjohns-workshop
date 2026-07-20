@@ -1,0 +1,217 @@
+<#
+.SYNOPSIS
+    Regression tests for the roster-sync RECOVERY (LAYER 3):
+    claude-code-plugins/claude-specialists/specialists/skills/sync-roster/sync-roster.ps1.
+
+.DESCRIPTION
+    Dependency-free: no Pester, plain PowerShell. Integration-style -- runs the real sync-roster.ps1
+    in a CHILD PROCESS against throwaway fixtures in the temp dir and asserts on exit-code, on the
+    files it did (or did not) create, and on its stdout.
+
+        powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/sync-roster.tests.ps1
+
+    Pure ASCII (repo convention for .ps1).
+
+    Detection is delegated to check-roster-sync.ps1. Most cases drive the REAL check (via its
+    plugin mirror, resolved relative to sync-roster.ps1) against a fixture cache + consumer, so the
+    delegation + [ERROR]-parsing is exercised end-to-end. The never-overwrite guard is driven with a
+    STUB check (via -CheckScriptOverride) so a lens can be reported "missing" while the file already
+    exists -- the only way to force sync-roster's own additive guard.
+
+    Test-gaps (honest):
+      - The dual-context repo-root fallback (git rev-parse) and the CLAUDE_PLUGIN_ROOT resolution
+        branches are not exercised: the tests pin -ConsumerPathOverride and clear CLAUDE_PLUGIN_ROOT,
+        matching how roster-sync.tests.ps1 pins its inputs.
+      - The best-effort "list" roster style is covered; matching an arbitrary real table's exact
+        column layout is inherently best-effort and only the row content (id + name + description) is
+        asserted, not column alignment.
+#>
+$ErrorActionPreference = 'Stop'
+
+# Deterministic: the resolution branches must not depend on an ambient hook env var.
+$env:CLAUDE_PLUGIN_ROOT = $null
+
+$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
+$Script   = Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\specialists\skills\sync-roster\sync-roster.ps1'
+$Fixture  = Join-Path ([System.IO.Path]::GetTempPath()) 'sync-roster-test-fixture'
+
+$Marketplace = 'davekjohns-workshop'
+$PluginName  = 'specialists'
+$PluginId    = "$PluginName@$Marketplace"
+
+$script:pass = 0
+$script:fail = 0
+
+function Assert-Equal {
+    param($Expected, $Actual, [string]$Name)
+    if ($Expected -eq $Actual) { $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green }
+    else { $script:fail++; Write-Host "  [FAIL] $Name`n         expected: '$Expected'`n         got:      '$Actual'" -ForegroundColor Red }
+}
+function Assert-Match {
+    param([string]$Pattern, [string]$Text, [string]$Name)
+    if ($Text -match $Pattern) { $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green }
+    else { $script:fail++; Write-Host "  [FAIL] $Name`n         pattern not found: '$Pattern'" -ForegroundColor Red }
+}
+function Assert-NotMatch {
+    param([string]$Pattern, [string]$Text, [string]$Name)
+    if ($Text -notmatch $Pattern) { $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green }
+    else { $script:fail++; Write-Host "  [FAIL] $Name`n         pattern present but should not be: '$Pattern'" -ForegroundColor Red }
+}
+function Assert-True {
+    param([bool]$Condition, [string]$Name)
+    if ($Condition) { $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green }
+    else { $script:fail++; Write-Host "  [FAIL] $Name" -ForegroundColor Red }
+}
+
+function Invoke-Ps {
+    param([string[]]$ScriptArgs)
+    $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Script @ScriptArgs
+    return [pscustomobject]@{ Code = $LASTEXITCODE; Out = ($out -join "`n") }
+}
+
+function Get-B64 { param([string]$Path) return [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($Path)) }
+
+# Fixture cache. -Agents: @{ '06-24' = @{ Name = 'ravi'; Desc = 'Refactoring Specialist. More.' } }.
+function New-FixtureCache {
+    param([hashtable]$Agents, [string]$Version = '1.11.0')
+    $cache = Join-Path $Fixture 'cache'
+    if (Test-Path -LiteralPath $cache) { Remove-Item -Recurse -Force -LiteralPath $cache }
+    $adir = Join-Path $cache "$Marketplace\$PluginName\$Version\agents"
+    New-Item -ItemType Directory -Path $adir -Force | Out-Null
+    foreach ($id in $Agents.Keys) {
+        $g = $id.Split('-')[0]; $i = $id.Split('-')[1]
+        $nm = $Agents[$id].Name; $ds = $Agents[$id].Desc
+        $fm = "---`nname: $nm`nid: $i`ngroup: $g`ndescription: >`n  $ds`n---`nbody"
+        [System.IO.File]::WriteAllText((Join-Path $adir "$id-agent.md"), $fm)
+    }
+    return $cache
+}
+
+# Fixture consumer. RosterIds -> written into CLAUDE.md; LensIds -> lens files on the plugin path.
+function New-FixtureConsumer {
+    param([string[]]$RosterIds = @(), [string[]]$LensIds = @(), [string]$RosterStyle = 'table')
+    $root = Join-Path $Fixture 'consumer'
+    if (Test-Path -LiteralPath $root) { Remove-Item -Recurse -Force -LiteralPath $root }
+    New-Item -ItemType Directory -Path (Join-Path $root '.claude') -Force | Out-Null
+    $settings = '{ "enabledPlugins": { "' + $PluginId + '": true } }'
+    [System.IO.File]::WriteAllText((Join-Path $root '.claude\settings.json'), $settings)
+
+    $lines = @('# Roster', '')
+    foreach ($id in $RosterIds) {
+        if ($RosterStyle -eq 'list') { $lines += "- $id ([$id-extension.md](x))" }
+        else { $lines += "| $id | [$id-extension.md](x) |" }
+    }
+    [System.IO.File]::WriteAllText((Join-Path $root 'CLAUDE.md'), ($lines -join "`n"))
+
+    if ($LensIds.Count -gt 0) {
+        $pdir = Join-Path $root ".claude\plugins\claude-specialists\$PluginName"
+        New-Item -ItemType Directory -Path $pdir -Force | Out-Null
+        foreach ($id in $LensIds) { [System.IO.File]::WriteAllText((Join-Path $pdir "$id-extension.md"), "existing-lens-$id") }
+    }
+    return $root
+}
+
+# A stub check-roster-sync that emits fixed [ERROR] lines + exit code (isolates sync-roster).
+function New-StubCheck {
+    param([string]$Name, [string[]]$OutputLines, [int]$ExitCode = 1)
+    $p = Join-Path $Fixture "$Name.ps1"
+    if (-not (Test-Path -LiteralPath $Fixture)) { New-Item -ItemType Directory -Path $Fixture -Force | Out-Null }
+    # The stub must accept (and ignore) the args sync-roster passes it.
+    $head = 'param([string]$ConsumerPathOverride = "", [string]$CacheRootOverride = "")' + "`r`n"
+    $body = (($OutputLines | ForEach-Object { 'Write-Host "' + $_ + '"' }) -join "`r`n") + "`r`nexit $ExitCode`r`n"
+    [System.IO.File]::WriteAllText($p, ($head + $body))
+    return $p
+}
+
+try {
+    Write-Host "== sync-roster.tests ==" -ForegroundColor Cyan
+
+    $lensRel = ".claude\plugins\claude-specialists\$PluginName"
+
+    # --- 1. Real-check integration: missing-lens -> scaffold; missing-roster -> proposed row --------
+    #   06-16: in roster + lens present            -> OK (nothing).
+    #   06-17: NOT in roster, lens present         -> missing roster row -> row proposed, NO scaffold.
+    #   06-24: in roster, NO lens                  -> missing lens -> scaffold created, NO row.
+    $cache = New-FixtureCache -Agents @{
+        '06-16' = @{ Name = 'victor';    Desc = 'Code Reviewer here.' }
+        '06-17' = @{ Name = 'edith';     Desc = 'Final Editor. The last look before a PR.' }
+        '06-24' = @{ Name = 'ravi';      Desc = 'Refactoring Specialist. The DRY guardian.' }
+    }
+    $c = New-FixtureConsumer -RosterIds @('06-16', '06-24') -LensIds @('06-16', '06-17')
+    $rosterPath = Join-Path $c 'CLAUDE.md'
+    $rosterBefore = Get-B64 $rosterPath
+
+    $r = Invoke-Ps @('-ConsumerPathOverride', $c, '-CacheRootOverride', $cache)
+    Assert-Equal 0 $r.Code 'integration: exit-code 0'
+
+    # 06-24 lens scaffold created, with the VUL-IN slot.
+    $scaffold24 = Join-Path $c "$lensRel\06-24-extension.md"
+    Assert-True (Test-Path -LiteralPath $scaffold24 -PathType Leaf) 'integration: 06-24 lens scaffold file created'
+    if (Test-Path -LiteralPath $scaffold24) {
+        $s24 = [System.IO.File]::ReadAllText($scaffold24, [System.Text.Encoding]::UTF8)
+        Assert-Match '## Specific to this repo \(VUL-IN\)' $s24 'integration: scaffold has the VUL-IN slot'
+        Assert-Match 'Ravi' $s24 'integration: scaffold names the agent (Ravi)'
+    }
+    Assert-Match 'created lens scaffold.*06-24' $r.Out 'integration: output reports the created scaffold'
+
+    # 06-17 proposed as a roster row (id + name appear); NO scaffold created for it (lens present).
+    Assert-Match '06-17' $r.Out 'integration: proposed row names the id 06-17'
+    Assert-Match 'Edith' $r.Out 'integration: proposed row names the agent Edith'
+    Assert-Match 'Final Editor' $r.Out 'integration: proposed row carries the description'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $c "$lensRel\06-17-extension.md") -PathType Leaf) -or `
+                 (([System.IO.File]::ReadAllText((Join-Path $c "$lensRel\06-17-extension.md"))) -eq 'existing-lens-06-17')) `
+                'integration: 06-17 existing lens not turned into a scaffold'
+
+    # 06-24 must NOT also be proposed as a roster row (it IS in the roster).
+    Assert-NotMatch 'proposed row names the id.*06-24' $r.Out 'integration: 06-24 not proposed as a roster row'
+
+    # CLAUDE.md / the roster is NEVER modified.
+    Assert-Equal $rosterBefore (Get-B64 $rosterPath) 'integration: CLAUDE.md bytes unchanged'
+
+    # --- 2. Additive guard: an existing lens is NEVER overwritten -----------------------------------
+    #   The stub reports 06-16 as missing-lens WHILE the plugin-path lens already exists -- the only
+    #   way to force sync-roster's own never-overwrite branch. Assert the file's bytes are unchanged.
+    $c2 = New-FixtureConsumer -RosterIds @('06-16') -LensIds @('06-16')
+    $lens16 = Join-Path $c2 "$lensRel\06-16-extension.md"
+    $lensBefore = Get-B64 $lens16
+    $rosterPath2 = Join-Path $c2 'CLAUDE.md'
+    $rosterBefore2 = Get-B64 $rosterPath2
+    $stub = New-StubCheck -Name 'stub-missing-lens' -OutputLines @(
+        "  [ERROR] agent '06-16' ($PluginId) has no repo-lens (.claude/plugins/... path).")
+    $emptyCache = Join-Path $Fixture 'empty-cache'
+    New-Item -ItemType Directory -Path $emptyCache -Force | Out-Null
+    $r = Invoke-Ps @('-ConsumerPathOverride', $c2, '-CacheRootOverride', $emptyCache, '-CheckScriptOverride', $stub)
+    Assert-Equal 0 $r.Code 'additive: exit-code 0'
+    Assert-Match 'already exists.*left untouched' $r.Out 'additive: existing lens reported as untouched'
+    Assert-Equal $lensBefore (Get-B64 $lens16) 'additive: existing lens bytes unchanged (not overwritten)'
+    Assert-Equal $rosterBefore2 (Get-B64 $rosterPath2) 'additive: CLAUDE.md bytes unchanged'
+
+    # --- 3. Clean repo: nothing missing -> nothing staged, exit 0 -----------------------------------
+    $cache = New-FixtureCache -Agents @{ '06-16' = @{ Name = 'victor'; Desc = 'Code Reviewer.' } }
+    $c3 = New-FixtureConsumer -RosterIds @('06-16') -LensIds @('06-16')
+    $r = Invoke-Ps @('-ConsumerPathOverride', $c3, '-CacheRootOverride', $cache)
+    Assert-Equal 0 $r.Code 'clean: exit-code 0'
+    Assert-Match 'nothing to stage' $r.Out 'clean: reports nothing to stage'
+    Assert-NotMatch 'created lens scaffold' $r.Out 'clean: no scaffold created'
+
+    # --- 4. List-style roster: proposed row uses the list form --------------------------------------
+    #   06-24 missing from roster (list style), lens present -> a list-form proposed row.
+    $cache = New-FixtureCache -Agents @{
+        '06-16' = @{ Name = 'victor'; Desc = 'Code Reviewer.' }
+        '06-24' = @{ Name = 'ravi';   Desc = 'Refactoring Specialist.' }
+    }
+    $c4 = New-FixtureConsumer -RosterIds @('06-16') -LensIds @('06-16', '06-24') -RosterStyle 'list'
+    $r = Invoke-Ps @('-ConsumerPathOverride', $c4, '-CacheRootOverride', $cache)
+    Assert-Equal 0 $r.Code 'list style: exit-code 0'
+    Assert-Match 'style: list' $r.Out 'list style: detected as a list roster'
+    Assert-Match '- \*\*Ravi\*\* #24' $r.Out 'list style: proposed row uses the list form'
+
+    # --- 5. Reminder that main is sacred / nothing was committed ------------------------------------
+    Assert-Match 'wrote NOTHING to.*CLAUDE.md and committed nothing' $r.Out 'reminder: sacred-main notice present'
+} finally {
+    if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
+}
+
+Write-Host "`nResult: $($script:pass) pass, $($script:fail) fail." -ForegroundColor $(if ($script:fail -gt 0) { 'Red' } else { 'Green' })
+if ($script:fail -gt 0) { exit 1 }
+exit 0
