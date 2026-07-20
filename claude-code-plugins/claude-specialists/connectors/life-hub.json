@@ -2,7 +2,7 @@
   "repo": "DaveKJohn/life-hub",
   "visibility": "private",
   "localCheckout": "../life-hub",
-  "lastChecked": "2026-07-19",
+  "lastChecked": "2026-07-20",
   "status": "attentie",
   "plugins": [
     {
@@ -21,5 +21,5 @@
       ]
     }
   ],
-  "notes": "Gesynct op v1.5.0 (17 juli 2026). life-hub hanteert het lens-only-model voor de vier persona's (01-01, 03-02, 05-05, 05-06): geen body-kopie in de consument. De vier persona-DRIFTED-meldingen van de drift-check zijn daardoor bekende vals-positieven tot inbound-issue #69 is verwerkt. ATTENTIE (19 juli 2026): de bron staat op v1.9.2 (v1.9.1: #86 bootstrap-scaffold + pre-flight; v1.9.2: #88 SKILL.md-uitlijning); machine-record staat op v1.9.0. Nog niet gepulld -- update via `claude plugin update` in de eigen life-hub-sessie; syncedVersion wordt pas daarna gebumpt."
+  "notes": "Gesynct op v1.5.0 (17 juli 2026). life-hub hanteert het lens-only-model voor de vier persona's (01-01, 03-02, 05-05, 05-06): geen body-kopie in de consument. ATTENTIE (20 juli 2026): de bron staat op v1.10.0; machine-record staat nog op v1.5.0. Nog niet gepulld -- update via `claude plugin update` in de eigen life-hub-sessie (andere machine); syncedVersion wordt pas daarna gebumpt. Openstaand voor die sessie: de 06-24 (Ravi)-lens is aanwezig in de checkout maar nog niet in dit register opgenomen -- registreren vanuit de authoritative life-hub-sessie."
 }
