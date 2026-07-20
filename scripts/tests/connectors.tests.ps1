@@ -263,7 +263,19 @@ try {
     )
     $r = Invoke-Ps $Hook @('-WorkshopPathOverride', $stub)
     Assert-Equal 0 $r.Code 'stub schoon: exit-code 0'
-    Assert-Match 'alle connectors in sync' $r.Out 'stub schoon: boilerplate telt niet als signaal'
+    Assert-Match 'geen fouten' $r.Out 'stub schoon: boilerplate telt niet als signaal'
+
+    # 9c2. Stub-workshop met alleen INFO-regels -> OK-tak, geen sessie-alert (wens Dave,
+    #      20 juli 2026): INFO is registeradministratie over consumenten-sync (vaak een andere
+    #      machine/gebruiker) en hoort niet bij elke sessiestart gemeld te worden.
+    $stub = New-StubWorkshop -Name 'stub-info' -ExitCode 0 -OutputLines @(
+        '  [INFO]  manifest is gesynct op v1.5.0, bron staat op v1.10.0 -- sync en manifest bijwerken.',
+        '  [INFO]  extension 06-24 bestaat in de consument maar staat niet in het register.'
+    )
+    $r = Invoke-Ps $Hook @('-WorkshopPathOverride', $stub)
+    Assert-Equal 0 $r.Code 'stub info: exit-code 0'
+    Assert-Match 'geen fouten' $r.Out 'stub info: OK-tak (INFO geeft geen sessie-alert)'
+    Assert-NotMatch 'gesynct op v1\.5\.0' $r.Out 'stub info: INFO-regel NIET doorgegeven'
 
     # 9d. Stub-workshop met een echte FOUT -> signalen-tak, regel komt door.
     $stub = New-StubWorkshop -Name 'stub-fout' -ExitCode 1 -OutputLines @(
