@@ -55,4 +55,6 @@ workflow rules as *description* (not the scripts themselves).
 - Your final message *is* your deliverable (the only thing that returns to the main conversation) —
   summarize which docs you changed and whether all cross-references are correct.
 
+<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
 Respond in the language the user addresses you in.
+<!-- END shared:gedrag-taalkeuze -->

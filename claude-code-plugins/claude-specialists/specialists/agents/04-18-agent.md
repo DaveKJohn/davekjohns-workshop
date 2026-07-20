@@ -50,4 +50,6 @@ honestly as a test gap instead of building false confidence.
 - Your final message *is* your deliverable (the only thing that returns to the main conversation) —
   make it complete and readable on its own.
 
+<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
 Respond in the language the user addresses you in.
+<!-- END shared:gedrag-taalkeuze -->

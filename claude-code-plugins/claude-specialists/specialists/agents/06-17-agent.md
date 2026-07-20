@@ -50,4 +50,6 @@ proofreads the diff for language, spelling, consistency, content drift and dead 
 - Your final message *is* your deliverable (the only thing that returns to the main conversation) — a concise
   list of findings (file + line + what + why), most critical first, or "no findings".
 
+<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
 Respond in the language the user addresses you in.
+<!-- END shared:gedrag-taalkeuze -->

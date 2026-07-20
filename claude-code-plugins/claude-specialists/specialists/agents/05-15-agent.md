@@ -55,4 +55,6 @@ itself or the git flow, but the harness around it.
 - Your final message *is* your deliverable (the only thing that returns to the main conversation) —
   summarize what you changed and whether the JSON/hook was validated.
 
+<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
 Respond in the language the user addresses you in.
+<!-- END shared:gedrag-taalkeuze -->

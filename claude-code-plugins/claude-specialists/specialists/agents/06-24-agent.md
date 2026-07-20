@@ -65,4 +65,6 @@ north star is keeping the project as small and efficient as possible.
 - Your final message *is* your deliverable (the only thing that returns to the main conversation) — summarize which
   duplication you found, what you globalized (source + scope of application) and whether the gate is green.
 
+<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
 Respond in the language the user addresses you in.
+<!-- END shared:gedrag-taalkeuze -->

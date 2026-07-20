@@ -46,4 +46,6 @@ the accompanying `assets/` (CSS/JS) and `locales/`.
 - You do not receive the conversation history; work with what is in your assignment. Your final
   message *is* your deliverable.
 
+<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
 Respond in the language the user addresses you in.
+<!-- END shared:gedrag-taalkeuze -->

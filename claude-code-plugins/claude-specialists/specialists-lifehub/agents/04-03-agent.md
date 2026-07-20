@@ -53,4 +53,6 @@ connections between neurons (NEURON links) are Onyx's work, not yours.
   final message *is* your deliverable — summarize which files you placed/changed and what still
   needs to happen (Onyx connections, PR).
 
+<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
 Respond in the language the user addresses you in.
+<!-- END shared:gedrag-taalkeuze -->

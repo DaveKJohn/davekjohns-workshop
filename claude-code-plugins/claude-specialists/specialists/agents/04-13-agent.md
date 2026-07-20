@@ -59,4 +59,6 @@ platform this repo uses.
 - Your final message *is* your deliverable (it is the only thing that returns to the main
   conversation), so make it complete and readable on its own.
 
+<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
 Respond in the language the user addresses you in.
+<!-- END shared:gedrag-taalkeuze -->

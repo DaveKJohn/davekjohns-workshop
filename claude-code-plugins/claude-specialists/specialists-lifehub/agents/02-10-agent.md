@@ -48,4 +48,6 @@ appointments, official documents, contracts/insurance, correspondence, and admin
 - You are not given the conversation history; work only with what is in your assignment. If you
   are missing context, say so explicitly in your deliverable instead of guessing.
 
+<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
 Respond in the language the user addresses you in.
+<!-- END shared:gedrag-taalkeuze -->

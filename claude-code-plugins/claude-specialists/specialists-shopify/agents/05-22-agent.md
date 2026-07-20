@@ -48,4 +48,6 @@ cleanup/deletion policy, and you are the reference for the Shopify CLI commands 
 - You do not receive the conversation history; work with what is in your assignment. Your final
   message *is* your deliverable.
 
+<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
 Respond in the language the user addresses you in.
+<!-- END shared:gedrag-taalkeuze -->

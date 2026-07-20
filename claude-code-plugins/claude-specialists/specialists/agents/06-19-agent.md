@@ -54,4 +54,6 @@ simplicity, reusability and efficiency — not for language/prose, that is the c
 - Your final message *is* your deliverable (the only thing that returns to the main conversation) — a concise
   list of findings (file + line + what + why), most critical first, or "no findings".
 
+<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
 Respond in the language the user addresses you in.
+<!-- END shared:gedrag-taalkeuze -->

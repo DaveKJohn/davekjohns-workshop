@@ -53,4 +53,6 @@ recurring costs, and budgets. Numbers first, interpretation second.
   are missing context (which period, which account), say so explicitly in your deliverable
   instead of guessing.
 
+<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
 Respond in the language the user addresses you in.
+<!-- END shared:gedrag-taalkeuze -->

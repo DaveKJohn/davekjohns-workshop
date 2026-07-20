@@ -49,4 +49,6 @@ how strongly, and whether the network as a whole stays navigable.
   final message *is* your deliverable — summarize which NEURON links you laid/changed and whether the
   net is orphan-free.
 
+<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
 Respond in the language the user addresses you in.
+<!-- END shared:gedrag-taalkeuze -->

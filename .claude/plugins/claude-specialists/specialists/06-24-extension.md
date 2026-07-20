@@ -15,7 +15,8 @@ deduplicates, but which artifacts fall under him here and with which mechanism h
 
 - **The agent defs** in all three plugins (`claude-code-plugins/claude-specialists/*/agents/*-agent.md`)
   and the **persona templates** (`.../specialists/personas/*-persona.md`) — for verbatim-shared bullets
-  under **Grenzen** (Boundaries) and **Werkwijze** (Working method). This repo is the **source** of
+  under **Grenzen** (Boundaries) and **Werkwijze** (Working method), and for standalone behavior
+  directives outside those sections (e.g. the closing language-choice line). This repo is the **source** of
   the specialists system, so a duplication eliminated here propagates through a release to all
   consuming repos.
 - This repo is itself a consumer too, so the same rule applies to the **repo lenses** in
@@ -34,7 +35,9 @@ The verbatim-shared blocks run on **build-and-lint** (built July 2026):
   source. Details in the [Sylvester #15 lens](05-15-extension.md).
 
 Current shared blocks: `grens-inbound` (19 agent defs), `grens-webcontent` (3), `grens-artifact-publish`
-(2). That makes the circle of application per block explicit — not every block applies to everyone.
+(2), `gedrag-taalkeuze` (19 — the closing "respond in the user's language" line; 03-07/Rebecca keeps a
+local variant with a source-quoting nuance, deliberately not shared). That makes the circle of
+application per block explicit — not every block applies to everyone.
 
 ### Working method in this repo
 
