@@ -212,9 +212,9 @@ $bodyFile = Join-Path ([System.IO.Path]::GetTempPath()) "open-pr-body-$PID.md"
 [System.IO.File]::WriteAllText($bodyFile, $Body, (New-Object System.Text.UTF8Encoding $false))
 $prevEap = $ErrorActionPreference
 try {
-    # gh writes its progress/URL partly to stderr; under EAP=Stop PS 5.1 would promote that to a
-    # terminating error before the $LASTEXITCODE check (same pitfall as the push above, #107). Run
-    # under Continue, capture the output, then judge on the exit code.
+    # gh schrijft zijn voortgang/URL deels naar stderr; onder EAP=Stop zou PS 5.1 dat tot een
+    # terminating error promoveren nog voor de $LASTEXITCODE-check (dezelfde valkuil als de push
+    # hierboven, #107). Draai onder Continue, vang de output, en oordeel dan op de exitcode.
     $ErrorActionPreference = 'Continue'
     $createOut = & gh pr create --base main --head $branch --title $Title --body-file $bodyFile --label $label --repo $repo 2>&1
     $createCode = $LASTEXITCODE

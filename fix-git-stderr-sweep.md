@@ -10,7 +10,9 @@ whole class.
   exit-code check that was missing), so git's chatter can't abort the release before the checks.
 - **`fold-changelog-entry.ps1`** (+ mirror): the two `gh pr list`/`gh pr view --json` calls run under
   `EAP=Continue` with `2>$null`, so a `gh` notice can't terminate the fold before its graceful
-  `$LASTEXITCODE` handling (and can't pollute the captured JSON).
+  `$LASTEXITCODE` handling (and can't pollute the captured JSON). On a non-zero `gh` exit it now
+  prints a one-line notice that the PR-number / Plugins-line enrichment was skipped (restoring the
+  operator-visibility the raw stderr used to give — review point Victor/Sean).
 - **`open-pr.ps1`** (+ mirror): the `gh pr create` call gets the same `EAP=Continue` + capture guard
   the push already had (#107).
 - **Query commands left as-is:** `git rev-parse`/`git status`/`git tag --list` write results to

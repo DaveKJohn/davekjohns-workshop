@@ -102,13 +102,15 @@ foreach ($file in $entryFiles) {
         $base = [System.IO.Path]::GetFileNameWithoutExtension($file)
         $branchForPr = $base -replace '^([^-]+)-', '$1/'
     }
-    # gh can write notices to stderr; under ErrorActionPreference=Stop PS 5.1 would promote that to a
-    # terminating error before the graceful $LASTEXITCODE handling below (the #107 pitfall). Run under
-    # Continue and discard stderr (2>$null) so it cannot pollute the captured JSON either.
+    # gh kan meldingen naar stderr schrijven; onder ErrorActionPreference=Stop zou PS 5.1 dat tot een
+    # terminating error promoveren nog voor de graceful $LASTEXITCODE-afhandeling hieronder (de #107-
+    # valkuil). Draai onder Continue en gooi stderr weg (2>$null), zodat het ook de gevangen JSON niet
+    # kan vervuilen.
     $prevEap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
     $prJson = gh pr list --head $branchForPr --state all --json number,url --limit 1 --repo $repo 2>$null
     $ghCode = $LASTEXITCODE
     $ErrorActionPreference = $prevEap
+    if ($ghCode -ne 0) { Write-Host "  (gh pr list gaf exitcode $ghCode -- PR-nummer-verrijking overgeslagen; draai gh handmatig voor de reden.)" -ForegroundColor DarkYellow }
     $prs = if ($ghCode -eq 0 -and $prJson) { @($prJson | ConvertFrom-Json) } else { @() }
     if ($prs.Count -ge 1) {
         $num = $prs[0].number
@@ -122,6 +124,7 @@ foreach ($file in $entryFiles) {
         $filesJson = gh pr view $num --json files --repo $repo 2>$null
         $ghViewCode = $LASTEXITCODE
         $ErrorActionPreference = $prevEap
+        if ($ghViewCode -ne 0) { Write-Host "  (gh pr view gaf exitcode $ghViewCode -- Plugins:-regel overgeslagen; draai gh handmatig voor de reden.)" -ForegroundColor DarkYellow }
         if ($ghViewCode -eq 0 -and $filesJson) {
             $touched = @()
             foreach ($f in @(($filesJson | ConvertFrom-Json).files)) {
