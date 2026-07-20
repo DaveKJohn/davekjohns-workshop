@@ -130,8 +130,19 @@ if (-not $SkipTests) {
     }
 }
 
-git push -u origin $branch
-if ($LASTEXITCODE -ne 0) { Write-Error "git push mislukte."; exit 1 }
+# git push schrijft zijn 'remote:'-voortgang naar stderr. Onder ErrorActionPreference=Stop
+# promoveert PowerShell 5.1 die stderr-regels tot een TERMINATING NativeCommandError -- het script
+# sterft dan op de push voordat de exitcode-check hieronder draait, terwijl git zelf exit 0 gaf
+# (dezelfde klasse valkuil als #96/#97: nooit op stderr-als-fout leunen, altijd op $LASTEXITCODE).
+# Daarom de push met EAP=Continue draaien, de volledige output vangen, meteen de exitcode
+# vastleggen en pas daarna oordelen.
+$prevEap = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+$pushOutput = & git push -u origin $branch 2>&1
+$pushCode = $LASTEXITCODE
+$ErrorActionPreference = $prevEap
+$pushOutput | ForEach-Object { Write-Host $_ }
+if ($pushCode -ne 0) { Write-Error "git push mislukte."; exit 1 }
 
 $info = Get-BranchInfo -Branch $branch
 if ($info.IsKnown) {
