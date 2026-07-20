@@ -30,10 +30,10 @@ that cover the **main-loop layer** (see [Adoption: the bootstrap path](#adoption
 
 **Doesn't:** governance (`CLAUDE.md`, the workflow rules), safety hooks, or MCP config. Those stay
 at repo level deliberately, because they differ per repo (or are safety-critical). The plugins
-deliberately carry **no safety/guardrail hooks** and **no repo-specific skills** — with two named,
-repo-neutral exceptions: the skill `specialists-init` (the adoption path itself) and the
-informational SessionStart hook `connector-sessioncheck` (read-only sync signaling, never blocks —
-see the
+deliberately carry **no safety/guardrail hooks** and **no repo-specific skills** — with a few named,
+repo-neutral exceptions: the skill `specialists-init` (the adoption path itself) and two
+informational, read-only SessionStart hooks that never block — `connector-sessioncheck` (sync
+signaling) and `roster-sessioncheck` (roster-drift signaling; see the
 [connectors README](claude-code-plugins/claude-specialists/connectors/README.md)); domain groups
 2/3 may carry domain skills that a repo shares.
 
