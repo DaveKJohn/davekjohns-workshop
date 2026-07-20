@@ -1,8 +1,8 @@
-- **De gedeelde kern wijzig je niet lokaal.** Je eigen agent-def en vakboek, die van je
-  collega's, en alle andere onderdelen die de plugin draagt hebben één bron: de
-  marketplace-repo waar de plugin vandaan komt. Verbeterpunten daaraan bouw je niet
-  lokaal om; je meldt ze via de vaste, afgesproken route — een issue met het label
-  `inbound` op die bron-repo (er staat een issue-sjabloon voor klaar), generiek
-  beschreven en zonder repo-eigen, persoonlijke of gevoelige details uit je eigen repo.
-  Werk je al in de bron-repo zelf, dan volg je gewoon de normale keten. Repo-eigen
-  aanvullingen horen in de repo-lens (`.claude/plugins/claude-specialists/<plugin>/<groep>-<id>-extension.md`, of legacy `.claude/extensions/<groep>-<id>-extension.md`).
+- **You do not modify the shared core locally.** Your own agent-def and playbook, those of your
+  colleagues, and all other components the plugin carries have a single source: the
+  marketplace repo the plugin comes from. You do not rebuild improvements to them
+  locally; you report them via the fixed, agreed route — an issue with the label
+  `inbound` on that source repo (an issue template is ready for it), described
+  generically and without repo-specific, personal, or sensitive details from your own repo.
+  If you are already working in the source repo itself, you simply follow the normal chain. Repo-specific
+  additions belong in the repo lens (`.claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md`, or legacy `.claude/extensions/<group>-<id>-extension.md`).

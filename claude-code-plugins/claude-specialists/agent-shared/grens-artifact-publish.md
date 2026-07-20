@@ -1,1 +1,1 @@
-- Publiceren of hosten als Artifact gebeurt in het hoofdgesprek, niet door jou.
+- Publishing or hosting as an Artifact happens in the main conversation, not by you.

@@ -1,55 +1,56 @@
 ---
 name: open-pr
 description: >-
-  Push de huidige branch en open een Pull Request naar main via het gedeelde, gecentraliseerde
-  open-pr-script uit de plugin (single source of truth, issue #81) -- zodat een consument dit script
-  niet lokaal hoeft te dupliceren. Draait eerst de repo-eigen lint- en test-poort; bij een fout wordt
-  er niet gepusht en geen PR geopend. Gebruik dit wanneer een branch klaar is en de PR mag worden
-  geopend (op expliciet verzoek).
+  Push the current branch and open a Pull Request to main via the shared, centralized
+  open-pr script from the plugin (single source of truth, issue #81) -- so a consumer does not have
+  to duplicate this script locally. Runs the repo's own lint and test gate first; on an error,
+  nothing is pushed and no PR is opened. Use this when a branch is ready and the PR may be
+  opened (on explicit request).
 ---
 
-# open-pr — de gedeelde PR-opener voor consumenten
+# open-pr — the shared PR opener for consumers
 
-Dit is de **plugin-spiegel** van `open-pr.ps1`: dezelfde geteste bron als in de werkplaats-repo, hier
-gedeeld zodat consumenten hem niet dupliceren. Achtergrond in
+This is the **plugin mirror** of `open-pr.ps1`: the same tested source as in the workshop repo,
+shared here so consumers do not duplicate it. Background in
 [issue #81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81).
 
-## Wat de skill doet
+## What the skill does
 
-Draai het gedeelde script vanuit de **root van de consumerende repo**:
+Run the shared script from the **root of the consuming repo**:
 
 ```powershell
-powershell -NoProfile -File "${CLAUDE_PLUGIN_ROOT}/scripts/release/open-pr.ps1" -Title "feat: korte titel"
+powershell -NoProfile -File "${CLAUDE_PLUGIN_ROOT}/scripts/release/open-pr.ps1" -Title "feat: short title"
 ```
 
-Het script:
+The script:
 
-1. Draait de **repo-eigen lint-poort** (via `Get-LintScript` uit `repo-config`) en daarna **alle
-   testsuites** (`scripts/tests/*.tests.ps1`) -- exact zoals CI. Een fout blokkeert: er wordt niet
-   gepusht en geen PR geopend. `-SkipLint` / `-SkipTests` zijn de bewuste noodkleppen.
-2. Pusht de huidige branch en opent een PR naar `main` via `gh`, met een label op basis van het
-   branch-prefix en een vooraf ingevulde PR-body uit `.github/pull_request_template.md` +
-   het changelog entry-bestand.
+1. Runs the **repo's own lint gate** (via `Get-LintScript` from `repo-config`) and then **all
+   test suites** (`scripts/tests/*.tests.ps1`) -- exactly like CI. An error blocks: nothing is
+   pushed and no PR is opened. `-SkipLint` / `-SkipTests` are the deliberate escape valves.
+2. Pushes the current branch and opens a PR to `main` via `gh`, with a label based on the
+   branch prefix and a pre-filled PR body from `.github/pull_request_template.md` +
+   the changelog entry file.
 
-## Vereisten in de consument
+## Requirements in the consumer
 
-Het script is repo-agnostisch, maar leest zijn repo-data uit de **root** van de consument
+The script is repo-agnostic, but reads its repo data from the **root** of the consumer
 (dual-context via `${CLAUDE_PROJECT_DIR}`):
 
-- `scripts/repo-config.ps1` met `Get-RepoName` (de `gh --repo`-doel) en `Get-LintScript`
-  (repo-root-relatief pad naar de eigen lint-poort).
-- `scripts/lib/branch-info.ps1` (label/type uit het branch-prefix).
-- `scripts/tests/*.tests.ps1` (de test-poort; conventie, geen config).
-- `.github/pull_request_template.md`, `git` en een ingelogde `gh` CLI.
+- `scripts/repo-config.ps1` with `Get-RepoName` (the `gh --repo` target) and `Get-LintScript`
+  (repo-root-relative path to the repo's own lint gate).
+- `scripts/lib/branch-info.ps1` (label/type from the branch prefix).
+- `scripts/tests/*.tests.ps1` (the test gate; convention, not config).
+- `.github/pull_request_template.md`, `git`, and a logged-in `gh` CLI.
 
-De `specialists-init`-bootstrap zet `repo-config.ps1` + `branch-info.ps1` als `VUL-IN`-scaffold neer.
-Ontbreken ze -- of staan ze nog op `VUL-IN` -- dan stopt het script vóór de dot-source met een
-duidelijke wegwijzer i.p.v. een rauwe fout (#86); vul ze eerst in (zie de werkplaats-repo als model).
+The `specialists-init` bootstrap puts `repo-config.ps1` + `branch-info.ps1` in place as a `VUL-IN`
+scaffold. If they are missing -- or still set to `VUL-IN` -- the script stops before the dot-source
+with a clear pointer instead of a raw error (#86); fill them in first (see the workshop repo as a
+model).
 
-## Belangrijk
+## Important
 
-- **Een PR wordt alleen geopend op expliciet verzoek** -- dat blijft de governance-regel van de repo,
-  los van dit script.
-- De bron van dit script woont in de werkplaats-repo; wijzig het niet lokaal in de consument. Een
-  wijziging landt eerst in de bron (`scripts/release/open-pr.ps1`) en reist daarna via een release naar
-  de plugin-spiegel -- bewaakt door de shared-scripts-drift-lint.
+- **A PR is only opened on explicit request** -- that remains the repo's governance rule,
+  independent of this script.
+- The source of this script lives in the workshop repo; do not modify it locally in the consumer. A
+  change lands first in the source (`scripts/release/open-pr.ps1`) and then travels via a release to
+  the plugin mirror -- guarded by the shared-scripts drift lint.

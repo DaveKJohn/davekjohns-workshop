@@ -1,9 +1,8 @@
 # Changelog — specialists-shopify
 
-Consument-gerichte geschiedenis van deze plugin: per release de wijzigingen die deze plugin
-raakten. Automatisch bijgeschreven door `cut-release.ps1` van de marketplace-repo
-(davekjohns-workshop); de volledige werkplaats-geschiedenis staat daar in `CHANGELOG.md` en
-`releases/`.
+Consumer-facing history of this plugin: per release, the changes that touched this plugin.
+Automatically appended by `cut-release.ps1` of the marketplace repo (davekjohns-workshop); the full
+workshop history lives there in `CHANGELOG.md` and `releases/`.
 
 ## v1.7.0 — 2026-07-18
 

@@ -1,55 +1,55 @@
 ---
 name: fold-changelog
 description: >-
-  Vouw de changelog entry-bestanden van een branch in CHANGELOG.md via het gedeelde,
-  gecentraliseerde fold-script uit de plugin (single source of truth, issue #81) -- zodat een
-  consument dit script niet lokaal hoeft te dupliceren. Gebruik dit op main, direct na het mergen
-  van een branch, om de entry-bestanden (<branch-naam>.md in de repo-root) in de ## Pull Requests-
-  sectie te vouwen en daarna te verwijderen.
+  Fold a branch's changelog entry files into CHANGELOG.md via the shared, centralized fold script
+  from the plugin (single source of truth, issue #81) -- so a consumer does not have to duplicate
+  this script locally. Use this on main, immediately after merging a branch, to fold the entry
+  files (<branch-name>.md in the repo root) into the ## Pull Requests section and then remove
+  them.
 ---
 
-# fold-changelog — de gedeelde fold voor consumenten
+# fold-changelog — the shared fold for consumers
 
-Dit is de **plugin-spiegel** van `fold-changelog-entry.ps1`: dezelfde geteste bron als in de
-werkplaats-repo, hier gedeeld zodat consumenten (life-hub, smartwatchbanden, …) hem niet dupliceren.
-De achtergrond staat in [issue #81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81).
+This is the **plugin mirror** of `fold-changelog-entry.ps1`: the same tested source as in the
+workshop repo, shared here so consumers (life-hub, smartwatchbanden, …) do not duplicate it.
+The background is in [issue #81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81).
 
-## Wat de skill doet
+## What the skill does
 
-Draai het gedeelde script vanuit de **root van de consumerende repo**:
+Run the shared script from the **root of the consuming repo**:
 
 ```powershell
-powershell -NoProfile -File "${CLAUDE_PLUGIN_ROOT}/scripts/release/fold-changelog-entry.ps1" -Branch <prefix>/<naam>
+powershell -NoProfile -File "${CLAUDE_PLUGIN_ROOT}/scripts/release/fold-changelog-entry.ps1" -Branch <prefix>/<name>
 ```
 
-Zonder `-Branch` vouwt het alle aanwezige entry-bestanden in de root. Het script:
+Without `-Branch` it folds all entry files present in the root. The script:
 
-1. Vouwt elk entry-bestand (`<branch-naam-met-koppeltekens>.md`) in de `## Pull Requests`-sectie van
-   `CHANGELOG.md`, met het PR-nummer + de link erbij (opgehaald via `gh pr list`).
-2. Verwijdert het entry-bestand daarna.
+1. Folds each entry file (`<branch-name-with-hyphens>.md`) into the `## Pull Requests` section of
+   `CHANGELOG.md`, with the PR number + link included (retrieved via `gh pr list`).
+2. Removes the entry file afterwards.
 
-Commit het resultaat (`CHANGELOG.md` + de verwijderde entry-bestanden) daarna rechtstreeks op main.
+Then commit the result (`CHANGELOG.md` + the removed entry files) directly on main.
 
-## Vereisten in de consument
+## Requirements in the consumer
 
-Het script is repo-agnostisch, maar leest een klein blokje repo-data uit de **root** van de consument
-(dual-context: het lost de repo-root op via `${CLAUDE_PROJECT_DIR}`):
+The script is repo-agnostic, but reads a small block of repo data from the **root** of the consumer
+(dual-context: it resolves the repo root via `${CLAUDE_PROJECT_DIR}`):
 
-- `scripts/repo-config.ps1` met `Get-RepoName` (voor de `gh --repo`-calls). Dit is het enige
-  repo-eigen bestand dat fold nodig heeft -- het leidt het PR-nummer af via `gh pr list` en de
-  entry-bestandsnaam, en dot-sourcet dus géén `branch-info.ps1` (anders dan `open-pr`).
-- Een `CHANGELOG.md` met een `## Pull Requests`-sectie in het verwachte format.
-- `git` en een ingelogde `gh` CLI.
+- `scripts/repo-config.ps1` with `Get-RepoName` (for the `gh --repo` calls). This is the only
+  repo-specific file fold needs -- it derives the PR number via `gh pr list` and the
+  entry file name, and thus does not dot-source `branch-info.ps1` (unlike `open-pr`).
+- A `CHANGELOG.md` with a `## Pull Requests` section in the expected format.
+- `git` and a logged-in `gh` CLI.
 
-Ontbreekt `repo-config.ps1` -- typisch op een schone consument -- dan stopt het script vóór de
-dot-source met een duidelijke wegwijzer i.p.v. een rauwe fout (#86). De `specialists-init`-bootstrap
-zet het als `VUL-IN`-scaffold neer; vul het in (zie de werkplaats-repo als model) voordat je deze
-skill gebruikt.
+If `repo-config.ps1` is missing -- typical on a clean consumer -- the script stops before the
+dot-source with a clear pointer instead of a raw error (#86). The `specialists-init` bootstrap
+puts it in place as a `VUL-IN` scaffold; fill it in (see the workshop repo as a model) before you use
+this skill.
 
-## Belangrijk
+## Important
 
-- **Draai dit op main, na de merge** (nadat de PR is gemergd) — dan bestaat het PR-nummer.
-- Het script raakt alleen `CHANGELOG.md` + de entry-bestanden aan; verder niets.
-- De bron van dit script woont in de werkplaats-repo; wijzig het niet lokaal in de consument. Een
-  wijziging landt eerst in de bron (`scripts/release/fold-changelog-entry.ps1`) en reist daarna via
-  een release naar de plugin-spiegel — bewaakt door de shared-scripts-drift-lint.
+- **Run this on main, after the merge** (after the PR has been merged) — then the PR number exists.
+- The script only touches `CHANGELOG.md` + the entry files; nothing else.
+- The source of this script lives in the workshop repo; do not modify it locally in the consumer. A
+  change lands first in the source (`scripts/release/fold-changelog-entry.ps1`) and then travels via
+  a release to the plugin mirror — guarded by the shared-scripts drift lint.
