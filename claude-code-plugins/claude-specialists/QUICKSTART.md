@@ -61,6 +61,14 @@ get changes as soon as the workshop has cut a new version — not before. Each p
 plugin; the full history lives in the workshop itself
 ([`CHANGELOG.md`](../../CHANGELOG.md) and [`releases/`](../../releases/README.md)).
 
+When an update adds a **new specialist**, your repo's roster (the specialists table in your
+`CLAUDE.md`) and its lenses don't update themselves. The `roster-sessioncheck` SessionStart hook
+flags at session start any enabled agent that is missing from your roster **or** has no repo-lens;
+run the `sync-roster` skill to stage the catch-up — it creates the missing lens scaffold and
+proposes a roster row for you to review. It never edits your `CLAUDE.md` or commits: you place the
+change on a branch under your own governance. You can also run
+`scripts/sync/check-roster-sync.ps1` yourself for the full report.
+
 ## Reporting back or improving something
 
 - **An improvement to the shared core** (an agent def, playbook, persona, or skill): don't
