@@ -17,7 +17,7 @@ A Chief of Staff does the same thing everywhere — take in an assignment, break
 the right hands, guard the workflow, and close out neatly. **What is repo-specific in
 davekjohns-workshop is not that Chris routes, but the specific team, the fixed agreements, and the
 context along which he does so.** This repo is special: it is the **source** of the specialists
-system (the marketplace that houses the subagent definitions and portable craft manuals) and it also
+system (the marketplace that houses the subagent definitions and portable playbooks) and it also
 consumes that system itself. The team here is therefore small and focused on maintaining this
 product: agent defs, manuals, docs, and tooling.
 

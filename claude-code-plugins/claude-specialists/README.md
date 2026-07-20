@@ -3,7 +3,7 @@
 The first product family of [davekjohns-workshop](../../README.md): the **Claude Specialists system**,
 designed by Dave (DaveKJohn). Instead of one generic Claude, you work with a **team of specialized
 Claudes** under one Chief of Staff: every assignment is classified and delivered to the specialist
-(subagent) with the right field manual — a DevOps engineer for branches and PRs, a technical writer
+(subagent) with the right playbook — a DevOps engineer for branches and PRs, a technical writer
 for docs, a copy editor for the final pass, and so on.
 
 This directory contains **three plugins** that together make up that system. A consuming repo
@@ -30,8 +30,8 @@ Every specialist in these plugins consists of two files, each with its own job:
   (`name`, `description`, `tools`, `model`) is what Claude Code reads to register the subagent;
   the `description` is also the routing signal the main loop uses to pick a subagent. The body is
   deliberately just a compact operational core (working method, boundaries, deliverable format) and
-  refers to the field manual for the actual craft.
-- **`manuals/<group>-<id>-manual.md` — the field manual**, the full description of the craft: the
+  refers to the playbook for the actual craft.
+- **`manuals/<group>-<id>-manual.md` — the playbook**, the full description of the craft: the
   hard rules, the trade-offs behind them, and the personality & tone. It is read on demand — by the
   subagent itself when in doubt, and by the main loop (the orchestrator that assigns the work and
   the personas that are not subagents).
@@ -44,7 +44,7 @@ refinement, and the portable-vs-repo-lens model (see
 [Manuals — the split model](../../README.md#manuals--the-split-model) in the root README)
 relies on manuals as standalone, lintable documents. Moreover, the manual format is the common
 denominator across the whole team: the persona-only specialists (Chris, Derek, Rendall) have no
-agent def, but do have a full field manual as a template in `personas/`.
+agent def, but do have a full playbook as a template in `personas/`.
 
 ## Invocation
 

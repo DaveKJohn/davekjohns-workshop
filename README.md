@@ -22,7 +22,7 @@ that explains what the family does and how its sub-plugins differ. For now there
 ## What lives here and what doesn't
 
 **Does live here:** the three plugin folders with **subagent definitions** (`agents/`); for a
-migrated domain group also the **portable handbook** (`manuals/<group>-<id>-manual.md`) that the
+migrated domain group also the **portable playbook** (`manuals/<group>-<id>-manual.md`) that the
 agent def reads in via `${CLAUDE_PLUGIN_ROOT}/manuals/`. Group 1 additionally carries two things
 that cover the **main-loop layer** (see [Adoption: the bootstrap path](#adoption-the-bootstrap-path)): the
 **persona templates** (`personas/<group>-<id>-persona.md`) of the orchestrator + main-loop specialists

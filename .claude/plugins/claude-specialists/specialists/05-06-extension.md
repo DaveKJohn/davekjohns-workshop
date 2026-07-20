@@ -32,8 +32,8 @@ after the merge.
 #### How it works
 
 - **`<branch-name-with-hyphens>.md`** (repo root) — created on the branch; contains that branch's
-  single entry. Filename = branch name with `/` replaced by `-` (branch `feat/nieuwe-plugin` →
-  file `feat-nieuwe-plugin.md`). **Never add a suffix like `-fix` or `-v2` to the filename** —
+  single entry. Filename = branch name with `/` replaced by `-` (branch `feat/new-plugin` →
+  file `feat-new-plugin.md`). **Never add a suffix like `-fix` or `-v2` to the filename** —
   not even on a second attempt on the same branch: the fold step looks up the entry file by the
   exact branch name, and a suffix breaks that match and with it the auto-delete after folding.
 - **After the merge**: `scripts/release/fold-changelog-entry.ps1` reads the entry file and converts

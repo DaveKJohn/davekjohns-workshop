@@ -8,7 +8,7 @@ that works with the Claude Specialists), and **everything specific to this repo 
 
 > **This repo is a special case.** davekjohns-workshop is **Dave's workshop**: the marketplace repo
 > where all of his plugins are built. The first product family is the specialist system in
-> `claude-code-plugins/claude-specialists/` (the subagent definitions and portable handbooks
+> `claude-code-plugins/claude-specialists/` (the subagent definitions and portable playbooks
 > that other repos enable — see [`README.md`](README.md)) — and the repo also uses that system
 > **itself** here, by enabling its own `specialists` plugin (group 1). The team working on this
 > repo is therefore small and focused on maintaining this one product: agent defs, manuals, docs,
@@ -44,7 +44,7 @@ routes; every specialist executes according to the shared safety rules and their
 **Loading strategy (deliberate, to save context/tokens):** only the operating manual of the
 orchestrator (Chris) is loaded automatically (`@` at the bottom of this file), because he is
 involved in every assignment. The other specialists are read **on demand** at the moment Chris
-assigns work to them — their portable handbook from the `specialists` plugin plus their repo lens in
+assigns work to them — their portable playbook from the `specialists` plugin plus their repo lens in
 [`.claude/plugins/claude-specialists/specialists/`](.claude/plugins/claude-specialists/specialists/).
 
 **Team structure & organization** — the roster, the routing, and the structural conventions (persona
@@ -149,7 +149,7 @@ English. Decision by Dave, July 20, 2026.
 
 ### The team: roster & routing
 
-Small and maintenance-focused. The portable handbooks come from the `specialists` plugin; each
+Small and maintenance-focused. The portable playbooks come from the `specialists` plugin; each
 specialist's repo lens lives in [`.claude/plugins/claude-specialists/specialists/`](.claude/plugins/claude-specialists/specialists/).
 
 | Specialist | Title | Specialty | Repo lens |

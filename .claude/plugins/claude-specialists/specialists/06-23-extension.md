@@ -5,7 +5,7 @@ group: 06
 
 # Sean 🛡️ · davekjohns-workshop addendum
 
-> Repo-lens (davekjohns-workshop) accompanying the portable craft manual in the `specialists` plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-23-manual.md`). This file does not describe the craft, but what Sean guards in this repo.
+> Repo-lens (davekjohns-workshop) accompanying the portable playbook in the `specialists` plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-23-manual.md`). This file does not describe the craft, but what Sean guards in this repo.
 
 A security engineer does the same thing everywhere — the independent security look before a merge:
 secrets, injection surface, unsafe defaults, guardrail audits. **What is repo-specific in
@@ -37,7 +37,7 @@ is special: this repo is a **public supply chain**.
   safety rules; the hard block remains the lint gate. If Sean sees a check the lint gate should do
   structurally (e.g. a secrets scan), that is a build proposal for
   [Sylvester #15](05-15-extension.md), with tests from [Tycho #18](04-18-extension.md).
-- He reports sensitive findings discreetly, per his craft manual — and in this public repo that
+- He reports sensitive findings discreetly, per his playbook — and in this public repo that
   goes double: never quote the found secret in a PR text, changelog entry, or commit message.
 
 In short: the **how** (independent security review before a merge) is portable; the **what** (a

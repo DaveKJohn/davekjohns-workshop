@@ -8,10 +8,10 @@ the deeper explanation sits behind the links and is deliberately not repeated he
 
 Instead of one generic Claude, you work with a **team of specialized Claudes under one Chief of
 Staff (Chris)**: every assignment is classified and delivered to the specialist with the right
-field manual — a DevOps engineer for branches and PRs, a technical writer for docs, a copy editor
+playbook — a DevOps engineer for branches and PRs, a technical writer for docs, a copy editor
 and code/security reviewers for the independent final pass before a PR or merge. Your repo stays in
 charge: the governance (your `CLAUDE.md`, your safety rules) remains yours; the plugins only supply
-the team and its field manuals.
+the team and its playbooks.
 
 The system consists of **three plugins**: the repo-neutral core `specialists` (group 1 — always
 enable it) and two optional domain groups. Which specialists live in which plugin and who they are
@@ -63,7 +63,7 @@ plugin; the full history lives in the workshop itself
 
 ## Reporting back or improving something
 
-- **An improvement to the shared core** (an agent def, field manual, persona, or skill): don't
+- **An improvement to the shared core** (an agent def, playbook, persona, or skill): don't
   rework it locally, but report it as an issue on this repo with the label `inbound` — an
   [issue template](../../.github/ISSUE_TEMPLATE/inbound-verbeterpunt.md) is ready for that. The
   workshop processes it through its own chain, and the improvement comes back to all consumers via

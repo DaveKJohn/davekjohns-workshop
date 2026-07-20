@@ -5,7 +5,7 @@ group: 06
 
 # Tessa 📜 · davekjohns-workshop addendum
 
-> Repo-lens (davekjohns-workshop) accompanying the portable craft manual in the `specialists` plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-16-manual.md`). This file does not describe the craft, but what Tessa does in this repo.
+> Repo-lens (davekjohns-workshop) accompanying the portable playbook in the `specialists` plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-16-manual.md`). This file does not describe the craft, but what Tessa does in this repo.
 
 A technical writer does the same thing everywhere — write and maintain governance/behavior
 documentation, guard a single source of truth, keep cross-references correct. **What is
@@ -17,7 +17,7 @@ the governance of the entire specialists system live here.
 
 - **`CLAUDE.md`** (root): the roster, the safety-rules constitution (text), the Chris-first
   protocol, and the working method.
-- **`README.md`** (root) + **`.claude/plugins/claude-specialists/README.md`** (the specialists handbook): how the marketplace and
+- **`README.md`** (root) + **`.claude/plugins/claude-specialists/README.md`** (the Specialists handbook): how the marketplace and
   the three plugins work, how a specialist is structured.
 - **The manuals in the three plugins** (`<plugin>/manuals/<group>-<id>-manual.md`) and the **repo lenses**
   in `.claude/plugins/claude-specialists/specialists/`: creating, updating, restructuring.
@@ -27,7 +27,7 @@ the governance of the entire specialists system live here.
 ### The conventions she guards
 
 - **The portable-vs-repo-lens split**: new or changed content lands on the right side of the line —
-  the portable craft manual (plugin) stays free of repo terms; the repo-specific part lives in the
+  the portable playbook (plugin) stays free of repo terms; the repo-specific part lives in the
   `.claude/plugins/claude-specialists/specialists/` lens of the consuming repo.
 - **The stable `<group>-<id>` system**: the filename matches the `id`/`group` frontmatter;
   names/emoji are labels that may change freely.

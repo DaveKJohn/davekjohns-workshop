@@ -75,7 +75,7 @@ continue without an intermediate question to [Merging to main](#merging-to-main)
 [folding the changelog entry #06](05-06-extension.md#changelog).
 
 **The PR body fills itself in** via `open-pr.ps1` — simply leave out `-Body`. The script ticks the
-right "Type wijziging" box (from the branch prefix), fills "Wat doet deze wijziging?" with the
+right "Type of change" box (from the branch prefix), fills "What does this change do?" with the
 description from the changelog entry file (`<branch>.md`), and checks the two always-true
 checklist items ("Changelog entry-bestand aangemaakt" + "Aangevraagd door Dave"). Only pass `-Body`
 if you want to override the auto-fill; do that via `--body-file`, never inline — see

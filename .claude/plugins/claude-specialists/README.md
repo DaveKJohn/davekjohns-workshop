@@ -25,8 +25,8 @@ themselves**. It is **not a replacement** for the safety rules or the routing.
   `<group>-<id>-extension.md`. There are two kinds:
   - **Subagent lens** — for the specialists that come out of the `specialists` plugin as subagents
     (Sylvester, Tessa, Edith, Victor, Tycho): only the `## Specific to this repo` part, which
-    supplements the portable craft manual in the plugin with the context of this repo. The subagent
-    reads the plugin craft manual + this lens together; the agent def points to both.
+    supplements the portable playbook in the plugin with the context of this repo. The subagent
+    reads the plugin playbook + this lens together; the agent def points to both.
   - **Persona lens (lens-only)** — for the persona-only specialists (Chris, Derek, Rendall), who run
     in the main conversation instead of as subagents. The main loop loads no plugin subagents, so the
     **portable body** comes straight from the plugin install via an `@` import: Chris always
@@ -47,7 +47,7 @@ themselves**. It is **not a replacement** for the safety rules or the routing.
 
 ### Persona or subagent — one specialist, two representations
 
-1. **Craft manual + repo lens.** The complete, portable craft manual (craft, hard rules, tone) lives
+1. **Craft manual + repo lens.** The complete, portable playbook (craft, hard rules, tone) lives
    in the marketplace plugin (`<plugin>/manuals/<group>-<id>-manual.md`); the repo-specific
    supplement lives locally in `.claude/extensions/<group>-<id>-extension.md`. For a **persona-only**
    specialist (who runs in the main conversation), the *full* manual instead lives locally in
@@ -65,7 +65,7 @@ the agent-def config (frontmatter, tools, model) belongs to [Sylvester #15](spec
 
 ### Every manual: portable craft and a repo-specific section
 
-Every craft manual is built in two parts, and those two halves live physically apart:
+Every playbook is built in two parts, and those two halves live physically apart:
 
 1. **The body — the portable craft** (in the plugin manual): the profession in generic terms, without
    repo terms ("main branch" rather than `main`, no concrete script names, no `#id` references).
@@ -79,7 +79,7 @@ Every craft manual is built in two parts, and those two halves live physically a
 
 Every specialist has a fixed, numeric **`id`** (permanent identity, never changes) and belongs to a
 **group** (organizational unit: **01 = Leadership, 02 = Staff, 03+ = teams**). The repo layer is
-named `<group>-<id>-extension.md`; the portable craft manual `<group>-<id>-manual.md` and the
+named `<group>-<id>-extension.md`; the portable playbook `<group>-<id>-manual.md` and the
 agent def `<group>-<id>-agent.md` live in the plugin. **Name, emoji, and title are labels** — they
 may change freely; the filename and link paths hang off `id`/`group`, not the name. **The lint gate
 guards this** ([Sylvester #15](specialists/05-15-extension.md)): every filename matches the
