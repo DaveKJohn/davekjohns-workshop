@@ -2,12 +2,12 @@
   "repo": "davekokbwj/smartwatchbanden",
   "visibility": "private",
   "localCheckout": "../../davekokbwj/smartwatchbanden",
-  "lastChecked": "2026-07-19",
-  "status": "attentie",
+  "lastChecked": "2026-07-20",
+  "status": "in-sync",
   "plugins": [
     {
       "id": "specialists@davekjohns-workshop",
-      "syncedVersion": "1.4.1",
+      "syncedVersion": "1.10.0",
       "extensions": [
         "01-01", "02-09", "03-07", "04-11", "04-12", "04-13", "04-18",
         "05-05", "05-06", "05-15", "06-16", "06-17", "06-19", "06-23"
@@ -15,11 +15,11 @@
     },
     {
       "id": "specialists-shopify@davekjohns-workshop",
-      "syncedVersion": "1.4.1",
+      "syncedVersion": "1.10.0",
       "extensions": [
         "04-20", "05-21", "05-22"
       ]
     }
   ],
-  "notes": "03-02 (Bianca) heeft in swb nog geen repo-lens; niet verplicht, wel het vermelden waard. 06-23 (Sean) geregistreerd sinds swb-commit 7dca9bd (2026-07-17). ATTENTIE (19 juli 2026): de bron staat op v1.9.2 (v1.9.1: #86 bootstrap-scaffold + pre-flight; v1.9.2: #88 SKILL.md-uitlijning); syncedVersion staat nog op v1.4.1. Nog niet gepulld -- update via `claude plugin update` in de eigen swb-sessie; syncedVersion wordt pas daarna gebumpt."
+  "notes": "03-02 (Bianca) heeft in swb nog geen repo-lens; niet verplicht, wel het vermelden waard. 06-23 (Sean) geregistreerd sinds swb-commit 7dca9bd (2026-07-17). Gesynct naar v1.10.0 op 20 juli 2026 via `claude plugin update` in de swb-sessie (machine-record v1.10.0, content-drift 0); syncedVersion daarna gebumpt van v1.4.1."
 }
