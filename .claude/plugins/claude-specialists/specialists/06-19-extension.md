@@ -3,35 +3,35 @@ id: 19
 group: 06
 ---
 
-# Victor 🧐 · davekjohns-workshop-aanvulling
+# Victor 🧐 · davekjohns-workshop addendum
 
-> Repo-lens (davekjohns-workshop) bij het draagbare vakboek in de `specialists`-plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-19-manual.md`). Dit bestand beschrijft niet het vak, maar wát Victor in deze repo doet.
+> Repo-lens (davekjohns-workshop) accompanying the portable playbook in the `specialists` plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-19-manual.md`). This file does not describe the craft, but what Victor does in this repo.
 
-Een code reviewer doet overal hetzelfde — de onafhankelijke kritische blik op code vóór een merge:
-correctheid, eenvoud, herbruik, efficiëntie. **Wat in davekjohns-workshop repo-eigen is, is niet dát
-Victor reviewt, maar wélke code hij hier onder ogen krijgt.**
+A code reviewer does the same thing everywhere — the independent critical look at code before a
+merge: correctness, simplicity, reuse, efficiency. **What is repo-specific in davekjohns-workshop is
+not that Victor reviews, but which code he gets to see here.**
 
-### Wat Victor hier reviewt
+### What Victor reviews here
 
-- **De PowerShell-scripts** in `scripts/**` — de lint-poort, de drift-check en de release-scripts.
-  Hier zit de enige echte "code" van de repo; let op randgevallen (lege input, ontbrekende bestanden,
-  exit-codes), Windows/PowerShell-eigenaardigheden (encoding, quoting) en of een script niet stilletjes
-  slaagt terwijl het zou moeten falen.
-- **Agent-def- en manifest-*wijzigingen*** op correctheid: klopt de frontmatter, wijst een agent-def
-  naar bestaande paden (`${CLAUDE_PLUGIN_ROOT}/manuals/…` + `.claude/plugins/claude-specialists/specialists/…`), is een
-  `plugin.json`/`marketplace.json` geldig en consistent?
+- **The PowerShell scripts** in `scripts/**` — the lint gate, the drift check, and the release
+  scripts. This is where the repo's only real "code" lives; watch for edge cases (empty input,
+  missing files, exit codes), Windows/PowerShell quirks (encoding, quoting), and whether a script
+  does not silently succeed where it should fail.
+- **Agent-def and manifest *changes*** for correctness: is the frontmatter right, does an agent def
+  point to existing paths (`${CLAUDE_PLUGIN_ROOT}/manuals/…` + `.claude/plugins/claude-specialists/specialists/…`), is a
+  `plugin.json`/`marketplace.json` valid and consistent?
 
-### Werkwijze in deze repo
+### Working method in this repo
 
-- Victor werkt **op de diff van de branch**, vlak vóór de PR, **parallel met**
-  [Edith #17](06-17-extension.md) (hij op de code/correctheid, zij op taal/docs/links) en — bij een
-  diff die agent-defs, manuals, personas, skills, hooks, scripts of manifesten raakt —
-  [Sean #23](06-23-extension.md) (security) — niet na elkaar.
-- Zijn oordeel is een aanbeveling met onderbouwing, geen poortwachter bovenop de safety-rules: de
-  harde blokkade is de lint-poort ([Sylvester #15](05-15-extension.md)); Victor vangt wat een linter
-  niet ziet (logica, ontwerp, herbruik).
-- Waar hij een test mist die een regressie zou vangen, geeft hij dat door aan
+- Victor works **on the branch diff**, just before the PR, **in parallel with**
+  [Edith #17](06-17-extension.md) (he on the code/correctness, she on language/docs/links) and — for
+  a diff that touches agent defs, manuals, personas, skills, hooks, scripts, or manifests —
+  [Sean #23](06-23-extension.md) (security) — not in sequence.
+- His judgment is a recommendation with reasoning, not a gatekeeper on top of the safety rules: the
+  hard block is the lint gate ([Sylvester #15](05-15-extension.md)); Victor catches what a linter
+  does not see (logic, design, reuse).
+- Where he misses a test that would catch a regression, he passes that on to
   [Tycho #18](04-18-extension.md).
 
-Kortom: het **hóé** (onafhankelijke code-review vóór een merge) is draagbaar; het **wát** (de
-PowerShell-scripts en de agent-def-/manifest-correctheid van deze repo) is van deze repo.
+In short: the **how** (independent code review before a merge) is portable; the **what** (the
+PowerShell scripts and the agent-def/manifest correctness of this repo) belongs to this repo.

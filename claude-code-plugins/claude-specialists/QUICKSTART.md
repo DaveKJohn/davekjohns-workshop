@@ -1,29 +1,29 @@
-# Quickstart — zo sluit je jouw repo aan
+# Quickstart — how to connect your repo
 
-Deze pagina is voor wie het Claude-Specialists-systeem **niet** gebouwd heeft: een collega met een
-eigen repo die met het specialisten-team wil werken. Alles hieronder is de rode draad — de diepere
-uitleg staat achter de links en wordt hier bewust niet herhaald.
+This page is for those who did **not** build the Claude Specialists system: a colleague with a repo
+of their own who wants to work with the specialists team. Everything below is the common thread —
+the deeper explanation sits behind the links and is deliberately not repeated here.
 
-## Wat je krijgt
+## What you get
 
-In plaats van één generieke Claude werk je met een **team van gespecialiseerde Claudes onder één
-Chief of Staff (Chris)**: elke opdracht wordt geclassificeerd en bezorgd bij de specialist met het
-juiste vakboek — een DevOps-engineer voor branches en PR's, een technical writer voor docs, een
-eindredacteur en code/security-reviewers voor de onafhankelijke laatste blik vóór een PR of merge. Jouw repo houdt zelf
-de regie: de governance (jouw `CLAUDE.md`, jouw safety-regels) blijft van jou; de plugins leveren
-alleen het team en zijn vakboeken.
+Instead of one generic Claude, you work with a **team of specialized Claudes under one Chief of
+Staff (Chris)**: every assignment is classified and delivered to the specialist with the right
+playbook — a DevOps engineer for branches and PRs, a technical writer for docs, a copy editor
+and code/security reviewers for the independent final pass before a PR or merge. Your repo stays in
+charge: the governance (your `CLAUDE.md`, your safety rules) remains yours; the plugins only supply
+the team and its playbooks.
 
-Het systeem bestaat uit **drie plugins**: de repo-neutrale kern `specialists` (groep 1 — altijd
-inschakelen) en twee optionele domein-groepen. Wélke specialisten in welke plugin zitten en voor wie
-ze bedoeld zijn, staat in de [familie-README](README.md).
+The system consists of **three plugins**: the repo-neutral core `specialists` (group 1 — always
+enable it) and two optional domain groups. Which specialists live in which plugin and who they are
+meant for is covered in the [family README](README.md).
 
-## Aansluiten in drie stappen
+## Connecting in three steps
 
-**Stap 1 — schakel de plugins in.** Zet in `.claude/settings.json` van jouw repo de marketplace-source
-en de gewenste plugins (de kern altijd; een domein-groep alleen als jouw repo dat domein heeft):
+**Step 1 — enable the plugins.** In your repo's `.claude/settings.json`, set the marketplace source
+and the plugins you want (always the core; a domain group only if your repo has that domain):
 
 ```jsonc
-// .claude/settings.json (jouw repo)
+// .claude/settings.json (your repo)
 "extraKnownMarketplaces": {
   "davekjohns-workshop": {
     "source": { "source": "github", "repo": "DaveKJohn/davekjohns-workshop" }
@@ -34,39 +34,39 @@ en de gewenste plugins (de kern altijd; een domein-groep alleen als jouw repo da
 }
 ```
 
-Deze repo is publiek, dus de source is zonder GitHub-authenticatie te lezen; Claude Code clonet en
-cachet hem zelf. **Herstart daarna je Claude Code-sessie** — pas dan zijn de plugins (en de skill
-uit stap 2) beschikbaar.
+This repo is public, so the source can be read without GitHub authentication; Claude Code clones
+and caches it by itself. **Then restart your Claude Code session** — only then are the plugins (and
+the skill from step 2) available.
 
-**Stap 2 — draai de bootstrap-skill.** Roep in de nieuwe sessie `specialists-init` aan. Die zet —
-puur additief, zonder iets te overschrijven — de **lens-only** persona-lenzen (waaronder Chris) +
-een lege repo-lens-scaffold per specialist op het **plugin-pad**
-(`.claude/plugins/claude-specialists/<plugin>/`), de twee Chris-`@`-imports in jouw `CLAUDE.md` (zijn
-draagbare body uit de plugin-install + zijn repo-lens), en een voorstel voor safety-instellingen
-(`settings.suggested.jsonc`, ter eigen
-beoordeling). De details van dit pad staan in de
-[root-README › Adoptie](../../README.md#adoptie-het-bootstrap-pad) — die telt de stappen daar als
-"stap 0" (het inschakelen hierboven) en "stap 1" (de skill).
+**Step 2 — run the bootstrap skill.** In the new session, invoke `specialists-init`. It sets up —
+purely additively, without overwriting anything — the **lens-only** persona lenses (including
+Chris) + an empty repo-lens scaffold per specialist on the **plugin path**
+(`.claude/plugins/claude-specialists/<plugin>/`), the two Chris `@`-imports in your `CLAUDE.md`
+(his portable body from the plugin install + his repo lens), and a proposal for safety settings
+(`settings.suggested.jsonc`, for your own
+review). The details of this path are in the
+[root README › Adoption](../../README.md#adoption-the-bootstrap-path) — which counts the steps there
+as "step 0" (the enabling above) and "step 1" (the skill).
 
-**Stap 3 — herstart en controleer.** Start opnieuw en check dat Chris het woord neemt (elke beurt
-opent met een afzender-kopregel zoals `🧭 Chris — intake & routing`). Vul daarna in je eigen tempo de
-repo-lenzen op het plugin-pad (`.claude/plugins/claude-specialists/<plugin>/`) in: dáár vertel je per specialist wat hij in jouw repo bedient.
-De werker-specialisten zijn direct aanroepbaar als `@specialists:<naam>`.
+**Step 3 — restart and verify.** Start again and check that Chris takes the floor (every turn opens
+with a sender header such as `🧭 Chris — intake & routing`). Then, at your own pace, fill in the
+repo lenses on the plugin path (`.claude/plugins/claude-specialists/<plugin>/`): that is where you tell each specialist what it serves in your repo.
+The worker specialists can be invoked directly as `@specialists:<name>`.
 
-## Bijblijven
+## Staying up to date
 
-Updates bereiken je via **releases**: `claude plugin update` vergelijkt uitsluitend versienummers,
-dus je krijgt wijzigingen zodra de werkplaats een nieuwe versie heeft gesneden — niet eerder. Elke
-plugin draagt een eigen `CHANGELOG.md` die met de plugin-cache meereist en per release vertelt wat
-er voor díe plugin veranderde; de volledige geschiedenis staat in de werkplaats zelf
-([`CHANGELOG.md`](../../CHANGELOG.md) en [`releases/`](../../releases/README.md)).
+Updates reach you via **releases**: `claude plugin update` compares version numbers only, so you
+get changes as soon as the workshop has cut a new version — not before. Each plugin carries its own
+`CHANGELOG.md` that travels with the plugin cache and describes per release what changed for that
+plugin; the full history lives in the workshop itself
+([`CHANGELOG.md`](../../CHANGELOG.md) and [`releases/`](../../releases/README.md)).
 
-## Iets terugmelden of verbeteren
+## Reporting back or improving something
 
-- **Verbeterpunt aan de gedeelde kern** (een agent-def, vakboek, persona of skill): bouw het niet
-  lokaal om, maar meld het als issue op deze repo met het label `inbound` — daar staat een
-  [issue-sjabloon](../../.github/ISSUE_TEMPLATE/inbound-verbeterpunt.md) voor klaar. De werkplaats
-  verwerkt het via zijn eigen keten, en de verbetering komt via een release bij álle consumenten
-  terug.
-- **Repo-eigen aanvullingen** horen in jouw eigen repo-lenzen op het plugin-pad
-  (`.claude/plugins/claude-specialists/<plugin>/`) — die zijn van jou en reizen niet mee met de plugin.
+- **An improvement to the shared core** (an agent def, playbook, persona, or skill): don't
+  rework it locally, but report it as an issue on this repo with the label `inbound` — an
+  [issue template](../../.github/ISSUE_TEMPLATE/inbound-verbeterpunt.md) is ready for that. The
+  workshop processes it through its own chain, and the improvement comes back to all consumers via
+  a release.
+- **Repo-specific additions** belong in your own repo lenses on the plugin path
+  (`.claude/plugins/claude-specialists/<plugin>/`) — those are yours and do not travel with the plugin.

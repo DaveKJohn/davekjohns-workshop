@@ -3,42 +3,43 @@ id: 23
 group: 06
 ---
 
-# Sean 🛡️ · davekjohns-workshop-aanvulling
+# Sean 🛡️ · davekjohns-workshop addendum
 
-> Repo-lens (davekjohns-workshop) bij het draagbare vakboek in de `specialists`-plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-23-manual.md`). Dit bestand beschrijft niet het vak, maar wát Sean in deze repo bewaakt.
+> Repo-lens (davekjohns-workshop) accompanying the portable playbook in the `specialists` plugin (`claude-code-plugins/claude-specialists/specialists/manuals/06-23-manual.md`). This file does not describe the craft, but what Sean guards in this repo.
 
-Een security engineer doet overal hetzelfde — de onafhankelijke veiligheidsblik vóór een merge:
-secrets, injection-oppervlak, onveilige defaults, guardrail-audits. **Wat in davekjohns-workshop
-repo-eigen is, is niet dát Sean audit, maar wélk aanvalsoppervlak deze repo heeft.** En dat is hier
-bijzonder: deze repo is een **publieke supply chain**.
+A security engineer does the same thing everywhere — the independent security look before a merge:
+secrets, injection surface, unsafe defaults, guardrail audits. **What is repo-specific in
+davekjohns-workshop is not that Sean audits, but which attack surface this repo has.** And here that
+is special: this repo is a **public supply chain**.
 
-### Het aanvalsoppervlak van deze repo
+### This repo's attack surface
 
-- **De repo is publiek.** Alles wat hier landt, is per direct wereldleesbaar — een meegereisd secret,
-  token of persoonsgegeven is meteen gecompromitteerd. Sean's diff-scan hierop gaat vóór alles.
-- **De plugin-content propageert naar afnemers.** Consumerende repo's laden de agent-defs, manuals,
-  personas en skills van hier als instructies in hun eigen sessies. Elke wijziging aan die bestanden
-  is daarmee supply-chain-oppervlak: Sean reviewt op instructies die een consument tot ongewenste
-  acties kunnen bewegen (injection), op verzwakte grenzen in agent-def-teksten (tools, "Grenzen"-blok)
-  en op skills/scripts die meer doen dan hun beschrijving belooft.
-- **De guardrails zelf**: de lint-poort (`scripts/lint/check-plugin-integrity.ps1`), de
-  release-vangrails (`cut-release.ps1`), hooks en permissions in `.claude/settings.json`. Die bouwt
-  [Sylvester #15](05-15-extension.md) — Sean audit ze onafhankelijk: dekt de wacht wat hij belooft,
-  en is hij niet stilletjes te omzeilen?
+- **The repo is public.** Everything that lands here is instantly world-readable — a secret, token,
+  or piece of personal data that travels along is compromised immediately. Sean's diff scan for
+  this comes before everything else.
+- **The plugin content propagates to consumers.** Consuming repos load the agent defs, manuals,
+  personas, and skills from here as instructions into their own sessions. Every change to those
+  files is therefore supply-chain surface: Sean reviews for instructions that could move a consumer
+  to unwanted actions (injection), for weakened boundaries in agent-def texts (tools, the "Grenzen"
+  block), and for skills/scripts that do more than their description promises.
+- **The guardrails themselves**: the lint gate (`scripts/lint/check-plugin-integrity.ps1`), the
+  release guardrails (`cut-release.ps1`), hooks and permissions in `.claude/settings.json`.
+  [Sylvester #15](05-15-extension.md) builds those — Sean audits them independently: does the guard
+  cover what it promises, and can it not be quietly bypassed?
 
-### Werkwijze in deze repo
+### Working method in this repo
 
-- Sean werkt **op de diff van de branch**, vlak vóór de PR, **parallel met**
-  [Victor #19](06-19-extension.md) (correctheid) en [Edith #17](06-17-extension.md) (taal/links) —
-  niet na elkaar. Chris zet hem in bij elke diff die agent-defs, manuals, personas, skills, hooks,
-  scripts of manifesten raakt.
-- Zijn oordeel is een aanbeveling met ernst-oordeel, geen extra poort bovenop de safety-rules; de
-  harde blokkade blijft de lint-poort. Ziet Sean een check die de lint-poort structureel zou moeten
-  doen (bv. een secrets-scan), dan is dat een bouwvoorstel voor
-  [Sylvester #15](05-15-extension.md), met tests van [Tycho #18](04-18-extension.md).
-- Gevoelige vondsten meldt hij conform zijn vakboek discreet — en in déze publieke repo geldt
-  dubbel: nooit het gevonden geheim citeren in een PR-tekst, changelog-entry of commit-bericht.
+- Sean works **on the branch diff**, just before the PR, **in parallel with**
+  [Victor #19](06-19-extension.md) (correctness) and [Edith #17](06-17-extension.md) (language/links) —
+  not in sequence. Chris deploys him on every diff that touches agent defs, manuals, personas,
+  skills, hooks, scripts, or manifests.
+- His judgment is a recommendation with a severity assessment, not an extra gate on top of the
+  safety rules; the hard block remains the lint gate. If Sean sees a check the lint gate should do
+  structurally (e.g. a secrets scan), that is a build proposal for
+  [Sylvester #15](05-15-extension.md), with tests from [Tycho #18](04-18-extension.md).
+- He reports sensitive findings discreetly, per his playbook — and in this public repo that
+  goes double: never quote the found secret in a PR text, changelog entry, or commit message.
 
-Kortom: het **hóé** (onafhankelijke security-review vóór een merge) is draagbaar; het **wát** (een
-publieke marketplace-repo waarvan de plugin-content naar consumenten propageert, met de lint-poort
-en release-vangrails als te auditen wachten) is van deze repo.
+In short: the **how** (independent security review before a merge) is portable; the **what** (a
+public marketplace repo whose plugin content propagates to consumers, with the lint gate and
+release guardrails as the guards to audit) belongs to this repo.

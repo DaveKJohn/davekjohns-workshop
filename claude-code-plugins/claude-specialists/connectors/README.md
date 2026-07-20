@@ -1,55 +1,55 @@
-# connectors/ — het register van aangesloten repo's
+# connectors/ — the registry of connected repos
 
-Dit is het register van **welke repo's de plugins van deze familie geïnstalleerd hebben en of ze
-nog in sync zijn met deze repo** — één `<repo>.json`-manifest per aangesloten repo, direct in
-deze map, met daarin per plugin de extension-inventaris. De connector ís de repo. Dit README is
-de doctrine; de manifesten zijn de data.
+This is the registry of **which repos have installed this family's plugins and whether they are
+still in sync with this repo** — one `<repo>.json` manifest per connected repo, directly in this
+directory, each containing the extension inventory per plugin. The connector *is* the repo. This
+README is the doctrine; the manifests are the data.
 
-**Het register woont bewust op familie-niveau, náást de plugin-mappen — niet erin.** De
-marketplace-sources wijzen naar de plugin-mappen zelf, dus dit register reist *niet* mee met de
-plugin-cache van consumenten: geen enkele consument ziet zo de manifesten van een ander (besluit
-Dave, 16 juli 2026, na de security-review). Het register is werkplaats-administratie.
+**The registry deliberately lives at the family level, next to the plugin directories — not inside
+them.** The marketplace sources point to the plugin directories themselves, so this registry does
+*not* travel with consumers' plugin caches: this way, no consumer sees another's manifests
+(decision by Dave, July 16, 2026, after the security review). The registry is workshop
+administration.
 
-## De doctrine: deze repo is de source of truth
+## The doctrine: this repo is the source of truth
 
-davekjohns-workshop werkt als een **Customer Data Platform**: alle wijzigingen aan gedeelde
-plugin-content (agent-defs, manuals, persona-bodies, skills) **landen éérst hier**, en worden pas
-daarna doorgesynct naar de aangesloten repo's — nooit andersom (zie de safety-regels in de
-repo-[`CLAUDE.md`](../../../CLAUDE.md)). Ontstaat er tóch een verbetering in een consument, dan
-is dat een **inbound-signaal**: de wijziging wordt eerst hierheen teruggelegd en daarna opnieuw
-uitgesynct.
+davekjohns-workshop works like a **Customer Data Platform**: all changes to shared plugin content
+(agent defs, manuals, persona bodies, skills) **land here first**, and are only then synced out to
+the connected repos — never the other way around (see the safety rules in the repo
+[`CLAUDE.md`](../../../CLAUDE.md)). If an improvement nevertheless originates in a consumer, that
+is an **inbound signal**: the change is first brought back here and then synced out again.
 
-**De vaste inbound-route** (afspraak Dave, 16 juli 2026): ontdekt een sessie in een consumerende
-repo kern-verbeterpunten (iets voor de gedeelde agent-defs, manuals, persona-bodies of skills —
-géén lens-werk), dan bouwt die sessie niet zelf, maar opent een **issue op deze repo** met het
-label **`inbound`** — sjabloon:
-[`inbound-verbeterpunt`](../../../.github/ISSUE_TEMPLATE/inbound-verbeterpunt.md). Zo gaat niets
-verloren en heeft elke workshop-sessie een zichtbare werkvoorraad; de workshop verwerkt het via
-de normale keten (branch → reviews → PR op Dave's woord → release-bump), waarna de consument het
-via de plugin-update terugkrijgt. De enige legitieme overbrugging aan consument-zijde is een
-bewust tijdelijke notitie in de eigen repo-lens, die na de sync weer verdwijnt.
+**The standing inbound route** (agreed with Dave, July 16, 2026): if a session in a consuming repo
+discovers core improvements (something for the shared agent defs, manuals, persona bodies, or
+skills — not lens work), that session does not build it itself, but opens an **issue on this repo**
+with the label **`inbound`** — template:
+[`inbound-verbeterpunt`](../../../.github/ISSUE_TEMPLATE/inbound-verbeterpunt.md). This way nothing
+gets lost and every workshop session has a visible backlog; the workshop processes it through the
+normal chain (branch → reviews → PR on Dave's word → release bump), after which the consumer gets
+it back via the plugin update. The only legitimate bridge on the consumer side is a deliberately
+temporary note in its own repo lens, which disappears again after the sync.
 
-Belangrijke nuance — **wat synct en wat niet**:
+An important nuance — **what syncs and what doesn't**:
 
-- **Wél gesynchroniseerd (bron hier):** de draagbare persona-bodies (alles boven de
-  `## Eigen aan deze repo`-marker) en alle plugin-content zelf (agent-defs, manuals, skills).
-- **Níét gesynchroniseerd (repo-eigen):** het `## Eigen aan deze repo`-slot van elke extension —
-  de repo-lens is per consument verschillend en hoort daar thuis. Het register houdt alleen bij
-  *dát* een lens bestaat, nooit wat erin staat.
-- **Waarom extensions niet alléén hier kunnen staan:** de sessie in een consumerende repo leest
-  de lens-bestanden runtime uit de **eigen checkout** (agent-defs verwijzen ernaar, en de
-  persona van de orchestrator wordt via een `@`-import in de repo-CLAUDE.md geladen). De kopie in
-  de consument is dus technisch noodzakelijk; dit register + de check houden hem eerlijk.
+- **Synced (source here):** the portable persona bodies (everything above the
+  `## Eigen aan deze repo` marker) and all plugin content itself (agent defs, manuals, skills).
+- **Not synced (repo-specific):** the `## Eigen aan deze repo` slot of each extension — the repo
+  lens differs per consumer and belongs there. The registry only tracks *that* a lens exists,
+  never what it contains.
+- **Why extensions cannot live only here:** the session in a consuming repo reads the lens files
+  at runtime from its **own checkout** (agent defs refer to them, and the orchestrator's persona
+  is loaded via an `@`-import in the repo CLAUDE.md). The copy in the consumer is therefore
+  technically necessary; this registry + the check keep it honest.
 
-## Privacy-grens (harde regel)
+## Privacy boundary (hard rule)
 
-Deze repo is **publiek**. Manifesten bevatten daarom uitsluitend **metadata**: repo-naam, plugin,
-extension-inventaris (alleen `<group>-<id>`-nummers) en een relatief checkout-pad. **Nooit** lens-inhoud, absolute machine-paden of andere gegevens uit de (private)
-consumerende repo's. De relatieve `localCheckout`-paden onthullen de sibling-indeling van de
-lokale checkouts; dat is een bewust geaccepteerde mate van transparantie (security-review,
-16 juli 2026).
+This repo is **public**. Manifests therefore contain **metadata** only: repo name, plugin,
+extension inventory (only `<group>-<id>` numbers), and a relative checkout path. **Never** lens
+content, absolute machine paths, or other data from the (private) consuming repos. The relative
+`localCheckout` paths reveal the sibling layout of the local checkouts; that is a deliberately
+accepted degree of transparency (security review, July 16, 2026).
 
-## Het manifest-format
+## The manifest format
 
 ```json
 {
@@ -66,85 +66,82 @@ lokale checkouts; dat is een bewust geaccepteerde mate van transparantie (securi
 }
 ```
 
-- `localCheckout` is **relatief aan de root van deze repo** (de werkplaats-checkout); staat de
-  checkout niet op de machine, dan slaat de check hem over. Absolute paden en paden buiten de
-  scope-root worden door de check geweigerd.
-- `plugins` bevat per geïnstalleerde plugin de `extensions`-inventaris van die plugin.
-- `notes` is de menselijke samenvatting/toelichting; bijgewerkt wanneer er inhoudelijk iets
-  verandert, niet bij elke check.
-- **Een versie-boekhouding kent het manifest bewust niet (meer)** (besluit Dave, 20 juli 2026):
-  de échte geïnstalleerde versie leest de check uit het machine-record
-  (`installed_plugins.json`), en een `syncedVersion`-veld dat die cijfers dupliceerde leverde
-  louter onderhouds-PR's op zonder dat iemand de signalen nog zag.
+- `localCheckout` is **relative to the root of this repo** (the workshop checkout); if the
+  checkout is not on the machine, the check skips it. Absolute paths and paths outside the scope
+  root are rejected by the check.
+- `plugins` contains, per installed plugin, that plugin's `extensions` inventory.
+- `notes` is the human summary/explanation; updated when something changes substantively, not on
+  every check.
+- **The manifest deliberately has no version bookkeeping (anymore)** (decision by Dave, July 20,
+  2026): the check reads the actually installed version from the machine record
+  (`installed_plugins.json`), and a `syncedVersion` field duplicating those numbers produced
+  nothing but maintenance PRs while nobody was watching the signals anymore.
 
-## De check
+## The check
 
-[`scripts/sync/check-connectors.ps1`](../../../scripts/sync/check-connectors.ps1) draait de
-two-way-controle over alle manifesten: plugin nog enabled, geregistreerde extensions aanwezig
-(outbound), niet-geregistreerde extensions gesignaleerd (inbound), de machine-versie tegen de
-bron, en per consument de content-drift-check
-([`check-consumer-drift.ps1`](../../../scripts/lint/check-consumer-drift.ps1)). Draai hem aan
-het begin van een werkdag of sessie:
+[`scripts/sync/check-connectors.ps1`](../../../scripts/sync/check-connectors.ps1) runs the two-way
+check across all manifests: plugin still enabled, registered extensions present (outbound),
+unregistered extensions flagged (inbound), the machine version against the source, and per
+consumer the content drift check
+([`check-consumer-drift.ps1`](../../../scripts/lint/check-consumer-drift.ps1)). Run it at the
+start of a workday or session:
 
 ```powershell
-.\scripts\sync\check-connectors.ps1              # alles
-.\scripts\sync\check-connectors.ps1 -SkipDrift   # alleen de registerchecks (snel)
+.\scripts\sync\check-connectors.ps1              # everything
+.\scripts\sync\check-connectors.ps1 -SkipDrift   # registry checks only (fast)
 ```
 
-Synchroniseren zelf blijft **pull-based per consument**: elke aangesloten repo haalt wijzigingen
-op in zijn eigen sessie, onder zijn eigen governance — dit register signaleert, het schrijft
-nooit cross-repo.
+Syncing itself remains **pull-based per consumer**: each connected repo pulls changes in its own
+session, under its own governance — this registry signals, it never writes cross-repo.
 
-## Persona-drift: hoe je een DRIFTED-melding leest (doctrine)
+## Persona drift: how to read a DRIFTED report (doctrine)
 
-Vastgelegd na het drift-onderzoek van 17 juli 2026 (Rebecca; dossier `persona-drift-doctrine`),
-dat over alle zeven toenmalige meldingen vaststelde: **nul** bewuste aanpassingen van draagbare
-bodies, één echte achterstand, en zes vals-positieven door één structureel padverschil.
+Recorded after the drift investigation of July 17, 2026 (Rebecca; dossier
+`persona-drift-doctrine`), which established across all seven reports at the time: **zero**
+deliberate changes to portable bodies, one genuine lag, and six false positives caused by one
+structural path difference.
 
-- **Er bestaat geen "bewust afwijkend"-status voor de draagbare body.** De praktijk bevestigt het
-  model: repo-eigen inhoud hoort in het `## Eigen aan deze repo`-slot (de lens), en een gewenste
-  wijziging aan het draagbare deel gaat via de inbound-route hierboven — nooit als blijvende
-  lokale afwijking. De check hoeft bewuste drift dus niet te faciliteren of te markeren.
-- **Lens-only persona's leveren geen body-drift op.** Een correct opgezette persona-lens (op het
-  plugin-pad `.claude/plugins/claude-specialists/<plugin>/`) draagt geen body-kopie meer -- de
-  draagbare body komt via een `@`-import uit de plugin-install. De indexregel is sinds #64
-  locatie-onafhankelijke platte tekst (geen pad-diepte-link), dus er valt niets meer te normaliseren.
-  `check-consumer-drift.ps1` herkent de `> Repo-lens (lens-only persona)`-blockquote en meldt zo'n
-  lens als `LENS-ONLY`; een consument met een oude, volledige body-kopie wordt nog wel op echte
-  body-drift vergeleken.
-- **Een `DRIFTED`-persona betekent daarmee altijd een werkpunt**: óf achterstand (de bron is
-  doorontwikkeld — ververs de kopie vanaf de bron in een sessie van de consument zelf), óf een
-  nog-niet-teruggelegde consument-wijziging (leg die eerst via de inbound-route terug). Niet
-  wegklikken, niet laten staan.
-- **Werk na een verversing ook het manifest bij** (`notes`, en de `extensions`-inventaris als
-  er lenzen bij kwamen of verdwenen): het onderzoek trof een al uitgevoerde refresh aan die
-  administratief nog als openstaand geboekt stond — de registerdata hoort de werkelijkheid te
-  volgen.
+- **There is no "deliberately divergent" status for the portable body.** Practice confirms the
+  model: repo-specific content belongs in the `## Eigen aan deze repo` slot (the lens), and a
+  desired change to the portable part goes through the inbound route above — never as a permanent
+  local divergence. So the check does not need to facilitate or mark deliberate drift.
+- **Lens-only personas produce no body drift.** A correctly set-up persona lens (on the plugin
+  path `.claude/plugins/claude-specialists/<plugin>/`) no longer carries a body copy -- the
+  portable body comes from the plugin install via an `@`-import. Since #64 the index line is
+  location-independent plain text (no path-depth link), so there is nothing left to normalize.
+  `check-consumer-drift.ps1` recognizes the `> Repo-lens (lens-only persona)` blockquote and
+  reports such a lens as `LENS-ONLY`; a consumer with an old, full body copy is still compared for
+  real body drift.
+- **A `DRIFTED` persona therefore always means a work item**: either lag (the source has moved on
+  — refresh the copy from the source in a session of the consumer itself), or a not-yet-returned
+  consumer change (bring that back through the inbound route first). Don't dismiss it, don't leave
+  it sitting.
+- **After a refresh, also update the manifest** (`notes`, and the `extensions` inventory if lenses
+  were added or removed): the investigation found an already-performed refresh that was still
+  administratively booked as open — the registry data should follow reality.
 
-## De sessie-check (automatisch)
+## The session check (automatic)
 
-De `specialists`-plugin draagt een **SessionStart-hook**
+The `specialists` plugin carries a **SessionStart hook**
 ([`hooks/hooks.json`](../specialists/hooks/hooks.json) +
-[`connector-sessioncheck.ps1`](../specialists/hooks/connector-sessioncheck.ps1)) die bij het
-starten van een sessie — in élke repo die de plugin heeft, dus ook life-hub en smartwatchbanden —
-de workshop-checkout zoekt en daar de connectors-check draait. Twee guardrails uit de
-security-review: het gevonden pad wordt eerst **geverifieerd** (marker-check op de
-marketplace-naam in `.claude-plugin/marketplace.json` — nooit code draaien op een padgok), en
-buiten de workshop is de check **gescoped** tot het manifest van de eigen repo, zodat een sessie
-nooit de registerdata van een andere consument in zijn context krijgt. De hook is verder bewust
-zacht: geen geverifieerde workshop-checkout betekent een melding en verder niets, alleen
-**blokkerende signalen** (`[FOUT]`/`[DRIFTED]`) komen als compacte samenvatting in de
-sessie-context, en de hook blokkeert nooit een sessiestart (altijd exit 0, read-only).
-`[INFO]`-signalen — registeradministratie over de sync-stand en registratie van consumenten:
-soms hier bij te werken, vaak de zaak van een andere machine of gebruiker, maar in geen geval
-werk waarvoor een sessiestart onderbroken hoeft te worden — blijven bij sessiestart bewust stil
-(besluit Dave, 20 juli 2026); ze zijn zichtbaar bij een bewuste run van `check-connectors.ps1`
-in de workshop. Daaruit
-volgt een classificatie-regel voor uitbreidingen van de check (advies security-review, 20 juli
-2026): een nieuwe signaal-categorie die veiligheidsrelevant kan zijn (bv. een aanwijzing van
-manipulatie) hoort nooit als `[INFO]` geclassificeerd te worden, maar als `[FOUT]` — anders
-blijft ze bij sessiestart stilzwijgend buiten beeld. Deze hook
-is — naast de skill `specialists-init` — de tweede benoemde, repo-neutrale uitzondering op de
-regel dat plugins geen hooks/skills dragen (zie de root-README). Let op de **versie-poort**:
-consumenten ontvangen de hook pas na een release-bump én een `claude plugin update` +
-sessie-herstart aan hun kant.
+[`connector-sessioncheck.ps1`](../specialists/hooks/connector-sessioncheck.ps1)) that, when a
+session starts — in every repo that has the plugin, so also life-hub and smartwatchbanden —
+locates the workshop checkout and runs the connectors check there. Two guardrails from the
+security review: the found path is **verified** first (a marker check on the marketplace name in
+`.claude-plugin/marketplace.json` — never run code on a guessed path), and outside the workshop
+the check is **scoped** to the repo's own manifest, so a session never gets another consumer's
+registry data into its context. Beyond that the hook is deliberately soft: no verified workshop
+checkout means a notice and nothing more, only **blocking signals** (`[FOUT]`/`[DRIFTED]`) end up
+as a compact summary in the session context, and the hook never blocks a session start (always
+exit 0, read-only). `[INFO]` signals — registry administration about the sync state and the
+registration of consumers: sometimes something to update here, often the business of another
+machine or user, but in no case work worth interrupting a session start for — deliberately stay
+silent at session start (decision by Dave, July 20, 2026); they are visible on a deliberate run of
+`check-connectors.ps1` in the workshop. From this follows
+a classification rule for extensions of the check (security review advice, July 20, 2026): a new
+signal category that may be security-relevant (e.g. an indication of tampering) must never be
+classified as `[INFO]`, but as `[FOUT]` — otherwise it silently stays out of sight at session
+start. This hook is — next to the `specialists-init` skill — the second named, repo-neutral
+exception to the rule that plugins carry no hooks/skills (see the root README). Mind the **version
+gate**: consumers only receive the hook after a release bump plus a `claude plugin update` +
+session restart on their side.

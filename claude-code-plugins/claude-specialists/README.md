@@ -1,61 +1,61 @@
-# claude-specialists — de specialisten-familie
+# claude-specialists — the specialists family
 
-De eerste product-familie van [davekjohns-workshop](../../README.md): het **Claude-Specialists-systeem**,
-ontworpen door Dave (DaveKJohn). In plaats van één generieke Claude werk je met een **team van
-gespecialiseerde Claudes** onder één Chief of Staff: elke opdracht wordt geclassificeerd en bezorgd
-bij de specialist (subagent) met het juiste vakboek — een DevOps-engineer voor branches en PR's, een
-technical writer voor docs, een eindredacteur voor de laatste blik, enzovoort.
+The first product family of [davekjohns-workshop](../../README.md): the **Claude Specialists system**,
+designed by Dave (DaveKJohn). Instead of one generic Claude, you work with a **team of specialized
+Claudes** under one Chief of Staff: every assignment is classified and delivered to the specialist
+(subagent) with the right playbook — a DevOps engineer for branches and PRs, a technical writer
+for docs, a copy editor for the final pass, and so on.
 
-Deze map bevat **drie plugins** die samen dat systeem vormen. Een consumerende repo schakelt ze via
-de marketplace **per stuk** aan of uit.
+This directory contains **three plugins** that together make up that system. A consuming repo
+enables or disables them **individually** via the marketplace.
 
-## De drie sub-plugins — wat is het verschil?
+## The three sub-plugins — what's the difference?
 
-| Plugin | Wat het is | Voor wie |
+| Plugin | What it is | Who it's for |
 |---|---|---|
-| [`specialists/`](specialists/) | **De gedeelde kern (groep 1).** Elf repo-neutrale specialisten die in élke repo hetzelfde werken (o.a. onderzoek, systeembeheer, technical writing, eindredactie, code-review, security-review, testen). Draagt daarnaast de persona-sjablonen van de hoofdloop (Chris/Derek/Rendall) en de bootstrap-skill `specialists-init`. | **Elke** consumerende repo — dit is de basis, altijd inschakelen. |
-| [`specialists-lifehub/`](specialists-lifehub/) | **Domein-groep 2.** Vijf specialisten voor een persoonlijke informatie-hub / brain-gebaseerde kennisrepo (Astrid, Fiona, Hugo, Ian, Onyx). Bewust domein-gekleurd: ze kennen hun repo en teamgenoten bij naam. | Alleen een life-hub-achtige repo. |
-| [`specialists-shopify/`](specialists-shopify/) | **Domein-groep 3.** Drie specialisten voor een Shopify-store-repo (Liam · Liquid, Sandra · webshopbeheer, Steven · configuratie) plus de domein-skill `start-task`. Eveneens bewust domein-gekleurd. | Alleen een Shopify-repo (bv. smartwatchbanden). |
+| [`specialists/`](specialists/) | **The shared core (group 1).** Eleven repo-neutral specialists who work the same way in *every* repo (research, systems administration, technical writing, copy editing, code review, security review, and testing, among others). Also carries the persona templates of the main loop (Chris/Derek/Rendall) and the bootstrap skill `specialists-init`. | **Every** consuming repo — this is the foundation, always enable it. |
+| [`specialists-lifehub/`](specialists-lifehub/) | **Domain group 2.** Five specialists for a personal information hub / brain-based knowledge repo (Astrid, Fiona, Hugo, Ian, Onyx). Deliberately domain-flavored: they know their repo and teammates by name. | Only a life-hub-style repo. |
+| [`specialists-shopify/`](specialists-shopify/) | **Domain group 3.** Three specialists for a Shopify store repo (Liam · Liquid, Sandra · store management, Steven · configuration) plus the domain skill `start-task`. Also deliberately domain-flavored. | Only a Shopify repo (e.g. smartwatchbanden). |
 
-Kort: **`specialists` is het fundament; de andere twee zijn optionele domein-uitbreidingen** waarvan
-een repo er hooguit één nodig heeft. De kern is repo-neutraal geschreven (geen repo-namen, paden of
-scriptnamen — die context komt uit de repo-lens van de consument); de domein-groepen noemen hun
-domein juist expliciet, want alleen een passende repo schakelt ze in.
+In short: **`specialists` is the foundation; the other two are optional domain extensions**, of
+which a repo needs at most one. The core is written repo-neutrally (no repo names, paths, or script
+names — that context comes from the consumer's repo lens); the domain groups name their domain
+explicitly, because only a matching repo enables them.
 
-## Agent-def vs. manual — twee bestanden, één specialist
+## Agent def vs. manual — two files, one specialist
 
-Elke specialist in deze plugins bestaat uit twee bestanden, elk met een eigen taak:
+Every specialist in these plugins consists of two files, each with its own job:
 
-- **`agents/<group>-<id>-agent.md` — de agent-definitie**, de uitvoerbare vorm. De frontmatter
-  (`name`, `description`, `tools`, `model`) is wat Claude Code inleest om de subagent te registreren;
-  de `description` is bovendien het routing-signaal waarop de hoofdloop een subagent kiest. De body is
-  bewust alleen een compacte operationele kern (werkwijze, grenzen, opleverformaat) en verwijst voor
-  het echte vak door naar het vakboek.
-- **`manuals/<group>-<id>-manual.md` — het vakboek**, de volledige beschrijving van het vak: de harde
-  regels, de afwegingen erachter en de persoonlijkheid & toon. Het wordt on-demand gelezen — door de
-  subagent zelf bij twijfel, én door de hoofdloop (de orchestrator die het werk toewijst en de
-  persona's die geen subagent zijn).
+- **`agents/<group>-<id>-agent.md` — the agent definition**, the executable form. The frontmatter
+  (`name`, `description`, `tools`, `model`) is what Claude Code reads to register the subagent;
+  the `description` is also the routing signal the main loop uses to pick a subagent. The body is
+  deliberately just a compact operational core (working method, boundaries, deliverable format) and
+  refers to the playbook for the actual craft.
+- **`manuals/<group>-<id>-manual.md` — the playbook**, the full description of the craft: the
+  hard rules, the trade-offs behind them, and the personality & tone. It is read on demand — by the
+  subagent itself when in doubt, and by the main loop (the orchestrator that assigns the work and
+  the personas that are not subagents).
 
-**De manual is leidend; de agent-def is de uitvoerbare verkorting.** Een vakregel wijzig je in de
-manual; de agent-def raak je alleen aan als de operationele kern of de tool-set verandert. De twee
-blijven bewust gescheiden: ze dienen verschillende lezers (de harness vs. mens en hoofdloop), de
-router-kritieke `description` en tool-set horen niet mee te deinen met elke tekstuele aanscherping,
-en het draagbaar-vs-repo-lens-model (zie
-[Manuals — het gesplitste model](../../README.md#manuals--het-gesplitste-model) in de root-README)
-leunt op manuals als zelfstandige, lintbare documenten. Bovendien is het manual-formaat de gemene
-deler over het hele team: de persona-only specialisten (Chris, Derek, Rendall) hebben géén agent-def,
-maar wél een volwaardig vakboek als sjabloon in `personas/`.
+**The manual is leading; the agent def is the executable abbreviation.** You change a craft rule in
+the manual; you only touch the agent def when the operational core or the tool set changes. The two
+are kept deliberately separate: they serve different readers (the harness vs. humans and the main
+loop), the router-critical `description` and tool set should not sway along with every textual
+refinement, and the portable-vs-repo-lens model (see
+[Manuals — the split model](../../README.md#manuals--the-split-model) in the root README)
+relies on manuals as standalone, lintable documents. Moreover, the manual format is the common
+denominator across the whole team: the persona-only specialists (Chris, Derek, Rendall) have no
+agent def, but do have a full playbook as a template in `personas/`.
 
-## Aanroep
+## Invocation
 
-Na inschakelen zijn de specialisten aanroepbaar met de **plugin-naam als namespace**:
-`@specialists:<naam>`, `@specialists-lifehub:<naam>` of `@specialists-shopify:<naam>`.
+Once enabled, the specialists can be invoked with the **plugin name as namespace**:
+`@specialists:<name>`, `@specialists-lifehub:<name>`, or `@specialists-shopify:<name>`.
 
-## Meer weten?
+## Want to know more?
 
-**Zelf aansluiten?** Volg de [Quickstart](QUICKSTART.md) — aansluiten in drie stappen, voor wie het
-systeem niet gebouwd heeft.
+**Connecting your own repo?** Follow the [Quickstart](QUICKSTART.md) — connect in three steps, for
+those who didn't build the system.
 
-Hoe een repo deze plugins consumeert (marketplace-source, `enabledPlugins`), hoe het gesplitste
-manual-model werkt en hoe het bootstrap-adoptiepad (`specialists-init`) een verse repo op gang helpt,
-staat in de [root-README](../../README.md) van de werkplaats.
+How a repo consumes these plugins (marketplace source, `enabledPlugins`), how the split manual
+model works, and how the bootstrap adoption path (`specialists-init`) gets a fresh repo going is
+covered in the workshop's [root README](../../README.md).

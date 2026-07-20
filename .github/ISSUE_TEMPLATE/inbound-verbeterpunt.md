@@ -1,19 +1,19 @@
 ---
-name: Inbound-verbeterpunt (uit een connector)
-about: Kern-verbeterpunt ontdekt in een consumerende repo (life-hub, smartwatchbanden) dat eerst in de bron moet landen
-title: "inbound: <korte samenvatting>"
+name: Inbound improvement (from a connector)
+about: Core improvement discovered in a consuming repo (life-hub, smartwatchbanden) that must land in the source first
+title: "inbound: <short summary>"
 labels: inbound
 ---
 
-## Uit welke repo komt dit?
-<!-- bv. DaveKJohn/life-hub -->
+## Which repo does this come from?
+<!-- e.g. DaveKJohn/life-hub -->
 
-## Wat moet er in de kern anders?
-<!-- welke gedeelde agent-def / manual / persona-body / skill, en wat er precies moet veranderen -->
+## What should change in the core?
+<!-- which shared agent def / manual / persona body / skill, and what exactly needs to change -->
 
-## Waarom (de praktijksituatie)?
-<!-- het concrete moment waarop dit knelde — hoe specifieker, hoe beter de wijziging wordt -->
+## Why (the real-world situation)?
+<!-- the concrete moment this pinched — the more specific, the better the change will be -->
 
-## Urgentie
-<!-- kan dit wachten op de volgende release, of is er een tijdelijke overbrugging in de eigen
-     repo-lens gezet die na de sync weer weg moet? Benoem die dan expliciet. -->
+## Urgency
+<!-- can this wait for the next release, or has a temporary bridge been placed in your own
+     repo lens that must be removed again after the sync? If so, name it explicitly. -->
