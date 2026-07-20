@@ -1,5 +1,5 @@
 ## What does this change do?
-<!-- Short description of what changes and why. -->
+<!-- Korte beschrijving van wat er verandert en waarom. -->
 
 ## Type of change
 <!-- Check the branch type (prefix + label listed alongside). -->
@@ -9,9 +9,9 @@
 - [ ] `chore/` · maintenance: scripts, workflow, tooling, config · _documentation_
 
 ## Checklist
-- [ ] Changelog entry file created (`<branch-name>.md` in the repo root)
+- [ ] Changelog entry-bestand aangemaakt (`<branch-name>.md` in the repo root)
 - [ ] `check-plugin-integrity.ps1` green (manifests, agent-def frontmatter, links)
 - [ ] Shared agent defs change here only (this repo is the single source of truth)
 
 ## Explicit approval
-- [ ] Requested by Dave (the PR request also counts as merge approval)
+- [ ] Aangevraagd door Dave (the PR request also counts as merge approval)
