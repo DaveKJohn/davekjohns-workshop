@@ -60,8 +60,12 @@ foreach ($pair in $pairs) {
 
 Write-Host "Dual-context resolution guarded in every source" -ForegroundColor Cyan
 # The whole mirror mechanism relies on a shared script resolving its repo root dual-context.
-# If CLAUDE_PROJECT_DIR disappears from a source, the consumer call breaks silently -- this catches that.
-foreach ($pair in $pairs) {
+# If CLAUDE_PROJECT_DIR disappears from a source, the consumer call breaks silently -- this catches
+# that. Exception: a dot-sourced LIB (issue #114's check-report-lib) is not itself a standalone
+# entry point -- it never resolves a repo root; it is reached via a $PSScriptRoot-relative
+# dot-source from a caller that already resolved one, so this invariant does not apply to it.
+$libOnlyPairs = @('check-report-lib')
+foreach ($pair in ($pairs | Where-Object { $libOnlyPairs -notcontains $_.Name })) {
     $src = Get-NormalizedScriptContent -Path $pair.SourcePath
     Assert-True ($src -match 'CLAUDE_PROJECT_DIR') "$($pair.Name): source resolves the repo root via CLAUDE_PROJECT_DIR"
 }

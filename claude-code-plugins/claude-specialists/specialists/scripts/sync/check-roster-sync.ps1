@@ -70,38 +70,13 @@ $cacheRoot = if ($CacheRootOverride) { $CacheRootOverride } else { Join-Path $en
 $script:errors = 0
 $script:infos  = 0
 
-function Write-Ok   ([string]$Msg) { Write-Host "  [OK]    $Msg" -ForegroundColor Green }
-function Write-Info ([string]$Msg) { $script:infos++;  Write-Host "  [INFO]  $Msg" -ForegroundColor Yellow }
-function Write-Fout ([string]$Msg) { $script:errors++; Write-Host "  [ERROR] $Msg" -ForegroundColor Red }
-
-# Resolve the versioned plugin dir for a plugin id split into name + marketplace. Honors
-# $env:CLAUDE_PLUGIN_ROOT (hook context) only when it points at THIS plugin (its parent dir leaf equals
-# the plugin name), so a multi-plugin setup stays correct; otherwise picks the semantically highest
-# version under <cacheRoot>/<marketplace>/<name>/ (bootstrap lesson: a string-sort puts 1.9.0 above
-# 1.10.0 -- [version] fixes that).
-function Resolve-PluginDir {
-    param([string]$Name, [string]$Marketplace, [string]$CacheRoot)
-
-    if ($env:CLAUDE_PLUGIN_ROOT) {
-        $cpr = $env:CLAUDE_PLUGIN_ROOT
-        if ((Test-Path -LiteralPath $cpr -PathType Container) -and
-            ((Split-Path (Split-Path $cpr -Parent) -Leaf) -eq $Name)) {
-            return (Resolve-Path -LiteralPath $cpr).Path
-        }
-    }
-
-    $nameDir = Join-Path (Join-Path $CacheRoot $Marketplace) $Name
-    if (-not (Test-Path -LiteralPath $nameDir -PathType Container)) { return $null }
-    $versions = Get-ChildItem -LiteralPath $nameDir -Directory |
-        Where-Object { $_.Name -match '^\d+\.\d+\.\d+$' } |
-        Sort-Object { [version]$_.Name } -Descending
-    foreach ($v in $versions) {
-        if (Test-Path -LiteralPath (Join-Path $v.FullName 'agents') -PathType Container) {
-            return (Resolve-Path -LiteralPath $v.FullName).Path
-        }
-    }
-    return $null
-}
+# Write-Ok/Write-Info/Write-Failure + Test-PluginNameSlug/Test-PluginMarketplaceSlug + Resolve-PluginDir:
+# shared with check-connectors.ps1 and skills/sync-roster/sync-roster.ps1 (single source, issue
+# #114). This script is a whole-file mirror (scripts/lib/shared-scripts-lib.ps1); check-report-lib.ps1
+# is registered in that same pair set and therefore travels along, so a $PSScriptRoot-relative
+# dot-source (not $repoRoot -- this lib is not repo-owned, unlike repo-config.ps1/branch-info.ps1)
+# resolves correctly whether this file runs from the workshop root or the plugin mirror.
+. (Join-Path $PSScriptRoot '..\lib\check-report-lib.ps1')
 
 # Agent ids ('<group>-<id>') a plugin ships (source a).
 function Get-AgentIds {
@@ -215,16 +190,16 @@ foreach ($plugId in ($enabledIds | Sort-Object -Unique)) {
 
     # Guardrail: plugin-name/marketplace come from settings and become path segments -- validate as
     # slugs before touching the filesystem (mirrors check-connectors' Get-PluginDir).
-    if ($name -notmatch '^[a-z0-9][a-z0-9-]*$') {
-        Write-Fout "invalid plugin id '$plugId' in .claude/settings.json -- skipped."
+    if (-not (Test-PluginNameSlug -Name $name)) {
+        Write-Failure "invalid plugin id '$plugId' in .claude/settings.json -- skipped."
         continue
     }
     if (-not $marketplace) {
         Write-Info "plugin '$plugId' has no '@marketplace' suffix -- cannot resolve its cache dir, skipped."
         continue
     }
-    if ($marketplace -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*$') {
-        Write-Fout "invalid marketplace in plugin id '$plugId' -- skipped."
+    if (-not (Test-PluginMarketplaceSlug -Marketplace $marketplace)) {
+        Write-Failure "invalid marketplace in plugin id '$plugId' -- skipped."
         continue
     }
 
@@ -249,10 +224,10 @@ foreach ($plugId in ($enabledIds | Sort-Object -Unique)) {
         $inRoster = Test-InRoster -RosterText $rosterText -Id $id
         $hasLens  = Test-LensExists -RepoRoot $repoRoot -PluginName $name -Id $id
         if (-not $inRoster) {
-            Write-Fout "agent '$id' ($plugId) has no roster row in $rosterRel -- add it to the roster."
+            Write-Failure "agent '$id' ($plugId) has no roster row in $rosterRel -- add it to the roster."
         }
         if (-not $hasLens) {
-            Write-Fout "agent '$id' ($plugId) has no repo-lens (.claude/plugins/claude-specialists/$name/$id-extension.md or the legacy .claude/extensions/ path)."
+            Write-Failure "agent '$id' ($plugId) has no repo-lens (.claude/plugins/claude-specialists/$name/$id-extension.md or the legacy .claude/extensions/ path)."
         }
         if ($inRoster -and $hasLens) { Write-Ok "agent '$id' present in roster + lens" }
     }
@@ -279,6 +254,4 @@ if ($pluginNames.Count -gt 0) {
     if (-not $orphanFound) { Write-Ok "no orphan roster tokens / lens files" }
 }
 
-Write-Host "`nSummary: $($script:errors) error(s), $($script:infos) info signal(s)." -ForegroundColor $(if ($script:errors -gt 0) { 'Red' } else { 'Green' })
-if ($script:errors -gt 0) { exit 1 }
-exit 0
+Write-CheckSummary

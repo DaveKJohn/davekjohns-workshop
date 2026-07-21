@@ -54,6 +54,11 @@ function Get-SharedScriptPairs {
             Name   = 'new-branch'
             Source = 'scripts\task\new-branch.ps1'
             Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\task\new-branch.ps1'
+        },
+        @{
+            Name   = 'check-report-lib'
+            Source = 'scripts\lib\check-report-lib.ps1'
+            Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\lib\check-report-lib.ps1'
         }
     )
 

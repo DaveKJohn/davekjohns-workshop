@@ -68,16 +68,16 @@ $DriftLint  = Join-Path $RepoRoot 'scripts\lint\check-consumer-drift.ps1'
 $script:errors = 0
 $script:infos  = 0
 
-function Write-Ok   ([string]$Msg) { Write-Host "  [OK]    $Msg" -ForegroundColor Green }
-function Write-Skip ([string]$Msg) { Write-Host "  [SKIP]  $Msg" -ForegroundColor DarkGray }
-function Write-Info ([string]$Msg) { $script:infos++;  Write-Host "  [INFO]  $Msg" -ForegroundColor Yellow }
-function Write-Fout ([string]$Msg) { $script:errors++; Write-Host "  [ERROR] $Msg" -ForegroundColor Red }
+# Write-Ok/Write-Info/Write-Failure + Test-PluginNameSlug: shared with check-roster-sync.ps1 (single
+# source, issue #114). This script is workshop-only (not mirrored -- it reads the connectors/
+# register that only exists here), so the lib is dot-sourced unconditionally.
+. (Join-Path $PSScriptRoot '..\lib\check-report-lib.ps1')
 
 # Plugin id (before the '@') -> plugin folder under the family root, only if the name is a
 # simple slug AND the folder actually exists under the family root; otherwise $null.
 function Get-PluginDir([string]$PluginId) {
     $name = $PluginId.Split('@')[0]
-    if ($name -notmatch '^[a-z0-9][a-z0-9-]*$') { return $null }
+    if (-not (Test-PluginNameSlug -Name $name)) { return $null }
     $dir = Join-Path $FamilyRoot $name
     if (-not (Test-Path -LiteralPath $dir)) { return $null }
     return $dir
@@ -134,7 +134,7 @@ foreach ($mf in $manifestFiles) {
     } else {
         if ([System.IO.Path]::IsPathRooted($m.localCheckout)) {
             if ($OnlyConsumer) { continue }
-            Write-Fout "absolute localCheckout path '$($m.localCheckout)' in $($mf.Name) -- rejected (relative sibling paths only)."
+            Write-Failure "absolute localCheckout path '$($m.localCheckout)' in $($mf.Name) -- rejected (relative sibling paths only)."
             continue
         }
         $checkout = Join-Path $RepoRoot $m.localCheckout
@@ -154,7 +154,7 @@ foreach ($mf in $manifestFiles) {
     if (-not $ConsumerPathOverride) {
         $scopeRoot = (Resolve-Path -LiteralPath (Join-Path $RepoRoot '..\..')).Path
         if (-not $checkout.StartsWith($scopeRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-            Write-Fout "localCheckout '$($m.localCheckout)' falls outside the allowed scope ('$scopeRoot') -- rejected."
+            Write-Failure "localCheckout '$($m.localCheckout)' falls outside the allowed scope ('$scopeRoot') -- rejected."
             continue
         }
     }
@@ -168,7 +168,7 @@ foreach ($mf in $manifestFiles) {
     if (Test-Path -LiteralPath $settingsPath) {
         $settings = Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
     } else {
-        Write-Fout ".claude/settings.json not found in '$checkout'"
+        Write-Failure ".claude/settings.json not found in '$checkout'"
     }
 
     foreach ($p in @($m.plugins)) {
@@ -176,7 +176,7 @@ foreach ($mf in $manifestFiles) {
 
         $pluginDir = Get-PluginDir $p.id
         if ($null -eq $pluginDir) {
-            Write-Fout "invalid or unknown plugin field '$($p.id)' in $($mf.Name) -- plugin block skipped."
+            Write-Failure "invalid or unknown plugin field '$($p.id)' in $($mf.Name) -- plugin block skipped."
             continue
         }
 
@@ -188,7 +188,7 @@ foreach ($mf in $manifestFiles) {
                 if ($prop -and $prop.Value -eq $true) { $enabled = $true }
             }
             if ($enabled) { Write-Ok "plugin is enabled in .claude/settings.json" }
-            else          { Write-Fout "plugin '$($p.id)' is NOT (or no longer) enabled in $settingsPath" }
+            else          { Write-Failure "plugin '$($p.id)' is NOT (or no longer) enabled in $settingsPath" }
         }
 
         # 3. Registered extensions present? + unregistered extensions of this plugin.
@@ -208,7 +208,7 @@ foreach ($mf in $manifestFiles) {
             }
             if (-not $hit) { $missing += $id }
         }
-        if ($missing.Count -gt 0) { Write-Fout ("registered extension(s) missing: " + ($missing -join ', ')) }
+        if ($missing.Count -gt 0) { Write-Failure ("registered extension(s) missing: " + ($missing -join ', ')) }
         else                      { Write-Ok  "all $(@($p.extensions).Count) registered extensions present" }
 
         $ownedIds = Get-PluginIds $pluginDir
@@ -246,7 +246,7 @@ foreach ($mf in $manifestFiles) {
                 } elseif ($record.version -eq $sourceVersion) {
                     Write-Ok "machine record is on the source version (v$sourceVersion)"
                 } else {
-                    Write-Fout "machine record is on v$($record.version), source on v$sourceVersion -- update the plugin from the consumer (scope lesson)."
+                    Write-Failure "machine record is on v$($record.version), source on v$sourceVersion -- update the plugin from the consumer (scope lesson)."
                 }
             } else {
                 Write-Info "no plugin administration found on this machine -- version check skipped."
@@ -269,10 +269,8 @@ if (-not $SkipDrift) {
         & powershell -NoProfile -ExecutionPolicy Bypass -File $DriftLint -ConsumerPath $checkout -Quiet |
             Where-Object { $_ -match 'DRIFTED|IDENTICAL|summary|drift' } |
             ForEach-Object { Write-Host "  $_" }
-        if ($LASTEXITCODE -ne 0) { Write-Fout "agent-def drift found in $($checkedConsumers[$checkout]) -- see check-consumer-drift." }
+        if ($LASTEXITCODE -ne 0) { Write-Failure "agent-def drift found in $($checkedConsumers[$checkout]) -- see check-consumer-drift." }
     }
 }
 
-Write-Host "`nSummary: $($script:errors) error(s), $($script:infos) info signal(s)." -ForegroundColor $(if ($script:errors -gt 0) { 'Red' } else { 'Green' })
-if ($script:errors -gt 0) { exit 1 }
-exit 0
+Write-CheckSummary

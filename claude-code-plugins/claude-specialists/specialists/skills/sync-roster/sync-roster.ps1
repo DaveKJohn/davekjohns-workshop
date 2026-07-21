@@ -69,9 +69,20 @@ $script:created  = 0
 $script:kept     = 0
 $script:proposed = 0
 
-function Write-Ok   ([string]$Msg) { Write-Host "  [OK]    $Msg" -ForegroundColor Green }
+# Write-Ok + Test-PluginNameSlug/Test-PluginMarketplaceSlug + Resolve-PluginDir: shared with
+# scripts/sync/check-roster-sync.ps1 and check-connectors.ps1 (single source, issue #114). This
+# lib is not repo-owned (unlike repo-config.ps1/branch-info.ps1), so it needs no consumer scaffold
+# -- it ships as part of the SAME plugin payload as this skill, two levels up under scripts/lib/,
+# so the $PSScriptRoot-relative path resolves correctly from the workshop checkout and from a
+# consumer's plugin cache alike.
+. (Join-Path $PSScriptRoot '..\..\scripts\lib\check-report-lib.ps1')
+
+# This script tracks created/kept/proposed (not error/info signals, and always exits 0 -- drift is
+# the expected input here, not a failure), so it deliberately keeps its own non-counting
+# Write-Info/Write-Failure instead of the lib's counting variants (an intentional, later redefinition
+# in this same scope -- ordinary PowerShell function resolution).
 function Write-Info ([string]$Msg) { Write-Host "  [INFO]  $Msg" -ForegroundColor Yellow }
-function Write-Fout ([string]$Msg) { Write-Host "  [ERROR] $Msg" -ForegroundColor Red }
+function Write-Failure ([string]$Msg) { Write-Host "  [ERROR] $Msg" -ForegroundColor Red }
 
 # Locate check-roster-sync.ps1: an explicit override (tests) wins; then the plugin-root copy (hook /
 # consumer context via CLAUDE_PLUGIN_ROOT); else the mirror that ships beside this skill
@@ -88,32 +99,9 @@ function Resolve-CheckScript {
     return $null
 }
 
-# Resolve the versioned plugin dir for a plugin split into name + marketplace -- mirrors
-# check-roster-sync.ps1's Resolve-PluginDir so the frontmatter we read comes from the SAME cache dir
-# the check inspected (semantically highest version; [version]-sort so 1.10.0 beats 1.9.0).
-function Resolve-PluginDir {
-    param([string]$Name, [string]$Marketplace, [string]$CacheRoot)
-
-    if ($env:CLAUDE_PLUGIN_ROOT) {
-        $cpr = $env:CLAUDE_PLUGIN_ROOT
-        if ((Test-Path -LiteralPath $cpr -PathType Container) -and
-            ((Split-Path (Split-Path $cpr -Parent) -Leaf) -eq $Name)) {
-            return (Resolve-Path -LiteralPath $cpr).Path
-        }
-    }
-
-    $nameDir = Join-Path (Join-Path $CacheRoot $Marketplace) $Name
-    if (-not (Test-Path -LiteralPath $nameDir -PathType Container)) { return $null }
-    $versions = Get-ChildItem -LiteralPath $nameDir -Directory |
-        Where-Object { $_.Name -match '^\d+\.\d+\.\d+$' } |
-        Sort-Object { [version]$_.Name } -Descending
-    foreach ($v in $versions) {
-        if (Test-Path -LiteralPath (Join-Path $v.FullName 'agents') -PathType Container) {
-            return (Resolve-Path -LiteralPath $v.FullName).Path
-        }
-    }
-    return $null
-}
+# Resolve-PluginDir comes from the dot-sourced check-report-lib.ps1 above (shared with
+# check-roster-sync.ps1, so the frontmatter we read comes from the SAME cache dir the check
+# inspected -- semantically highest version; [version]-sort so 1.10.0 beats 1.9.0).
 
 # Read an agent's display name + a short description from its cache file's frontmatter. Returns a
 # hashtable @{ Name; Description } (both best-effort, may be empty). The description is a YAML folded
@@ -192,7 +180,7 @@ Write-Host "== sync-roster -- $repoRoot ==" -ForegroundColor Cyan
 # --- 1. Delegate detection to check-roster-sync.ps1 -------------------------------------------------
 $checkScript = Resolve-CheckScript
 if (-not $checkScript -or -not (Test-Path -LiteralPath $checkScript -PathType Leaf)) {
-    Write-Fout "check-roster-sync.ps1 not found -- cannot determine the drift. Nothing staged."
+    Write-Failure "check-roster-sync.ps1 not found -- cannot determine the drift. Nothing staged."
     exit 0
 }
 
@@ -222,15 +210,16 @@ if ($missingLens.Count -eq 0 -and $missingRoster.Count -eq 0) {
 }
 
 # Split a validated plugin id into name + marketplace, or $null if either fails the slug guard.
-# Guardrail: name/marketplace become path segments -- validate as slugs before filesystem access
-# (mirrors check-roster-sync / check-connectors).
+# Guardrail: name/marketplace become path segments -- validate as slugs before filesystem access,
+# via the shared Test-PluginNameSlug/Test-PluginMarketplaceSlug (mirrors check-roster-sync /
+# check-connectors).
 function Split-PluginId {
     param([string]$PluginId)
     $parts = $PluginId.Split('@')
     $name = $parts[0]
     $marketplace = if ($parts.Count -gt 1) { $parts[1] } else { '' }
-    if ($name -notmatch '^[a-z0-9][a-z0-9-]*$') { return $null }
-    if (-not $marketplace -or $marketplace -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*$') { return $null }
+    if (-not (Test-PluginNameSlug -Name $name)) { return $null }
+    if (-not $marketplace -or -not (Test-PluginMarketplaceSlug -Marketplace $marketplace)) { return $null }
     return @{ Name = $name; Marketplace = $marketplace }
 }
 
@@ -252,7 +241,7 @@ foreach ($e in $missingLens) {
     $id = $e.Id
     $parts = $id.Split('-'); $group = $parts[0]; $idNum = $parts[1]
     $pi = Split-PluginId -PluginId $e.PluginId
-    if ($null -eq $pi) { Write-Fout "skipping lens for '$id' -- invalid plugin id '$($e.PluginId)'."; continue }
+    if ($null -eq $pi) { Write-Failure "skipping lens for '$id' -- invalid plugin id '$($e.PluginId)'."; continue }
 
     $dest = Join-Path $repoRoot ".claude\plugins\claude-specialists\$($pi.Name)\$id-extension.md"
     if (Test-Path -LiteralPath $dest -PathType Leaf) {
@@ -300,7 +289,7 @@ foreach ($e in $missingRoster) {
     $id = $e.Id
     $parts = $id.Split('-'); $group = $parts[0]; $idNum = $parts[1]
     $pi = Split-PluginId -PluginId $e.PluginId
-    if ($null -eq $pi) { Write-Fout "skipping roster row for '$id' -- invalid plugin id '$($e.PluginId)'."; continue }
+    if ($null -eq $pi) { Write-Failure "skipping roster row for '$id' -- invalid plugin id '$($e.PluginId)'."; continue }
 
     $displayName = "$group-$idNum"; $desc = ''
     $pluginDir = Get-CachedPluginDir -Name $pi.Name -Marketplace $pi.Marketplace

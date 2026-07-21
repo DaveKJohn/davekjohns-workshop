@@ -20,10 +20,12 @@
       - The $env:CLAUDE_PLUGIN_ROOT hook-context branch of Resolve-PluginDir is not covered; in
         practice this script is not a hook, so that env var is normally unset. The cache-resolution
         branch (incl. semantically-highest-version) IS covered.
-      - No test exercises TWO simultaneously-enabled plugins (the cross-plugin orphan aggregation over
-        the shared $allBackingIds/$pluginNames). Single-plugin aggregation is covered; the multi-plugin
-        path is deferred to layer 2, where the hook wiring exercises it naturally (fixture cache would
-        need a second plugin name to test here).
+      - TWO simultaneously-enabled plugins (the cross-plugin orphan aggregation over the shared
+        $allBackingIds/$pluginNames) IS covered (scenario 12): 'specialists' + a second fixture
+        plugin 'widgets' each ship one agent and one orphan; the test asserts neither plugin's own
+        agent is misreported as an orphan by the other plugin's pass, and that BOTH orphans surface
+        (not just the first plugin's), proving the aggregation is a union across the whole loop, not
+        truncated to the last plugin processed.
 #>
 $ErrorActionPreference = 'Stop'
 
@@ -72,13 +74,17 @@ function Invoke-Ps {
 }
 
 # Builds a fixture plugin cache. -VersionAgents: @{ '1.11.0' = @('06-16','06-24') }.
-# -VersionPersonas: @{ '1.11.0' = @('01-01') }. Returns the cache root.
+# -VersionPersonas: @{ '1.11.0' = @('01-01') }. -Plugin: which plugin name to build under the cache
+# root (default the module-level $PluginName, 'specialists'). -KeepExisting: do NOT wipe the cache
+# root first -- needed to build a SECOND plugin into the same cache (scenario 12, two enabled plugins
+# sharing one cache root, matching the real $env:USERPROFILE\.claude\plugins\cache layout). Returns
+# the cache root.
 function New-FixtureCache {
-    param([hashtable]$VersionAgents, [hashtable]$VersionPersonas = @{})
+    param([hashtable]$VersionAgents, [hashtable]$VersionPersonas = @{}, [string]$Plugin = $PluginName, [switch]$KeepExisting)
     $cache = Join-Path $Fixture 'cache'
-    if (Test-Path -LiteralPath $cache) { Remove-Item -Recurse -Force -LiteralPath $cache }
+    if (-not $KeepExisting -and (Test-Path -LiteralPath $cache)) { Remove-Item -Recurse -Force -LiteralPath $cache }
     foreach ($ver in $VersionAgents.Keys) {
-        $adir = Join-Path $cache "$Marketplace\$PluginName\$ver\agents"
+        $adir = Join-Path $cache "$Marketplace\$Plugin\$ver\agents"
         New-Item -ItemType Directory -Path $adir -Force | Out-Null
         foreach ($id in $VersionAgents[$ver]) {
             $g = $id.Split('-')[0]; $i = $id.Split('-')[1]
@@ -86,7 +92,7 @@ function New-FixtureCache {
         }
     }
     foreach ($ver in $VersionPersonas.Keys) {
-        $pdir = Join-Path $cache "$Marketplace\$PluginName\$ver\personas"
+        $pdir = Join-Path $cache "$Marketplace\$Plugin\$ver\personas"
         New-Item -ItemType Directory -Path $pdir -Force | Out-Null
         foreach ($id in $VersionPersonas[$ver]) {
             $g = $id.Split('-')[0]; $i = $id.Split('-')[1]
@@ -107,7 +113,13 @@ function New-FixtureConsumer {
         [bool]$WriteSettings = $true,
         [string]$RosterFile = 'CLAUDE.md',
         [string]$RepoConfig = '',
-        [string]$EnabledPluginId = $PluginId
+        [string]$EnabledPluginId = $PluginId,
+        # Scenario 12 (two enabled plugins): extra 'name@marketplace' ids written into
+        # enabledPlugins alongside $EnabledPluginId, and a map of pluginName -> ids whose lens files
+        # are written under that plugin's OWN .claude/plugins/claude-specialists/<name>/ dir (a
+        # second plugin has its own lens namespace, distinct from $PluginName's).
+        [string[]]$ExtraEnabledPluginIds = @(),
+        [hashtable]$ExtraLensesByPlugin = @{}
     )
     $root = Join-Path $Fixture 'consumer'
     if (Test-Path -LiteralPath $root) { Remove-Item -Recurse -Force -LiteralPath $root }
@@ -115,7 +127,9 @@ function New-FixtureConsumer {
 
     if ($WriteSettings) {
         $val = if ($Enabled) { 'true' } else { 'false' }
-        $settings = '{ "enabledPlugins": { "' + $EnabledPluginId + '": ' + $val + ' } }'
+        $entries = @('"' + $EnabledPluginId + '": ' + $val)
+        foreach ($extraId in $ExtraEnabledPluginIds) { $entries += '"' + $extraId + '": true' }
+        $settings = '{ "enabledPlugins": { ' + ($entries -join ', ') + ' } }'
         [System.IO.File]::WriteAllText((Join-Path $root '.claude\settings.json'), $settings)
     }
 
@@ -132,6 +146,11 @@ function New-FixtureConsumer {
         $ldir = Join-Path $root '.claude\extensions'
         New-Item -ItemType Directory -Path $ldir -Force | Out-Null
         foreach ($id in $LegacyLensIds) { [System.IO.File]::WriteAllText((Join-Path $ldir "$id-extension.md"), "lens") }
+    }
+    foreach ($pn in $ExtraLensesByPlugin.Keys) {
+        $edir = Join-Path $root ".claude\plugins\claude-specialists\$pn"
+        New-Item -ItemType Directory -Path $edir -Force | Out-Null
+        foreach ($id in $ExtraLensesByPlugin[$pn]) { [System.IO.File]::WriteAllText((Join-Path $edir "$id-extension.md"), "lens") }
     }
     if ($RepoConfig) {
         New-Item -ItemType Directory -Path (Join-Path $root 'scripts') -Force | Out-Null
@@ -296,6 +315,29 @@ try {
     $r = Invoke-Ps @('-ConsumerPathOverride', $c, '-CacheRootOverride', $cache)
     Assert-Equal 1 $r.Code 'guardrail: exit-code 1 on malformed plugin id'
     Assert-Match "\[ERROR\].*invalid plugin id" $r.Out 'guardrail: malformed plugin id rejected'
+
+    # --- 12. Cross-plugin orphan aggregation: TWO enabled plugins, each with its own orphan --------
+    #     Documented test-gap (see file header). 'specialists' ships agent 06-16, 'widgets' ships
+    #     agent 07-07; both are satisfied (roster + own lens dir). 09-90 (lens under specialists'
+    #     dir) and 09-91 (lens under widgets' dir) are backed by NEITHER plugin -- true orphans.
+    #     Assertions prove: (1) 06-16/07-07 are NOT misreported as orphans by the OTHER plugin's
+    #     pass (the union $allBackingIds must survive across both loop iterations, not just the
+    #     last one), and (2) BOTH orphans surface -- not just the first plugin's -- via the
+    #     '2 info signal(s)' summary count.
+    $cache = New-FixtureCache -VersionAgents @{ '1.11.0' = @('06-16') } -Plugin 'specialists'
+    $cache = New-FixtureCache -VersionAgents @{ '1.11.0' = @('07-07') } -Plugin 'widgets' -KeepExisting
+    $c = New-FixtureConsumer -RosterIds @('06-16', '07-07', '09-90', '09-91') -LensIds @('06-16', '09-90') `
+        -ExtraEnabledPluginIds @('widgets@davekjohns-workshop') `
+        -ExtraLensesByPlugin @{ 'widgets' = @('07-07', '09-91') }
+    $r = Invoke-Ps @('-ConsumerPathOverride', $c, '-CacheRootOverride', $cache)
+    Assert-Equal 0 $r.Code 'two-plugin: exit-code 0 (both agents satisfied, orphans are INFO only)'
+    Assert-Match "\[OK\]\s+agent '06-16' present in roster \+ lens" $r.Out 'two-plugin: specialists agent 06-16 OK'
+    Assert-Match "\[OK\]\s+agent '07-07' present in roster \+ lens" $r.Out 'two-plugin: widgets agent 07-07 OK'
+    Assert-Match "\[INFO\].*orphan '09-90'" $r.Out 'two-plugin: specialists orphan 09-90 reported'
+    Assert-Match "\[INFO\].*orphan '09-91'" $r.Out 'two-plugin: widgets orphan 09-91 reported'
+    Assert-NotMatch "orphan '06-16'" $r.Out 'two-plugin: 06-16 (backed by specialists) not an orphan'
+    Assert-NotMatch "orphan '07-07'" $r.Out 'two-plugin: 07-07 (backed by widgets) not an orphan'
+    Assert-Match '2 info signal' $r.Out 'two-plugin: BOTH orphans counted (not just the first)'
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
 }
