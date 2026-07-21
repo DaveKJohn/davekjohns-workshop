@@ -1,29 +1,29 @@
-# Release v1.14.0
+# Release v1.15.0
 
 **Date:** 2026-07-21  
 **Type:** Minor
 
-Cross-browser and automation-first shared rules, and a leaner, plugin-independent CLAUDE.md
+English script layer, Shopify dev-first, consumer-fit open-pr/fold, and shared release/check helpers
 
 You are on this release.
 
-## v1.14.0 — 2026-07-21
+## v1.15.0 — 2026-07-21
 
-### #121 · Make the automation-first (lazy) rule a plugin-owned shared block, like inbound-behaviour · Feat · 2026-07-21
+### #123 · Translate the GEGENEREERD, bewerk sentinel marker to English across the agent defs · Docs · 2026-07-21
 
-The automation-first ("stay lazy") behavioral rule is now plugin-owned via a new shared block,
-`claude-code-plugins/claude-specialists/agent-shared/laziness-automation.md`, wired into the
-subagent agent-defs via `<!-- BEGIN/END shared:... -->` sentinels — the same circle as
-`shared:inbound-behaviour` — so the rule travels along to consuming repos instead of living only
-in this repo's own `CLAUDE.md`. The per-specialist "X is lazy" examples in the manuals stay in
-place as elaboration; `CLAUDE.md`'s own "Shared trait — all of them incredibly lazy" paragraph
-remains as the governance narrative for the main loop (Chris and the main-loop personas, who carry
-no agent-shared blocks), with a light note added that it is the same rule carried by every
-specialist's shared playbook, not a second canonical copy.
+Translated the last Dutch fragment in the agent-def shared-block sentinel comments to English, in
+line with the repo-wide English-content norm: `<!-- BEGIN shared:NAME -- GEGENEREERD, bewerk
+agent-shared/NAME.md -->` becomes `<!-- BEGIN shared:NAME -- GENERATED, edit agent-shared/NAME.md
+-->`. The marker is literal per-file text (the generator preserves the BEGIN/END sentinel lines
+as-is and only fills the body between them), so all 21 agent-defs across the three plugins were
+updated directly, plus the one docstring example in `agent-shared-lib.ps1` and the one test
+fixture string in `agent-shared.tests.ps1`. No regex in the generator or the lint gate matched the
+Dutch text, so nothing there needed changing. Verified: `build-agent-defs.ps1 -Check` (in sync),
+`check-plugin-integrity.ps1` (0 errors), and all `scripts/tests/*.tests.ps1` suites green.
 
-[PR #121](https://github.com/DaveKJohn/davekjohns-workshop/pull/121)
+[PR #123](https://github.com/DaveKJohn/davekjohns-workshop/pull/123)
 
 ---
 
-Full workshop notes: [releases/development/1.14/1.14.0.md](https://github.com/DaveKJohn/davekjohns-workshop/blob/main/releases/development/1.14/1.14.0.md)
+Full workshop notes: [releases/development/1.15/1.15.0.md](https://github.com/DaveKJohn/davekjohns-workshop/blob/main/releases/development/1.15/1.15.0.md)
 Cumulative plugin history: [CHANGELOG.md](CHANGELOG.md)

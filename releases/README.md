@@ -13,6 +13,7 @@ meereizend met de plugin-cache via `claude plugin update`).
 
 | Versie | Datum | Type | Titel |
 |---|---|---|---|
+| [1.15.0](development/1.15/1.15.0.md) | 2026-07-21 | Minor | English script layer, Shopify dev-first, consumer-fit open-pr/fold, and shared release/check helpers |
 | [1.14.0](development/1.14/1.14.0.md) | 2026-07-21 | Minor | Cross-browser and automation-first shared rules, and a leaner, plugin-independent CLAUDE.md |
 | [1.13.0](development/1.13/1.13.0.md) | 2026-07-21 | Minor | Consumer release cards, branch-creates-changelog-entry, and English agent-shared block names |
 | [1.12.1](development/1.12/1.12.1.md) | 2026-07-20 | Patch | Ship the git/gh stderr-under-Stop sweep to consumers (the open-pr + fold shared-script mirrors from #113) |
