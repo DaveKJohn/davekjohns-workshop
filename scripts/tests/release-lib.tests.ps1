@@ -42,6 +42,7 @@ function Assert-Throws {
 }
 
 $midDot = [char]0x00B7
+$emDash = [char]0x2014
 
 Write-Host "Get-NextVersion" -ForegroundColor Cyan
 Assert-Equal '0.2.0' (Get-NextVersion -Current '0.1.0' -BumpKind 'minor') 'minor bumpt tweede cijfer, nult patch'
@@ -137,6 +138,32 @@ Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"
 Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"name": "leeg"}' } 'ontbrekende plugins-lijst gooit'
 Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson 'geen json' } 'corrupte JSON gooit'
 
+Write-Host "Get-TouchedPlugins" -ForegroundColor Cyan
+$touchedFiles = @(
+    'claude-code-plugins/claude-specialists/specialists/agents/01-01-chris.md',
+    'claude-code-plugins/claude-specialists/specialists/manuals/01-01-manual.md',
+    'claude-code-plugins/claude-specialists/specialists-lifehub/agents/foo.md',
+    'claude-code-plugins/claude-specialists/connectors/some-repo.json',
+    'README.md',
+    'scripts/lib/release-lib.ps1'
+)
+$touched = @(Get-TouchedPlugins -Files $touchedFiles)
+Assert-Equal 2 $touched.Count 'twee geraakte plugins (gededupliceerd + gesorteerd)'
+Assert-Equal 'specialists' $touched[0] 'eerste plugin-naam alfabetisch'
+Assert-Equal 'specialists-lifehub' $touched[1] 'tweede plugin-naam alfabetisch'
+Assert-Equal $false ([bool]($touched -contains 'connectors')) 'connectors-map telt niet mee als plugin'
+Assert-Equal 0 (@(Get-TouchedPlugins -Files @())).Count 'lege input -> lege set'
+Assert-Equal 0 (@(Get-TouchedPlugins -Files @('README.md', 'scripts/lib/release-lib.ps1'))).Count 'niet-plugin-paden genegeerd'
+Assert-Equal 0 (@(Get-TouchedPlugins -Files @('claude-code-plugins/claude-specialists/Specialists/agents/x.md'))).Count 'uppercase plugin-slug telt niet mee (-cmatch lowercase-regel)'
+$dedupFiles = @(
+    'claude-code-plugins/claude-specialists/specialists/agents/a.md',
+    'claude-code-plugins/claude-specialists/specialists/agents/b.md',
+    'claude-code-plugins/claude-specialists/specialists/manuals/c.md'
+)
+$dedupTouched = @(Get-TouchedPlugins -Files $dedupFiles)
+Assert-Equal 1 $dedupTouched.Count 'dezelfde plugin over meerdere files -> eenmaal in de set'
+Assert-Equal 'specialists' $dedupTouched[0] 'gededupliceerde naam correct'
+
 Write-Host "Get-EntryPlugins" -ForegroundColor Cyan
 $entryMetPlugins = @("### #4 $midDot Iets $midDot Feat $midDot 2026-01-04", '', 'Body vier.', '', 'Plugins: specialists, specialists-lifehub', '', '[PR #4](https://example.com/4)') -join "`n"
 $plugs = @(Get-EntryPlugins -EntryText $entryMetPlugins)
@@ -169,6 +196,34 @@ $section2 = Build-PluginChangelogSection -Entries @($entryMetPlugins) -Version '
 $appended = Add-PluginChangelogSection -Existing $fresh -Section $section2 -PluginName 'specialists'
 Assert-Match $appended '(?s)## v1\.6\.0.*## v1\.5\.0' 'nieuwste release staat bovenaan'
 Assert-Equal 1 (@([regex]::Matches($appended, '(?m)^# Changelog')).Count) 'intro-header niet gedupliceerd'
+
+Write-Host "Add-PluginChangelogSection (aangescherpte ## v-match, #103)" -ForegroundColor Cyan
+# Een niet-versie '## '-kop (bv. handmatig toegevoegde '## Notes') mag de invoegpositie niet
+# verstoren: de nieuwe sectie hoort v??r de eerste ECHTE '## vX.Y.Z'-kop te landen, niet ervoor de
+# Notes-kop of er middenin.
+$existingMetNotes = "# Changelog $emDash specialists`n`n## Notes`n`nHandmatige notitie, geen versie.`n`n## v1.0.0 $emDash 2026-01-01`n`nOude inhoud.`n"
+$sectionVoorNotesTest = "## v1.1.0 $emDash 2026-01-02`n`nNieuwe inhoud."
+$metNotesResultaat = Add-PluginChangelogSection -Existing $existingMetNotes -Section $sectionVoorNotesTest -PluginName 'specialists'
+Assert-Match $metNotesResultaat '(?s)## Notes.*Handmatige notitie.*## v1\.1\.0.*## v1\.0\.0' 'nieuwe sectie ingevoegd na de Notes-kop, voor de eerste echte versie-kop'
+$notesKopMatches = @([regex]::Matches($metNotesResultaat, '(?m)^## Notes'))
+Assert-Equal 1 $notesKopMatches.Count 'Notes-kop blijft eenmalig staan (niet verdubbeld of overschreven)'
+$notesIdx = $metNotesResultaat.IndexOf('## Notes')
+$v11Idx = $metNotesResultaat.IndexOf('## v1.1.0')
+$v10Idx = $metNotesResultaat.IndexOf('## v1.0.0')
+Assert-Equal $true ($notesIdx -lt $v11Idx -and $v11Idx -lt $v10Idx) 'volgorde is Notes, dan de nieuwe v1.1.0-sectie, dan de bestaande v1.0.0-sectie'
+# Normale geval (alleen versiekoppen, geen niet-versie-kop) blijft werken -- dezelfde uitkomst als
+# de bestaande 'nieuwste release staat bovenaan'-test hierboven, hier als expliciete regressie-guard
+# voor de aangescherpte regex.
+$alleenVersiesResultaat = Add-PluginChangelogSection -Existing $fresh -Section $section2 -PluginName 'specialists'
+Assert-Match $alleenVersiesResultaat '(?s)## v1\.6\.0.*## v1\.5\.0' 'normale geval (alleen versiekoppen) blijft correct invoegen'
+
+Write-Host "Build-PluginChangelogSection (LF-normalisatie, punt e, #103)" -ForegroundColor Cyan
+$crlfEntry = "### #7 $midDot CRLF-test $midDot Fix $midDot 2026-01-07`r`n`r`nBody met`r`nCRLF-regels.`r`n`r`n[PR #7](https://example.com/7)"
+$lfSection = Build-PluginChangelogSection -Entries @($crlfEntry) -Version '1.7.0' -Date '2026-07-20'
+Assert-Equal $false ($lfSection.Contains("`r")) 'Build-PluginChangelogSection-output bevat geen CR, ook bij een CRLF-invoerentry'
+Assert-Match $lfSection '### #7 .* CRLF-test' 'entry-inhoud toch correct opgenomen ondanks de normalisatie'
+$cardMetCrlf = Build-PluginReleaseCard -PluginName 'specialists' -Version '1.7.0' -Date '2026-07-20' -Type 'Fix' -Entries @($crlfEntry)
+Assert-Equal $false ($cardMetCrlf.Contains("`r")) 'Build-PluginReleaseCard blijft LF-puur ondanks een CRLF-invoerentry'
 
 Write-Host "Build-PluginReleaseCard" -ForegroundColor Cyan
 $cardEntries = @($linkEntry)

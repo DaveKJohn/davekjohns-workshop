@@ -213,7 +213,11 @@ Assert-True ($cutText -match "(?s)ErrorActionPreference = 'Continue'.*git add -A
 $foldSrc = ($pairs | Where-Object { $_.Name -eq 'fold-changelog-entry' }).SourcePath
 $foldText = [System.IO.File]::ReadAllText($foldSrc)
 Assert-True ($foldText -match "gh pr list.*2>\`$null") 'fold draait gh pr list met stderr-discard'
-Assert-True ($foldText -match "gh pr view.*2>\`$null") 'fold draait gh pr view met stderr-discard'
+# #103 (Victor #4): gh pr list levert 'files' net zo goed als gh pr view -- de tweede gh-roundtrip
+# is vervallen. Regressie-guard: de --json-lijst draagt 'files' mee, en een echte 'gh pr view'-
+# aanroep (i.t.t. een verklarende code-comment die de oude aanpak noemt) is niet teruggekeerd.
+Assert-True ($foldText -match "gh pr list.*--json number,url,files") 'fold vraagt files al mee in de gh pr list-call'
+Assert-True (-not ($foldText -match '(?m)^\s*\$\w+\s*=\s*gh pr view')) 'fold draait geen aparte gh pr view-aanroep meer (samengevoegd, #103)'
 
 Write-Host ""
 if ($script:fail -gt 0) {
