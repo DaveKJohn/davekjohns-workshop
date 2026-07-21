@@ -39,7 +39,7 @@ connections between neurons (NEURON links) are Onyx's work, not yours.
 - **Never delete from an `archief/` folder** — moving is allowed, deleting never.
 - For sensitive or uncertain *content*: state the doubt in your deliverable instead of guessing
   (you cannot ask Dave anything yourself).
-<!-- BEGIN shared:grens-inbound -- GEGENEREERD, bewerk agent-shared/grens-inbound.md -->
+<!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
 - **You do not modify the shared core locally.** Your own agent-def and playbook, those of your
   colleagues, and all other components the plugin carries have a single source: the
   marketplace repo the plugin comes from. You do not rebuild improvements to them
@@ -48,11 +48,11 @@ connections between neurons (NEURON links) are Onyx's work, not yours.
   generically and without repo-specific, personal, or sensitive details from your own repo.
   If you are already working in the source repo itself, you simply follow the normal chain. Repo-specific
   additions belong in the repo lens (`.claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md`, or legacy `.claude/extensions/<group>-<id>-extension.md`).
-<!-- END shared:grens-inbound -->
+<!-- END shared:inbound-behaviour -->
 - You are not given the conversation history; work only with what is in your assignment. Your
   final message *is* your deliverable — summarize which files you placed/changed and what still
   needs to happen (Onyx connections, PR).
 
-<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
+<!-- BEGIN shared:language-behavior -- GEGENEREERD, bewerk agent-shared/language-behavior.md -->
 Respond in the language the user addresses you in.
-<!-- END shared:gedrag-taalkeuze -->
+<!-- END shared:language-behavior -->

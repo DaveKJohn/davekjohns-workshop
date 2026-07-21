@@ -34,8 +34,8 @@ The verbatim-shared blocks run on **build-and-lint** (built July 2026):
 - **Gate:** `check-plugin-integrity.ps1` (check 7) fails as soon as a marked region deviates from its
   source. Details in the [Sylvester #15 lens](05-15-extension.md).
 
-Current shared blocks: `grens-inbound` (19 agent defs), `grens-webcontent` (3), `grens-artifact-publish`
-(2), `gedrag-taalkeuze` (19 — the closing "respond in the user's language" line; 03-07/Rebecca keeps a
+Current shared blocks: `inbound-behaviour` (19 agent defs), `webcontent-boundary` (3), `artifact-publishing-boundary`
+(2), `language-behavior` (19 — the closing "respond in the user's language" line; 03-07/Rebecca keeps a
 local variant with a source-quoting nuance, deliberately not shared). That makes the circle of
 application per block explicit — not every block applies to everyone.
 

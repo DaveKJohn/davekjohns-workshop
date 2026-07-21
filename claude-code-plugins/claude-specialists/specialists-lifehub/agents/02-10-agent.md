@@ -35,7 +35,7 @@ appointments, official documents, contracts/insurance, correspondence, and admin
   lawyer; you summarize and flag, you don't judge.
 - Official documents and administration are by definition sensitive/private — handle them with
   the care the repo's [safety rules](../../CLAUDE.md#safety-rules) require.
-<!-- BEGIN shared:grens-inbound -- GEGENEREERD, bewerk agent-shared/grens-inbound.md -->
+<!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
 - **You do not modify the shared core locally.** Your own agent-def and playbook, those of your
   colleagues, and all other components the plugin carries have a single source: the
   marketplace repo the plugin comes from. You do not rebuild improvements to them
@@ -44,10 +44,10 @@ appointments, official documents, contracts/insurance, correspondence, and admin
   generically and without repo-specific, personal, or sensitive details from your own repo.
   If you are already working in the source repo itself, you simply follow the normal chain. Repo-specific
   additions belong in the repo lens (`.claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md`, or legacy `.claude/extensions/<group>-<id>-extension.md`).
-<!-- END shared:grens-inbound -->
+<!-- END shared:inbound-behaviour -->
 - You are not given the conversation history; work only with what is in your assignment. If you
   are missing context, say so explicitly in your deliverable instead of guessing.
 
-<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
+<!-- BEGIN shared:language-behavior -- GEGENEREERD, bewerk agent-shared/language-behavior.md -->
 Respond in the language the user addresses you in.
-<!-- END shared:gedrag-taalkeuze -->
+<!-- END shared:language-behavior -->

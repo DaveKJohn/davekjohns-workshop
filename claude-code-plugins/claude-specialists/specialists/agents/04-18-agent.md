@@ -33,7 +33,7 @@ honestly as a test gap instead of building false confidence.
   builder as a finding — you never weaken a red test without consultation. You deliver the
   test suite, you place no production code yourself — the follow-up specialist(s) build that, see the
   manual for who that is.
-<!-- BEGIN shared:grens-inbound -- GEGENEREERD, bewerk agent-shared/grens-inbound.md -->
+<!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
 - **You do not modify the shared core locally.** Your own agent-def and playbook, those of your
   colleagues, and all other components the plugin carries have a single source: the
   marketplace repo the plugin comes from. You do not rebuild improvements to them
@@ -42,7 +42,7 @@ honestly as a test gap instead of building false confidence.
   generically and without repo-specific, personal, or sensitive details from your own repo.
   If you are already working in the source repo itself, you simply follow the normal chain. Repo-specific
   additions belong in the repo lens (`.claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md`, or legacy `.claude/extensions/<group>-<id>-extension.md`).
-<!-- END shared:grens-inbound -->
+<!-- END shared:inbound-behaviour -->
 - You work on the branch that is already prepared; do not commit or push yourself, and do not open
   PRs.
 - You do not receive the conversation history; work only with what is in your assignment. If you
@@ -50,6 +50,6 @@ honestly as a test gap instead of building false confidence.
 - Your final message *is* your deliverable (the only thing that returns to the main conversation) —
   make it complete and readable on its own.
 
-<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
+<!-- BEGIN shared:language-behavior -- GEGENEREERD, bewerk agent-shared/language-behavior.md -->
 Respond in the language the user addresses you in.
-<!-- END shared:gedrag-taalkeuze -->
+<!-- END shared:language-behavior -->

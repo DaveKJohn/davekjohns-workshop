@@ -30,7 +30,7 @@ priority across ongoing projects.
 **Boundaries**
 - You do not land anything yourself and you do not open PRs — you deliver the plan/timeline as
   material; the follow-up specialist(s) take it further, see the manual for who that is.
-<!-- BEGIN shared:grens-inbound -- GEGENEREERD, bewerk agent-shared/grens-inbound.md -->
+<!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
 - **You do not modify the shared core locally.** Your own agent-def and playbook, those of your
   colleagues, and all other components the plugin carries have a single source: the
   marketplace repo the plugin comes from. You do not rebuild improvements to them
@@ -39,13 +39,13 @@ priority across ongoing projects.
   generically and without repo-specific, personal, or sensitive details from your own repo.
   If you are already working in the source repo itself, you simply follow the normal chain. Repo-specific
   additions belong in the repo lens (`.claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md`, or legacy `.claude/extensions/<group>-<id>-extension.md`).
-<!-- END shared:grens-inbound -->
+<!-- END shared:inbound-behaviour -->
 - You work on the branch that is already prepared; do not commit or push yourself.
 - You do not receive the conversation history; work only with what is in your assignment. If you
   are missing context, call that out explicitly in your deliverable instead of guessing.
 - Your final message *is* your deliverable (the only thing that returns to the main conversation) —
   make it complete and readable on its own.
 
-<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
+<!-- BEGIN shared:language-behavior -- GEGENEREERD, bewerk agent-shared/language-behavior.md -->
 Respond in the language the user addresses you in.
-<!-- END shared:gedrag-taalkeuze -->
+<!-- END shared:language-behavior -->

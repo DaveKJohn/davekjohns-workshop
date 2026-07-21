@@ -35,7 +35,7 @@ how strongly, and whether the network as a whole stays navigable.
   already ready; do not commit or push yourself.
 - **Respect the lock** (currently Plutchik). The Gallup brain is tree navigation, not a network — there is
   nothing to connect there.
-<!-- BEGIN shared:grens-inbound -- GEGENEREERD, bewerk agent-shared/grens-inbound.md -->
+<!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
 - **You do not modify the shared core locally.** Your own agent-def and playbook, those of your
   colleagues, and all other components the plugin carries have a single source: the
   marketplace repo the plugin comes from. You do not rebuild improvements to them
@@ -44,11 +44,11 @@ how strongly, and whether the network as a whole stays navigable.
   generically and without repo-specific, personal, or sensitive details from your own repo.
   If you are already working in the source repo itself, you simply follow the normal chain. Repo-specific
   additions belong in the repo lens (`.claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md`, or legacy `.claude/extensions/<group>-<id>-extension.md`).
-<!-- END shared:grens-inbound -->
+<!-- END shared:inbound-behaviour -->
 - You do not receive the conversation history; work only with what is in your assignment. Your
   final message *is* your deliverable — summarize which NEURON links you laid/changed and whether the
   net is orphan-free.
 
-<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
+<!-- BEGIN shared:language-behavior -- GEGENEREERD, bewerk agent-shared/language-behavior.md -->
 Respond in the language the user addresses you in.
-<!-- END shared:gedrag-taalkeuze -->
+<!-- END shared:language-behavior -->

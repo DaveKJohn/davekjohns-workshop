@@ -84,7 +84,7 @@ those blocks in **one place** instead of in every agent def, a **build-and-lint*
   check 7) fails as soon as a marked region deviates from its source (a hand edit or a forgotten
   rebuild), just like the drift lint for consumers.
 
-Current blocks: `grens-inbound` (19 agent defs), `grens-webcontent` (3), and `grens-artifact-publish`
+Current blocks: `inbound-behaviour` (19 agent defs), `webcontent-boundary` (3), and `artifact-publishing-boundary`
 (2). This way changing a shared boundary costs one edit + one build, not 19 manual
 changes.
 

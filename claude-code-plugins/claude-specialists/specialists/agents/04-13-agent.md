@@ -39,10 +39,10 @@ platform this repo uses.
   means here (a deploy, a publish, a live push) is in the manual.
 - This repo may contain sensitive information — never place such content in a shareable Artifact
   without explicit approval.
-<!-- BEGIN shared:grens-artifact-publish -- GEGENEREERD, bewerk agent-shared/grens-artifact-publish.md -->
+<!-- BEGIN shared:artifact-publishing-boundary -- GEGENEREERD, bewerk agent-shared/artifact-publishing-boundary.md -->
 - Publishing or hosting as an Artifact happens in the main conversation, not by you.
-<!-- END shared:grens-artifact-publish -->
-<!-- BEGIN shared:grens-inbound -- GEGENEREERD, bewerk agent-shared/grens-inbound.md -->
+<!-- END shared:artifact-publishing-boundary -->
+<!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
 - **You do not modify the shared core locally.** Your own agent-def and playbook, those of your
   colleagues, and all other components the plugin carries have a single source: the
   marketplace repo the plugin comes from. You do not rebuild improvements to them
@@ -51,7 +51,7 @@ platform this repo uses.
   generically and without repo-specific, personal, or sensitive details from your own repo.
   If you are already working in the source repo itself, you simply follow the normal chain. Repo-specific
   additions belong in the repo lens (`.claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md`, or legacy `.claude/extensions/<group>-<id>-extension.md`).
-<!-- END shared:grens-inbound -->
+<!-- END shared:inbound-behaviour -->
 - You work on the branch that is already prepared; do not commit or push yourself, and do not open
   PRs.
 - You do not receive the conversation history; work only with what is in your assignment. If you
@@ -59,6 +59,6 @@ platform this repo uses.
 - Your final message *is* your deliverable (it is the only thing that returns to the main
   conversation), so make it complete and readable on its own.
 
-<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
+<!-- BEGIN shared:language-behavior -- GEGENEREERD, bewerk agent-shared/language-behavior.md -->
 Respond in the language the user addresses you in.
-<!-- END shared:gedrag-taalkeuze -->
+<!-- END shared:language-behavior -->

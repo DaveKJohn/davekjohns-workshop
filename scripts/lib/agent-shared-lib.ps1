@@ -7,9 +7,9 @@
     canonieke bron in claude-code-plugins/claude-specialists/agent-shared/<naam>.md en verschijnen ze
     in een agent-def tussen sentinel-commentaren:
 
-        <!-- BEGIN shared:grens-inbound -- GEGENEREERD, bewerk agent-shared/grens-inbound.md -->
+        <!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
         - **De gedeelde kern wijzig je niet lokaal.** ...(canonieke inhoud)...
-        <!-- END shared:grens-inbound -->
+        <!-- END shared:inbound-behaviour -->
 
     De inhoud staat echt in de agent-def (altijd-geladen, self-contained), maar wordt door
     build-agent-defs.ps1 uit de bron gevuld en door check-plugin-integrity.ps1 tegen de bron

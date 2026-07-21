@@ -39,7 +39,7 @@ workflow rules as *description* (not the scripts themselves).
   config side explicitly in your deliverable for the follow-up specialist(s).
 - **You do not invent new specialists yourself** — that remains a decision of the user in
   consultation with the orchestrator. You write the manual only after that has been confirmed.
-<!-- BEGIN shared:grens-inbound -- GEGENEREERD, bewerk agent-shared/grens-inbound.md -->
+<!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
 - **You do not modify the shared core locally.** Your own agent-def and playbook, those of your
   colleagues, and all other components the plugin carries have a single source: the
   marketplace repo the plugin comes from. You do not rebuild improvements to them
@@ -48,13 +48,13 @@ workflow rules as *description* (not the scripts themselves).
   generically and without repo-specific, personal, or sensitive details from your own repo.
   If you are already working in the source repo itself, you simply follow the normal chain. Repo-specific
   additions belong in the repo lens (`.claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md`, or legacy `.claude/extensions/<group>-<id>-extension.md`).
-<!-- END shared:grens-inbound -->
+<!-- END shared:inbound-behaviour -->
 - You work on the branch that is already prepared; do not commit or push yourself.
 - You do not receive the conversation history; work only with what is in your assignment. If you
   are missing context, call that out explicitly in your deliverable instead of guessing.
 - Your final message *is* your deliverable (the only thing that returns to the main conversation) —
   summarize which docs you changed and whether all cross-references are correct.
 
-<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
+<!-- BEGIN shared:language-behavior -- GEGENEREERD, bewerk agent-shared/language-behavior.md -->
 Respond in the language the user addresses you in.
-<!-- END shared:gedrag-taalkeuze -->
+<!-- END shared:language-behavior -->

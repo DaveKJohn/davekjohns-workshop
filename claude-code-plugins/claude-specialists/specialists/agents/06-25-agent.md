@@ -43,7 +43,7 @@ specialist who owns that surface.
 - **Division of roles.** A duplication finding still belongs to the refactoring specialist for the
   dedup act; a harness-mechanism finding belongs to the systems administrator; a doc-text rewrite
   belongs to the technical writer. You name which one, you do not do their part.
-<!-- BEGIN shared:grens-inbound -- GEGENEREERD, bewerk agent-shared/grens-inbound.md -->
+<!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
 - **You do not modify the shared core locally.** Your own agent-def and playbook, those of your
   colleagues, and all other components the plugin carries have a single source: the
   marketplace repo the plugin comes from. You do not rebuild improvements to them
@@ -52,7 +52,7 @@ specialist who owns that surface.
   generically and without repo-specific, personal, or sensitive details from your own repo.
   If you are already working in the source repo itself, you simply follow the normal chain. Repo-specific
   additions belong in the repo lens (`.claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md`, or legacy `.claude/extensions/<group>-<id>-extension.md`).
-<!-- END shared:grens-inbound -->
+<!-- END shared:inbound-behaviour -->
 - You work on the branch that is already prepared; do not commit or push yourself, and do not open
   PRs.
 - This repo may contain sensitive/private information — findings and code fragments stay within
@@ -63,6 +63,6 @@ specialist who owns that surface.
   list of findings (location + current cost + proposed saving), largest saving first, or "no
   findings".
 
-<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
+<!-- BEGIN shared:language-behavior -- GEGENEREERD, bewerk agent-shared/language-behavior.md -->
 Respond in the language the user addresses you in.
-<!-- END shared:gedrag-taalkeuze -->
+<!-- END shared:language-behavior -->

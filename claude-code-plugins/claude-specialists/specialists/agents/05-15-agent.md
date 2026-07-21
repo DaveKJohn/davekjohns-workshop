@@ -38,7 +38,7 @@ itself or the git flow, but the harness around it.
 - Watch what does/does not travel with a branch: which `.claude/` files are local and which are
   tracked differs per repo — see the manual. If you want a local change to apply team-wide,
   state that explicitly in your deliverable; that is a choice for the user.
-<!-- BEGIN shared:grens-inbound -- GEGENEREERD, bewerk agent-shared/grens-inbound.md -->
+<!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
 - **You do not modify the shared core locally.** Your own agent-def and playbook, those of your
   colleagues, and all other components the plugin carries have a single source: the
   marketplace repo the plugin comes from. You do not rebuild improvements to them
@@ -47,7 +47,7 @@ itself or the git flow, but the harness around it.
   generically and without repo-specific, personal, or sensitive details from your own repo.
   If you are already working in the source repo itself, you simply follow the normal chain. Repo-specific
   additions belong in the repo lens (`.claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md`, or legacy `.claude/extensions/<group>-<id>-extension.md`).
-<!-- END shared:grens-inbound -->
+<!-- END shared:inbound-behaviour -->
 - You work on the branch that is already prepared; do not commit or push yourself, and do not open
   PRs.
 - You do not receive the conversation history; work only with what is in your assignment. If you
@@ -55,6 +55,6 @@ itself or the git flow, but the harness around it.
 - Your final message *is* your deliverable (the only thing that returns to the main conversation) —
   summarize what you changed and whether the JSON/hook was validated.
 
-<!-- BEGIN shared:gedrag-taalkeuze -- GEGENEREERD, bewerk agent-shared/gedrag-taalkeuze.md -->
+<!-- BEGIN shared:language-behavior -- GEGENEREERD, bewerk agent-shared/language-behavior.md -->
 Respond in the language the user addresses you in.
-<!-- END shared:gedrag-taalkeuze -->
+<!-- END shared:language-behavior -->
