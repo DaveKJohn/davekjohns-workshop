@@ -31,6 +31,13 @@
       7. gedeelde agent-def-blokken: elke <!-- BEGIN/END shared:NAME -->-regio in een agent-def is nog
          gelijk aan zijn canonieke bron in agent-shared/<naam>.md (zie scripts/agents/build-agent-defs.ps1)
          -- een hand-edit binnen de sentinels of een vergeten rebuild valt zo op de poort.
+      8. gedeelde workflow-scripts: elke plugin-spiegel van een repo-agnostisch script (issue #81) is
+         nog LF-identiek aan zijn root-bron -- een hand-edit in de spiegel of een vergeten
+         scripts/sync/build-shared-scripts.ps1 valt zo op de poort.
+      9. RELEASE.md per plugin (Model A, plugin-gedragen): elke plugin-map heeft een RELEASE.md, en de
+         'vX.Y.Z' die daarin staat is gelijk aan de 'version' in die plugin's plugin.json. Alleen
+         cut-release.ps1 wijzigt beide bestanden samen, dus een gewone feature-PR kan hier nooit op
+         vallen -- een mismatch/ontbrekend bestand betekent dat het kaartje niet is (her)gegenereerd.
 
     Exit-code: 0 = geen errors. 1 = minstens een error (bruikbaar als poort in open-pr.ps1).
 .EXAMPLE
@@ -234,6 +241,10 @@ $releasesDir = Join-Path $RepoRoot 'releases'
 if (Test-Path -LiteralPath $releasesDir) {
     $linkFiles += (Get-ChildItem -Path $releasesDir -Recurse -Filter '*.md' -File | Select-Object -ExpandProperty FullName)
 }
+# Elk plugin-gedragen RELEASE.md-kaartje (check 9) linkt naar de volledige notes en de eigen
+# CHANGELOG.md -- ook die links horen gevalideerd te worden.
+$linkFiles += (Get-ChildItem -Path $RepoRoot -Recurse -Filter 'RELEASE.md' -File |
+    Select-Object -ExpandProperty FullName)
 
 $linkRegex = [regex]'\[(?:[^\]]*)\]\(([^)]+)\)'
 $slugCache = @{}
@@ -395,6 +406,36 @@ foreach ($pair in @(Get-SharedScriptPairs -RepoRoot $RepoRoot)) {
         Add-Error "[shared-script] $($pair.MirrorRel) wijkt af van $($pair.SourceRel) -- draai scripts/sync/build-shared-scripts.ps1."
     }
 }
+
+# --- 9. RELEASE.md per plugin aanwezig + versie-match -------------------------------------------------
+# Model A (plugin-gedragen, zie CHANGELOG/#115-achtige inbound-issue): cut-release.ps1 schrijft dit
+# kaartje bij ELKE release voor ELKE plugin (lockstep-versie), ook een plugin die deze keer niet
+# geraakt is. Omdat RELEASE.md en plugin.json alleen samen wijzigen -- via cut-release.ps1 -- kan een
+# gewone feature-PR hier nooit op stuklopen; alleen een vergeten regeneratie of hand-edit valt op.
+Get-ChildItem -Path $RepoRoot -Recurse -Filter 'plugin.json' -File |
+    Where-Object { $_.FullName -match '\.claude-plugin\\plugin\.json$' } | ForEach-Object {
+        $pluginDir = Split-Path (Split-Path $_.FullName -Parent) -Parent
+        $pluginName = Split-Path $pluginDir -Leaf
+        $pj = Test-JsonFile -Path $_.FullName
+        if (-not $pj) { return }
+        if (-not ($pj.PSObject.Properties.Name -contains 'version') -or -not $pj.version) {
+            Add-Error "[release-card] $pluginName/.claude-plugin/plugin.json mist een niet-lege 'version' -- vereist voor het lockstep-RELEASE.md-kaartje."
+            return
+        }
+        $pjVersion = $pj.version
+        $releasePath = Join-Path $pluginDir 'RELEASE.md'
+        if (-not (Test-Path -LiteralPath $releasePath -PathType Leaf)) {
+            Add-Error "[release-card] $pluginName mist RELEASE.md -- run scripts/release/cut-release.ps1 (dat regenereert het kaartje voor elke plugin)."
+            return
+        }
+        $releaseText = [System.IO.File]::ReadAllText($releasePath, [System.Text.Encoding]::UTF8)
+        $vm = [regex]::Match($releaseText, '(?m)^#\s+Release\s+v(\d+\.\d+\.\d+)\s*$')
+        if (-not $vm.Success) {
+            Add-Error "[release-card] $pluginName/RELEASE.md: geen '# Release vX.Y.Z'-kop gevonden -- regenereer via cut-release.ps1."
+        } elseif ($vm.Groups[1].Value -ne $pjVersion) {
+            Add-Error "[release-card] $pluginName/RELEASE.md draagt v$($vm.Groups[1].Value), maar plugin.json zegt v$pjVersion -- run cut-release.ps1 opnieuw."
+        }
+    }
 
 # --- Rapport ----------------------------------------------------------------------------------------
 if ($errors.Count -eq 0) {

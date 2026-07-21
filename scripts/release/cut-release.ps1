@@ -26,6 +26,11 @@
           uit de PR-bestanden) bij in <plugin>/CHANGELOG.md -- de consument-gerichte geschiedenis
           die met de plugin-cache meereist. Root-relatieve links worden daarbij herschreven naar
           absolute GitHub-URLs.
+      3c. Schrijft/overschrijft voor ELKE plugin (niet alleen de geraakte -- de versie bumpt
+          lockstep) <plugin>/RELEASE.md: een kort kaartje ("You are on this release") dat een
+          consument laat zien op welke release hij zit, met of zonder eigen entries deze keer, plus
+          links naar de volledige notes en de eigen CHANGELOG.md. Model A (plugin-gedragen), bewust
+          zonder sessiestart-hook.
       4. Commit dat rechtstreeks op main (release: vX.Y.Z) en zet een annotated tag vX.Y.Z.
       5. Pusht main + de tag (tenzij -NoPush).
 
@@ -198,6 +203,24 @@ foreach ($m in $manifests) {
     $existing = if (Test-Path -LiteralPath $plChangelogPath) { Get-Content -Path $plChangelogPath -Raw -Encoding UTF8 } else { '' }
     Write-Utf8NoBom -Path $plChangelogPath -Content (Add-PluginChangelogSection -Existing $existing -Section $section -PluginName $pluginName)
     Write-Host "  bijgewerkt: $pluginName/CHANGELOG.md ($($pluginEntries.Count) entries)" -ForegroundColor DarkGray
+}
+
+# --- RELEASE.md-kaartje per plugin (Model A, plugin-gedragen) --------------------------------------
+# Anders dan de per-plugin CHANGELOG hierboven (die alleen schrijft als een plugin daadwerkelijk
+# entries heeft) loopt dit over ALLE manifesten: de versie bumpt lockstep, dus ELKE plugin moet na
+# deze release de nieuwe versie tonen -- ook een plugin die deze keer niet geraakt is (Build-
+# PluginReleaseCard toont dan het "no changes"-blok in plaats van te falen). RELEASE.md is een
+# snapshot (niet een geschiedenis zoals CHANGELOG.md), dus overschrijven is hier juist.
+foreach ($m in $manifests) {
+    $pluginDir = Split-Path (Split-Path $m -Parent) -Parent
+    $pluginName = Split-Path $pluginDir -Leaf
+    $pluginEntries = @($entries | Where-Object { @(Get-EntryPlugins -EntryText $_) -contains $pluginName })
+    $pluginEntries = @($pluginEntries | ForEach-Object { Remove-EntryPluginsLine -EntryText $_ })
+    $card = Build-PluginReleaseCard -PluginName $pluginName -Version $new -Date $today -Type $typeLabel `
+        -Title $Title -Entries $pluginEntries -RepoBlobUrl (Get-RepoBlobUrl)
+    $releaseCardPath = Join-Path $pluginDir 'RELEASE.md'
+    Write-Utf8NoBom -Path $releaseCardPath -Content $card
+    Write-Host "  bijgewerkt: $pluginName/RELEASE.md" -ForegroundColor DarkGray
 }
 
 # --- Plugin-versies bumpen (regex op de version-regel -- behoudt de JSON-opmaak) -----------------

@@ -51,6 +51,14 @@ agent def, but do have a full playbook as a template in `personas/`.
 Once enabled, the specialists can be invoked with the **plugin name as namespace**:
 `@specialists:<name>`, `@specialists-lifehub:<name>`, or `@specialists-shopify:<name>`.
 
+## Which release am I on?
+
+Every plugin folder carries a `RELEASE.md` card (version, a one-line summary, and the entries for
+that version) right next to its `CHANGELOG.md`. It travels with the plugin cache, so once
+`claude plugin update` has pinned your install to a version, the cached copy of `RELEASE.md` is
+exactly that release — open it under the plugin path in your own cache to see which one you're on.
+See [Consumption](../../README.md#consumption) in the root README for the mechanics.
+
 ## Want to know more?
 
 **Connecting your own repo?** Follow the [Quickstart](QUICKSTART.md) — connect in three steps, for

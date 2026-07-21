@@ -5,7 +5,9 @@ De release-historie van de davekjohns-workshop-marketplace. Een release is hier 
 lockstep. Er worden bewust **geen GitHub Releases** gepubliceerd — de volledige notes staan
 hieronder in `development/<X.Y>/<X.Y.Z>.md` en het `## Releases`-blok in
 [`CHANGELOG.md`](../CHANGELOG.md) verwijst ernaar. Releases worden alleen op Dave's expliciete verzoek
-gesneden via [`scripts/release/cut-release.ps1`](../scripts/release/cut-release.ps1).
+gesneden via [`scripts/release/cut-release.ps1`](../scripts/release/cut-release.ps1). Elke release
+ververst ook, per plugin, het `RELEASE.md`-kaartje dat consumenten zien (versie + korte notes,
+meereizend met de plugin-cache via `claude plugin update`).
 
 ## Overzicht
 

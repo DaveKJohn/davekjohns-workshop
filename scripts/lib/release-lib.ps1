@@ -11,9 +11,12 @@
     Levert Get-NextVersion, Get-BumpType, Get-LockstepVersion, Get-PluginManifestPaths,
     Get-PullRequestEntries, Convert-ChangelogForRelease, Build-ReleaseNotes, en voor de
     per-plugin CHANGELOGs: Get-EntryPlugins, Convert-EntryLinksForPluginChangelog,
-    Build-PluginChangelogSection en Add-PluginChangelogSection. Deze functies zijn bewust puur
-    (string/waarde in, string/waarde uit) zodat ze los te testen zijn zonder een release te draaien --
-    scripts/release/cut-release.ps1 gebruikt ze, en de tests dekken ze af.
+    Build-PluginChangelogSection en Add-PluginChangelogSection. Ook Build-PluginReleaseCard: het
+    per-plugin RELEASE.md-kaartje (Model A, plugin-gedragen) dat toont op welke release de plugin nu
+    zit, ook als die specifieke release de plugin niet raakte (lockstep-versie, kaartje mag leeg zijn
+    aan entries). Deze functies zijn bewust puur (string/waarde in, string/waarde uit) zodat ze los
+    te testen zijn zonder een release te draaien -- scripts/release/cut-release.ps1 gebruikt ze, en
+    de tests dekken ze af.
 
     Model: de release-inhoud verhuist naar releases/development/<X.Y>/<X.Y.Z>.md; het ## Releases-blok
     in CHANGELOG.md wordt een korte VERWIJZING naar dat bestand (net als life-hub, maar zonder
@@ -336,6 +339,58 @@ function Add-PluginChangelogSection {
         return $Existing.Substring(0, $m.Index) + $Section.TrimEnd() + "`n`n---`n`n" + $Existing.Substring($m.Index)
     }
     return ($Existing.TrimEnd() + "`n`n" + $Section.TrimEnd() + "`n")
+}
+
+function Build-PluginReleaseCard {
+    <#
+        Bouwt de volledige RELEASE.md-kaarttekst voor een plugin (Model A, plugin-gedragen): een
+        consument die alleen de plugin-cache heeft ziet meteen op welke release-versie hij zit, ook
+        als deze specifieke release die plugin niet raakte (de versie bumpt lockstep, dus elke
+        plugin krijgt bij elke release een vers kaartje). Hergebruikt Build-PluginChangelogSection /
+        Convert-EntryLinksForPluginChangelog voor de body zodat de vorm gelijk blijft aan de
+        per-plugin CHANGELOG. Pure string-uit (LF-newlines), dus los testbaar.
+
+        $Entries is de array met entry-blokken van DEZE plugin voor DEZE release (mag leeg zijn --
+        geen wijzigingen betekent gewoon het "no changes"-blok, geen error). $RepoBlobUrl is de basis
+        voor de link naar de volledige workshop-notes (repo-root-relatief, dus alleen als blob-URL
+        leesbaar vanuit de plugin-cache); de link naar de eigen CHANGELOG.md blijft bewust
+        map-relatief ("CHANGELOG.md") -- dat bestand reist met dit kaartje mee in dezelfde
+        plugin-map, dus die link werkt zowel in dit repo als in de plugin-cache van een consument.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$PluginName,
+        [Parameter(Mandatory)][string]$Version,
+        [Parameter(Mandatory)][string]$Date,
+        [Parameter(Mandatory)][string]$Type,
+        [string]$Title = '',
+        [string[]]$Entries = @(),
+        [string]$RepoBlobUrl = 'https://github.com/DaveKJohn/davekjohns-workshop/blob/main/'
+    )
+    $minorDir = ($Version -split '\.')[0..1] -join '.'
+    $notesRelPath = "releases/development/$minorDir/$Version.md"
+    $notesUrl = "$RepoBlobUrl$notesRelPath"
+
+    $titleLine = if ($Title) { "$Title`n`n" } else { '' }
+    $header = "# Release v$Version`n`n" +
+        "**Date:** $Date  `n**Type:** $Type`n`n" +
+        "${titleLine}You are on this release.`n`n"
+
+    $emDash = [char]0x2014
+    $realEntries = @($Entries | Where-Object { $_ -and $_.Trim() })
+    if ($realEntries.Count -gt 0) {
+        $converted = @($realEntries | ForEach-Object {
+            Convert-EntryLinksForPluginChangelog -EntryText $_ -RepoBlobUrl $RepoBlobUrl
+        })
+        $body = (Build-PluginChangelogSection -Entries $converted -Version $Version -Date $Date).Trim()
+    } else {
+        $body = "No changes to this plugin in this release $emDash see the full notes."
+    }
+
+    $footer = "---`n`n" +
+        "Full workshop notes: [$notesRelPath]($notesUrl)`n" +
+        "Cumulative plugin history: [CHANGELOG.md](CHANGELOG.md)`n"
+
+    return ($header + $body + "`n`n" + $footer)
 }
 
 function Build-ReleaseNotes {

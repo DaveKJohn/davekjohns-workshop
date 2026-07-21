@@ -185,7 +185,9 @@ invented on anyone's own initiative — only in consultation with Dave (see
 - **`claude-code-plugins/`** — the home of all the workshop's plugin families. The first (and so
   far only) family is **`claude-specialists/`**: the three plugins
   (`specialists/`, `specialists-lifehub/`, `specialists-shopify/`), each with its
-  own `.claude-plugin/plugin.json` (`version`), `agents/`, and — for a migrated group —
+  own `.claude-plugin/plugin.json` (`version`), `agents/`, a consumer-facing `CHANGELOG.md` and
+  `RELEASE.md` card (both travel with the plugin cache — see
+  [Versioning](README.md#versioning)), and — for a migrated group —
   `manuals/`. Next to the plugin folders (deliberately *not* inside them, so it doesn't travel
   along with the plugin cache) lives `connectors/`: the register of which repos have each plugin
   installed and whether they are in sync (doctrine + format in the
@@ -232,8 +234,9 @@ The constitution above, concretely implemented here:
      the entry file. See [Rendall #06](.claude/plugins/claude-specialists/specialists/05-06-extension.md#changelog).
   2. The **release commit** (only on explicit request): [`cut-release.ps1`](scripts/release/cut-release.ps1)
      bumps all plugin versions in lockstep, generates the release notes in `releases/development/`,
-     references them from `## Releases`, commits that on `main`, and tags `vX.Y.Z`. Deliberately no
-     branch/PR — just like the fold. See [Rendall #06](.claude/plugins/claude-specialists/specialists/05-06-extension.md#versioning--releases).
+     references them from `## Releases`, (re)generates each plugin's consumer-facing `RELEASE.md`
+     card, commits that on `main`, and tags `vX.Y.Z`. Deliberately no branch/PR — just like the
+     fold. See [Rendall #06](.claude/plugins/claude-specialists/specialists/05-06-extension.md#versioning--releases).
 - **This repo is `public`.** A deliberate choice, so the remote `github` marketplace source can be
   read without gh auth. Consequence: **nothing confidential** belongs here — no personal
   information, credentials, or secrets. The group 1 agent defs are therefore deliberately

@@ -19,8 +19,11 @@ infrastructure.
   every `plugin.json` and the agent-def/manual frontmatter (`name`/`id`/`group` + filename match),
   scans for dead links (in `README.md`, `CHANGELOG.md`, the manuals, `SKILL.md`s, and `releases/**`),
   checks that every `scripts/**/*.ps1` parses without errors (catching syntax errors in the
-  orchestration that would only break at runtime), and guards (check 7) that every shared-block
-  region in an agent def still equals its source in `agent-shared/`. This is the safety guard that
+  orchestration that would only break at runtime), guards (check 7) that every shared-block
+  region in an agent def still equals its source in `agent-shared/`, and guards (check 9) that
+  every plugin's consumer-facing `RELEASE.md` card is present and its `vX.Y.Z` matches that
+  plugin's `plugin.json` — since both only ever change together, via `cut-release.ps1`, a
+  mismatch can only mean a forgotten regeneration or a hand-edit. This is the safety guard that
   [Derek #05](05-05-extension.md)'s `open-pr.ps1` runs before every push — and that `cut-release.ps1`
   runs before a release.
 - **`.github/workflows/ci.yml`** — the CI gate on GitHub: runs the same lint gate + all test suites

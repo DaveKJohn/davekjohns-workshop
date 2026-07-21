@@ -170,6 +170,30 @@ $appended = Add-PluginChangelogSection -Existing $fresh -Section $section2 -Plug
 Assert-Match $appended '(?s)## v1\.6\.0.*## v1\.5\.0' 'nieuwste release staat bovenaan'
 Assert-Equal 1 (@([regex]::Matches($appended, '(?m)^# Changelog')).Count) 'intro-header niet gedupliceerd'
 
+Write-Host "Build-PluginReleaseCard" -ForegroundColor Cyan
+$cardEntries = @($linkEntry)
+$card = Build-PluginReleaseCard -PluginName 'specialists' -Version '1.5.0' -Date '2026-07-19' -Type 'Minor' -Title 'Test-titel' -Entries $cardEntries -RepoBlobUrl 'https://gh.test/blob/main/'
+Assert-Match $card '^# Release v1\.5\.0' 'kop met versie'
+Assert-Match $card '\*\*Date:\*\* 2026-07-19' 'datumregel'
+Assert-Match $card '\*\*Type:\*\* Minor' 'type-regel'
+Assert-Match $card 'Test-titel' 'titel opgenomen'
+Assert-Match $card 'You are on this release\.' 'you-are-on-this-release-regel'
+Assert-Match $card '(?s)Test-titel.*You are on this release\.' 'titel staat voor de you-are-on-this-release-regel'
+Assert-Match $card '(?m)^## v1\.5\.0 ' 'sectiekop uit Build-PluginChangelogSection (met entries)'
+Assert-Match $card '### #3 .* Iets' 'entry-fragment opgenomen in de body'
+Assert-Match $card '\[de lint\]\(https://gh\.test/blob/main/scripts/lint/x\.ps1\)' 'root-relatieve link in de body herschreven zoals Convert-EntryLinksForPluginChangelog doet'
+Assert-Match $card '\[de site\]\(https://example\.com\)' 'externe link in de body blijft ongemoeid'
+$card2 = Build-PluginReleaseCard -PluginName 'specialists' -Version '1.5.0' -Date '2026-07-19' -Type 'Minor' -Entries @() -RepoBlobUrl 'https://gh.test/blob/main/'
+Assert-Match $card2 "No changes to this plugin in this release $([char]0x2014) see the full notes\." 'lege-entries-tak: exact het no-changes-blok'
+Assert-Equal $false ([bool]($card2 -match '(?m)^## v')) 'lege-entries-tak: geen sectiekop'
+Assert-Match $card2 '\*\*Type:\*\* Minor' 'lege-entries-tak: kop blijft wel intact'
+Assert-Match $card '\[releases/development/1\.5/1\.5\.0\.md\]\(https://gh\.test/blob/main/releases/development/1\.5/1\.5\.0\.md\)' 'footer: blob-URL naar de volledige release-notes'
+Assert-Match $card '\[CHANGELOG\.md\]\(CHANGELOG\.md\)' 'footer: map-relatieve link naar CHANGELOG.md'
+Assert-Match $card2 '\[releases/development/1\.5/1\.5\.0\.md\]\(https://gh\.test/blob/main/releases/development/1\.5/1\.5\.0\.md\)' 'lege-entries-tak: footer-links blijven kloppen'
+
+$cardNoTitle = Build-PluginReleaseCard -PluginName 'specialists' -Version '2.0.0' -Date '2026-07-19' -Type 'Major' -Entries @()
+Assert-Match $cardNoTitle '(?s)\*\*Type:\*\* Major\n\nYou are on this release\.' 'zonder -Title precies een lege regel (geen extra) voor you-are-on-this-release'
+
 Write-Host ""
 if ($script:fail -gt 0) {
     Write-Host "FAALT: $($script:fail) fout, $($script:pass) goed." -ForegroundColor Red

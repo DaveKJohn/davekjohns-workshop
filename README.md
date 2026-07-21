@@ -112,6 +112,13 @@ plugins without a manual local step.
 
 A newly enabled plugin only becomes visible in the **next** Claude Code session.
 
+**Seeing which release you're on — `RELEASE.md`.** Each plugin folder carries a `RELEASE.md` card
+(version + date/type, a one-line summary, and the entries for that version) that travels with the
+plugin cache exactly like its `CHANGELOG.md`. Because `claude plugin update` pins the cache to a
+specific version (see [Versioning](#versioning)), the cached `RELEASE.md` copy is always *exactly*
+the installed release — a consumer opens it under the plugin path in their own cache to see which
+release they're on, without cross-referencing this workshop's own `releases/` history.
+
 **One canonical channel — mind the old repo name.** The marketplace is named `davekjohns-workshop`
 (repo `DaveKJohn/davekjohns-workshop`) and that is the only channel; use that name in
 `extraKnownMarketplaces` (as above). This repo used to be named `claude-specialists`: that old
@@ -157,6 +164,10 @@ version numbers, so a consuming repo (including this repo itself, which consumes
 in merged changes after the `version` has been bumped — a merge without a release stays invisible
 to consumers. So if work must propagate to consumers, a release belongs with it
 (on Dave's explicit request, as always).
+On every release, `cut-release.ps1` also (re)generates each plugin's `RELEASE.md` card from that
+plugin's lockstep version + its own changelog entries, so the two artifacts always move together —
+the lint gate ([`scripts/lint/check-plugin-integrity.ps1`](scripts/lint/check-plugin-integrity.ps1),
+check 9) guards that the card is present and its version matches `plugin.json`.
 Changes to a shared agent def land here first, are committed here, and only then picked up by the
 consuming repos — never the other way around (no repo may overwrite a shared agent def locally
 without contributing it back here).
@@ -235,8 +246,9 @@ In one motion, on a clean `main`:
    `CHANGELOG.md` a reference under `## Releases` (the Pull Requests section is emptied down to its intro);
 3. appends, per plugin, the entries that touched that plugin (selected via the `Plugins:` line that
    the fold derives from the PR's files; as internal bookkeeping, the line itself doesn't travel along)
-   to the **per-plugin `CHANGELOG.md`** — the consumer-facing history that travels along with the
-   plugin cache;
+   to the **per-plugin `CHANGELOG.md`**, and regenerates that plugin's **`RELEASE.md`** card (version,
+   one-line summary, and the entries for that version) — both consumer-facing artifacts that travel
+   along with the plugin cache;
 4. commits that directly on `main` (`release: vX.Y.Z`) and sets an annotated tag `vX.Y.Z`;
 5. pushes `main` + the tag (unless `-NoPush` for inspection first).
 

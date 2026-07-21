@@ -59,7 +59,9 @@ Updates reach you via **releases**: `claude plugin update` compares version numb
 get changes as soon as the workshop has cut a new version — not before. Each plugin carries its own
 `CHANGELOG.md` that travels with the plugin cache and describes per release what changed for that
 plugin; the full history lives in the workshop itself
-([`CHANGELOG.md`](../../CHANGELOG.md) and [`releases/`](../../releases/README.md)).
+([`CHANGELOG.md`](../../CHANGELOG.md) and [`releases/`](../../releases/README.md)). Each plugin
+folder also carries a `RELEASE.md` card next to its `CHANGELOG.md` — open it in your plugin cache
+after an update to see, at a glance, exactly which release you're now on.
 
 When an update adds a **new specialist**, your repo's roster (the specialists table in your
 `CLAUDE.md`) and its lenses don't update themselves. The `roster-sessioncheck` SessionStart hook
