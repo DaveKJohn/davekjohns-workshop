@@ -32,10 +32,17 @@ The Configuration Manager manages the theme landscape and the platform reference
 
 **Always** pass the store explicitly (`--store <store>.myshopify.com`); never assume an implicit default.
 
-- **Local hot-reload** (while building on a branch): `shopify theme dev --store <store>.myshopify.com` — automatically creates a hidden `Development (...)` theme (safe).
+**`shopify theme dev` is the default, dev-first workflow** — theme work is built and tested locally
+against the dev server, not by pushing a preview theme on every branch. Pushing to a preview theme
+(below) is the **fallback**: reach for it only when something demonstrably can't be tested through
+the dev server (a market/currency-specific behavior via Shopify Markets, or a third-party
+integration that needs the real published storefront). See [Sandra #21](05-21-manual.md#what-sandra-owns)
+for who performs the fallback push and under what conditions.
+
+- **Local hot-reload** (the default way to build): `shopify theme dev --store <store>.myshopify.com` — automatically creates a hidden `Development (...)` theme (safe).
 - **Listing themes** (to find an unpublished id): `shopify theme list --store <store>.myshopify.com`. Only the `unpublished`/`development` roles are valid push/pull targets; `live` is off-limits.
-- **Push to a new unpublished preview theme:** `shopify theme push --store <store>.myshopify.com --unpublished --json`.
-- **Push to an existing unpublished theme (by id):** `shopify theme push --store <store>.myshopify.com --theme <UNPUBLISHED_ID>`. Before every push, verify that the target role is **not** `live`/`main` (pre-push checklist, follow the safety rules).
+- **Push to a new unpublished preview theme (fallback):** `shopify theme push --store <store>.myshopify.com --unpublished --json` — only when local `shopify theme dev` testing can't cover the test goal.
+- **Push to an existing unpublished theme (by id, fallback):** `shopify theme push --store <store>.myshopify.com --theme <UNPUBLISHED_ID>`. Before every push, verify that the target role is **not** `live`/`main` (pre-push checklist, follow the safety rules).
 - **Pull from an unpublished theme:** `shopify theme pull --store <store>.myshopify.com --theme <UNPUBLISHED_ID>`.
 - **`--live` pull** is only allowed in narrowly defined cases (the pre-task sync, an explicit request from the user to mirror the live version for reference, or a targeted `--only` pull for a live-setting toggle). Never pull `--live` outside those.
 - **Publishing** (makes a theme the live customer theme): `shopify theme publish --store <store>.myshopify.com --theme <ID>`. **Always ask the user first. Never publish autonomously.**
