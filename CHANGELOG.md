@@ -9,6 +9,23 @@ folden) staat in [`README.md`](README.md#contributing--changelog--pr-workflow).
 Alles wat sinds de laatste release naar `main` is gemergd — nieuwste bovenaan, één blok per pull
 request.
 
+### #119 · Ship a per-plugin RELEASE.md card so consumers see which release they are on · Feat · 2026-07-21
+
+Every plugin now carries a `RELEASE.md` card (version, one-line summary, and the entries for that
+version) right next to its `CHANGELOG.md`. Chosen approach: **Model A, plugin-authored** — the card
+lives inside the plugin folder and travels with the plugin cache via `claude plugin update`, so a
+consumer can see exactly which release they're on without cross-referencing the workshop's own
+`releases/` history. `cut-release.ps1` (re)generates the card for every plugin, in lockstep, on
+every release; the lint gate's new check 9 guards that the card is present and its `vX.Y.Z` matches
+that plugin's `plugin.json`. Deliberately **no SessionStart hook** announces this — the card is
+discovered by opening the file in the plugin cache. Seeded on v1.12.1.
+
+Plugins: specialists, specialists-lifehub, specialists-shopify
+
+[PR #119](https://github.com/DaveKJohn/davekjohns-workshop/pull/119)
+
+---
+
 ### #118 · new-branch.ps1: branch creation immediately scaffolds its changelog entry · Feat · 2026-07-21
 
 Branch creation now brings its changelog entry into being in the same move — a branch is never entry-less. Added a shared, Derek-bound `scripts/task/new-branch.ps1` that validates the branch name via `branch-info.ps1` (new additive `Test-BranchName` helper), creates the branch (idempotent `git -C` checkout/checkout -b, no `Set-Location`), and immediately scaffolds the changelog entry by calling `new-changelog-entry.ps1` as a child process. Promoted `new-changelog-entry.ps1` to a dual-context, mirrored shared script (resolves its repo root via `CLAUDE_PROJECT_DIR`, dot-sources `branch-info.ps1` from the repo root, with a #86 pre-flight); registered both scripts in `shared-scripts-lib.ps1` and generated their plugin mirrors. Added the `/specialists:new-branch` skill, and updated Derek's persona + the workflow docs (Derek/Rendall/Tessa lenses, plugin scripts README, root README) so "a branch creates its entry at creation time" is the rule and the separate later step is gone. Consumer seam: the shared script does only git + entry (no push/PR, idempotent), so a consumer like smartwatchbanden can call it first and layer its own step (e.g. a Shopify preview theme) on top. Tests: new `new-branch.tests.ps1` plus extended `shared-scripts` and `branch-info` suites; lint and all suites green.
