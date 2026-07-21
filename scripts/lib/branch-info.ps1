@@ -61,3 +61,35 @@ function Get-BranchInfo {
         SafeName = $Branch -replace '/', '-'
     }
 }
+
+function Test-BranchName {
+    <#
+        Additieve SSOT-helper (naast Get-BranchInfo) voor scripts die een branch-naam moeten
+        VALIDEREN voor ze hem gebruiken (bv. new-branch.ps1), i.p.v. de hard-reject-regels inline
+        te herhalen. Raakt Get-BranchInfo/Get-BranchTypes/de prefix-tabel niet aan.
+
+        Hard-rejects (IsValid = $false, Reason gevuld):
+          - lege/whitespace-only naam
+          - naam gelijk aan 'main'
+          - naam bevat de substring 'final' (case-insensitief, dus ook 'finalize'/'refinalization' --
+            Derek's harde regel, bewust breed)
+
+        Onbekend prefix is GEEN hard-reject (IsValid blijft $true); de aanroeper leest IsKnown en
+        beslist zelf of/hoe een soft-warn nodig is, consistent met new-changelog-entry/open-pr die
+        bij een onbekend prefix ook terugvallen (Chore/'question') i.p.v. te blokkeren.
+    #>
+    param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Branch)
+
+    if ([string]::IsNullOrWhiteSpace($Branch)) {
+        return [pscustomobject]@{ IsValid = $false; Reason = "Branch-naam mag niet leeg zijn."; IsKnown = $false }
+    }
+    if ($Branch -eq 'main') {
+        return [pscustomobject]@{ IsValid = $false; Reason = "Branch-naam mag niet 'main' zijn."; IsKnown = $false }
+    }
+    if ($Branch -match 'final') {
+        return [pscustomobject]@{ IsValid = $false; Reason = "Branch-naam mag het token 'final' niet bevatten."; IsKnown = $false }
+    }
+
+    $info = Get-BranchInfo -Branch $Branch
+    [pscustomobject]@{ IsValid = $true; Reason = $null; IsKnown = $info.IsKnown }
+}

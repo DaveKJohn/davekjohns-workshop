@@ -43,6 +43,16 @@ function Get-SharedScriptPairs {
             Name   = 'check-roster-sync'
             Source = 'scripts\sync\check-roster-sync.ps1'
             Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\sync\check-roster-sync.ps1'
+        },
+        @{
+            Name   = 'new-changelog-entry'
+            Source = 'scripts\release\new-changelog-entry.ps1'
+            Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\release\new-changelog-entry.ps1'
+        },
+        @{
+            Name   = 'new-branch'
+            Source = 'scripts\task\new-branch.ps1'
+            Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\task\new-branch.ps1'
         }
     )
 

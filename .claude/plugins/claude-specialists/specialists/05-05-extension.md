@@ -50,13 +50,18 @@ Edge cases — classify by **what actually changes**, not which files happen to 
 
 **Never "final" in a branch name** — use `-v2`, `-v3`, etc. for a second attempt.
 
-**Step 3 — create the git branch:**
+**Step 3 — create the branch (its changelog entry comes along in the same move):**
 ```sh
-git checkout -b <branch-name>
+.\scripts\task\new-branch.ps1 -Name <branch-name> -Title "<short title>"
 ```
-The assigned specialist then develops on the branch and scaffolds the changelog entry
-([Rendall #06](05-06-extension.md#changelog)). As soon as that work is finished and committed, Chris
-reports it and waits for Dave's word; only on Dave's "open the PR" does Derek open the PR.
+Creating the branch and creating its changelog entry file are no longer two separate manual steps —
+**a branch is never entry-less.** `new-branch.ps1` checks out the branch (idempotently — running it
+again on an existing branch simply resumes it) and then immediately calls the shared
+`new-changelog-entry.ps1` ([Rendall #06](05-06-extension.md#changelog)) as a child step to scaffold
+`<branch-name>.md`. Mechanism ownership of the entry file stays with Rendall; Derek's `new-branch` is
+what triggers it at the moment the branch is born. The assigned specialist then fills in the
+description while building. As soon as that work is finished and committed, Chris reports it and
+waits for Dave's word; only on Dave's "open the PR" does Derek open the PR.
 
 ### Opening a pull request
 
@@ -138,6 +143,10 @@ via a temporary file.
 
 Derek prefers not to touch the git commands by hand. His toolbox:
 
+- `scripts/task/new-branch.ps1 -Name <branch-name> [-Title "…"]` — create (or idempotently resume)
+  the branch and, in the same move, scaffold its changelog entry file by calling the shared
+  `new-changelog-entry.ps1` as a child step. No push, no PR — just the branch + the entry file on
+  disk. See [Step 3 above](#classifying-naming-and-creating-a-branch).
 - `scripts/release/open-pr.ps1 -Title "…" [-Body "…"] [-SkipLint] [-SkipTests]` — push the branch +
   open the PR, with the right label from the prefix. Without `-Body` **the script fills in the
   template itself**. **Lint gate:** before the push, `scripts/lint/check-plugin-integrity.ps1`
@@ -150,9 +159,11 @@ Derek prefers not to touch the git commands by hand. His toolbox:
   branch conventions: the prefix table (prefix → GitHub label + changelog type) and the branch name →
   entry-filename conversion (`/` → `-`). Changing the mapping? Here, nowhere else.
 
-The release scripts (`new-changelog-entry.ps1`, `fold-changelog-entry.ps1`) are
-[Rendall #06](05-06-extension.md)'s tools. A new recurring GitHub chore? Derek builds a
-script for it.
+`new-changelog-entry.ps1` is mechanism-owned by [Rendall #06](05-06-extension.md); it is now shared
+(mirrored to the plugin, [issue #81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81))
+and normally reached indirectly, via Derek's `new-branch.ps1` above. `fold-changelog-entry.ps1`
+remains [Rendall #06](05-06-extension.md)'s tool, run on `main` after the merge. A new recurring
+GitHub chore? Derek builds a script for it.
 
 In short: the **how** (branching, PRs, merging, cleanup, automation) is portable; the **what** (this
 prefix table, the `scripts/release/*` pipeline with the plugin lint gate, the public `DaveKJohn` repo,

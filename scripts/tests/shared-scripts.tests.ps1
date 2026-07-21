@@ -42,6 +42,12 @@ $fold = $pairs | Where-Object { $_.Name -eq 'fold-changelog-entry' }
 Assert-True ($null -ne $fold) 'fold-changelog-entry staat in het register'
 Assert-True ($fold.SourceRel -like 'scripts\*') 'bron is repo-root-relatief onder scripts\'
 Assert-True ($fold.MirrorRel -like 'claude-code-plugins\*') 'spiegel ligt onder de plugin'
+# Expliciet -- de generieke loops verderop dekken deze twee al impliciet, maar een missend paar in het
+# register zou dan stil door de mazen glippen i.p.v. een gerichte faal te geven.
+$newChangelogPair = $pairs | Where-Object { $_.Name -eq 'new-changelog-entry' }
+Assert-True ($null -ne $newChangelogPair) 'new-changelog-entry staat in het register'
+$newBranchPair = $pairs | Where-Object { $_.Name -eq 'new-branch' }
+Assert-True ($null -ne $newBranchPair) 'new-branch staat in het register'
 
 Write-Host "Repo-invariant: elke spiegel in sync met zijn bron" -ForegroundColor Cyan
 foreach ($pair in $pairs) {
@@ -89,16 +95,38 @@ try {
     # Continue, niet Stop: de child schrijft zijn wegwijzer via Write-Error naar stderr; met 2>&1 zou
     # Windows PowerShell 5.1 dat als terminating NativeCommandError behandelen en deze test afbreken.
     $ErrorActionPreference = 'Continue'
+    # Het KINDPROCES rendert Write-Error zelf al naar platte stderr-regels op zijn eigen (niet-
+    # interactieve) consolebreedte, VOORDAT die tekst hier ooit wordt gevangen -- een woord als
+    # 'branch-info.ps1' kan daarbij toevallig precies op de koppelteken-wrapgrens splitsen
+    # ('branch-'\n'info.ps1'), wat een kale -match hieronder flaky zou laten falen, puur afhankelijk
+    # van de (willekeurige) tijdelijke-pad-lengte. Newlines eruit strippen vóór de match herstelt de
+    # oorspronkelijke doorlopende tekst -- geen functionele wijziging, alleen deterministische matching.
+    function Test-OutputContains { param([string]$Text, [string]$Pattern) return (($Text -replace "`r?`n", '') -match $Pattern) }
+
     $foldSrc = ($pairs | Where-Object { $_.Name -eq 'fold-changelog-entry' }).SourcePath
     $foldOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File $foldSrc 2>&1 | Out-String)
     $foldCode = $LASTEXITCODE
     Assert-Equal 1 $foldCode 'fold stopt (exit 1) zonder repo-config'
-    Assert-True ($foldOut -match 'repo-config') 'fold noemt repo-config in de wegwijzer'
+    Assert-True (Test-OutputContains $foldOut 'repo-config') 'fold noemt repo-config in de wegwijzer'
     $prSrc = ($pairs | Where-Object { $_.Name -eq 'open-pr' }).SourcePath
     $prOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File $prSrc -Title 'fix: preflight-test' 2>&1 | Out-String)
     $prCode = $LASTEXITCODE
     Assert-Equal 1 $prCode 'open-pr stopt (exit 1) zonder repo-config/branch-info'
-    Assert-True ($prOut -match 'branch-info') 'open-pr noemt branch-info in de wegwijzer'
+    Assert-True (Test-OutputContains $prOut 'branch-info') 'open-pr noemt branch-info in de wegwijzer'
+
+    # new-changelog-entry en new-branch leunen ALLEEN op branch-info.ps1 (geen repo-config, geen gh --
+    # lichter dan fold/open-pr), dus geen VUL-IN-vervolgscenario voor deze twee: hun enige pre-flight-
+    # check is de kale existence-check op branch-info.ps1 hieronder.
+    $nceSrc = ($pairs | Where-Object { $_.Name -eq 'new-changelog-entry' }).SourcePath
+    $nceOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File $nceSrc -Title 'fix: preflight-test' 2>&1 | Out-String)
+    $nceCode = $LASTEXITCODE
+    Assert-Equal 1 $nceCode 'new-changelog-entry stopt (exit 1) zonder branch-info'
+    Assert-True (Test-OutputContains $nceOut 'branch-info') 'new-changelog-entry noemt branch-info in de wegwijzer'
+    $nbSrc = ($pairs | Where-Object { $_.Name -eq 'new-branch' }).SourcePath
+    $nbOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File $nbSrc -Name 'feat/preflight-test' 2>&1 | Out-String)
+    $nbCode = $LASTEXITCODE
+    Assert-Equal 1 $nbCode 'new-branch stopt (exit 1) zonder branch-info'
+    Assert-True (Test-OutputContains $nbOut 'branch-info') 'new-branch noemt branch-info in de wegwijzer'
 
     # Tweede scenario: scaffolds AANWEZIG maar nog niet ingevuld (VUL-IN) -> ook stoppen met wegwijzer.
     # Minimale scaffolds (repo-config met VUL-IN + een lege branch-info zodat open-pr's existence-check

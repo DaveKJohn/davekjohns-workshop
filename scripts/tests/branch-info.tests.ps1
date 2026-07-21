@@ -73,6 +73,32 @@ foreach ($t in $types) {
     Assert-True ($tableTypes -contains $t) "canoniek type '$t' heeft een prefix in de tabel"
 }
 
+Write-Host "Test-BranchName (SSOT-validatiehelper, new-branch.ps1)" -ForegroundColor Cyan
+$validCheck = Test-BranchName -Branch 'feat/nieuwe-plugin'
+Assert-Equal $true $validCheck.IsValid 'geldige naam -> IsValid'
+Assert-Equal $null  $validCheck.Reason 'geldige naam -> geen Reason'
+Assert-Equal $true  $validCheck.IsKnown 'geldige naam (bekend prefix) -> IsKnown'
+
+$mainCheck = Test-BranchName -Branch 'main'
+Assert-Equal $false $mainCheck.IsValid "'main' -> IsValid false"
+Assert-Equal "Branch-naam mag niet 'main' zijn." $mainCheck.Reason "'main' -> verwachte Reason"
+
+$finalCheck = Test-BranchName -Branch 'feat/final-versie'
+Assert-Equal $false $finalCheck.IsValid "naam met token 'final' -> IsValid false"
+Assert-Equal "Branch-naam mag het token 'final' niet bevatten." $finalCheck.Reason "token 'final' -> verwachte Reason"
+
+$emptyCheck = Test-BranchName -Branch ''
+Assert-Equal $false $emptyCheck.IsValid 'lege naam -> IsValid false'
+Assert-Equal "Branch-naam mag niet leeg zijn." $emptyCheck.Reason 'lege naam -> verwachte Reason'
+
+$wsCheck = Test-BranchName -Branch '   '
+Assert-Equal $false $wsCheck.IsValid 'whitespace-only naam -> IsValid false'
+Assert-Equal "Branch-naam mag niet leeg zijn." $wsCheck.Reason 'whitespace-only naam -> verwachte Reason'
+
+$unknownCheck = Test-BranchName -Branch 'wip/experiment'
+Assert-Equal $true  $unknownCheck.IsValid 'onbekend prefix -> IsValid true (soft-warn-pad, geen hard-reject)'
+Assert-Equal $false $unknownCheck.IsKnown 'onbekend prefix -> IsKnown false'
+
 Write-Host ""
 if ($script:fail -gt 0) {
     Write-Host "FAALT: $($script:fail) fout, $($script:pass) goed." -ForegroundColor Red

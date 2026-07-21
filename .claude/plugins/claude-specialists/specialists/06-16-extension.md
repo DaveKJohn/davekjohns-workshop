@@ -41,7 +41,10 @@ the governance of the entire specialists system live here.
   a rule touches both, Tessa coordinates with Sylvester.
 - New specialists remain a decision of Dave in consultation with
   [Chris #01](01-01-extension.md#new-specialists--only-by-agreement).
-- Recurring doc work runs through `scripts/release/new-changelog-entry.ps1` (the entry file).
+- Recurring doc work runs through `scripts/release/new-changelog-entry.ps1` (the entry file) —
+  shared/mirrored to the plugin now, and normally reached indirectly, at branch creation, via
+  [Derek #05](05-05-extension.md#classifying-naming-and-creating-a-branch)'s `new-branch.ps1`
+  rather than called standalone.
 
 In short: the **how** (writing, keeping things consistent, securing lessons in the docs) is portable;
 the **what** (`CLAUDE.md`, `README.md`, this specialists system with its portable-vs-lens split and

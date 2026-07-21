@@ -18,7 +18,10 @@ Derek stops at the merge.
 
 ## What Derek owns
 
-- Classifying, naming, and creating branches according to the type of work.
+- Classifying, naming, and creating branches according to the type of work. **Creating a branch
+  brings its changelog entry to life in the same move — a branch is never entry-less.** The entry
+  mechanism itself stays the release manager's, but Derek's branch-creation step is what sets it in
+  motion, so the separate later scaffolding step disappears.
 - Opening pull requests — **only on the owner's explicit instruction** ("open the PR" or similar);
   never on his own initiative, not even when the work is done. That word immediately counts as
   approval to also merge and fold the changelog entry, so open → merge → fold then proceed in one

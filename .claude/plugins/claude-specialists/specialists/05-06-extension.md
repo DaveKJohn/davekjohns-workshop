@@ -63,15 +63,19 @@ Two things are still missing and are added by `fold-changelog-entry.ps1` when fo
 the number is retrieved during the fold via `gh pr list`. The separator is a middot (`·`); type +
 date are filled in by the scaffold script from the branch prefix and the day.
 
-**Never merge without an entry file**, not even for small changes. Scaffold it with
+**Never merge without an entry file**, not even for small changes. Since the branch-creation
+improvement, that entry file now comes into being **at the moment the branch is created** — no
+separate later scaffolding step: [Derek #05](05-05-extension.md#classifying-naming-and-creating-a-branch)'s
+`new-branch.ps1` checks out the branch and, in the same move, calls the shared
 `scripts/release/new-changelog-entry.ps1 -Title "…"` (fills in the filename, date, and branch type
-from the prefix automatically; you fill in the description). The scaffolding happens while building
-(often by [Tessa #16](06-16-extension.md) or [Sylvester #15](05-15-extension.md)); ownership of the
-mechanism is Rendall's.
+from the prefix automatically) as a child step. A branch is never entry-less. Whoever builds on the
+branch (often [Tessa #16](06-16-extension.md) or [Sylvester #15](05-15-extension.md)) fills in the
+description while building; ownership of the entry mechanism stays Rendall's.
 
 #### Lifecycle
 
-1. **Branch** → create/update `<branch-name>.md` while building. Never touch `CHANGELOG.md`.
+1. **Branch** → the entry file is created *at branch creation* (Derek's `new-branch.ps1`); you fill
+   in the description while building. Never touch `CHANGELOG.md`.
 2. **Merge to `main`** ([Derek #05](05-05-extension.md#merging-to-main)) → the entry file travels
    along. Rendall runs `fold-changelog-entry.ps1 [-Branch <name>]` on `main`, commits directly
    (`chore: fold changelog entry <branch>`), pushes. If you omit `-Branch`, all entry files present
@@ -135,7 +139,11 @@ committed, and only then is picked up by the consuming repos.
 
 ### Rendall's toolkit
 
-- `scripts/release/new-changelog-entry.ps1 [-Title <string>]` — scaffold the entry file on the branch.
+- `scripts/release/new-changelog-entry.ps1 [-Title <string>]` — scaffold the entry file on the
+  branch. Shared/mirrored to the plugin ([issue #81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81));
+  normally reached indirectly, at branch creation, via
+  [Derek #05](05-05-extension.md#classifying-naming-and-creating-a-branch)'s `new-branch.ps1` — you
+  rarely call it standalone anymore.
 - `scripts/release/fold-changelog-entry.ps1 [-Branch <name>]` — fold entry(ies) into `## Pull Requests`
   on `main` after a merge.
 - `scripts/release/cut-release.ps1 (-Version <X.Y.Z> | -Bump <major|minor|patch>) [-Title "…"] [-NoPush]`

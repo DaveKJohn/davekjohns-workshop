@@ -20,6 +20,8 @@ consumers (life-hub, smartwatchbanden, …) no longer duplicate them per repo. T
 |---|---|---|
 | `release/fold-changelog-entry.ps1` | **Shared** (mirror active) | [`fold-changelog`](../skills/fold-changelog/SKILL.md) |
 | `release/open-pr.ps1` | **Shared** (mirror active; lint gate via `Get-LintScript` in `repo-config`) | [`open-pr`](../skills/open-pr/SKILL.md) |
+| `release/new-changelog-entry.ps1` | **Shared** (mirror active; normally reached indirectly via `new-branch`, not called standalone) | [`new-branch`](../skills/new-branch/SKILL.md) |
+| `task/new-branch.ps1` | **Shared** (mirror active; creates the branch and calls `new-changelog-entry.ps1` as a child step in the same move -- a branch is never entry-less) | [`new-branch`](../skills/new-branch/SKILL.md) |
 
 ## How the mirror works
 
