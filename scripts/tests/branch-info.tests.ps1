@@ -1,17 +1,17 @@
 <#
 .SYNOPSIS
-    Regressietests voor scripts/lib/branch-info.ps1 (de gedeelde branch-conventies + type-SSOT).
+    Regression tests for scripts/lib/branch-info.ps1 (the shared branch conventions + type SSOT).
 
 .DESCRIPTION
-    Dependency-vrij: geen Pester nodig, alleen PowerShell. Dot-source't de lib en draait een reeks
-    asserts. Exit-code 0 als alles slaagt, 1 bij een faal -- zo bruikbaar in een CI-poort.
+    Dependency-free: no Pester needed, only PowerShell. Dot-sources the lib and runs a series of
+    asserts. Exit code 0 if everything passes, 1 on a failure -- so usable as a CI gate.
 
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/branch-info.tests.ps1
 
-    Bewaakt in het bijzonder het SSOT-contract dat het DRY-lek dichtte (issue #81): de branch-typen
-    hebben een enige bron (Get-BranchTypes) die release-lib.ps1 leest i.p.v. een eigen kopie.
+    Guards in particular the SSOT contract that closed the DRY leak (issue #81): the branch types
+    have a single source (Get-BranchTypes) that release-lib.ps1 reads instead of its own copy.
 
-    Puur ASCII (repo-conventie voor .ps1).
+    Pure ASCII (repo convention for .ps1).
 #>
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\branch-info.ps1')
@@ -24,7 +24,7 @@ function Assert-Equal {
     if ($Expected -eq $Actual) {
         $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green
     } else {
-        $script:fail++; Write-Host "  [FAIL] $Name`n         verwacht: '$Expected'`n         kreeg:    '$Actual'" -ForegroundColor Red
+        $script:fail++; Write-Host "  [FAIL] $Name`n         expected: '$Expected'`n         got:      '$Actual'" -ForegroundColor Red
     }
 }
 
@@ -38,71 +38,71 @@ function Assert-True {
 }
 
 Write-Host "Get-BranchPrefix" -ForegroundColor Cyan
-Assert-Equal 'feat'  (Get-BranchPrefix -Branch 'feat/nieuwe-plugin') "slash-prefix 'feat/...' -> feat"
-Assert-Equal 'fix'   (Get-BranchPrefix -Branch 'fix/kapotte-frontmatter') "slash-prefix 'fix/...' -> fix"
-Assert-Equal 'chore' (Get-BranchPrefix -Branch 'chore-losse-naam') "koppelteken-prefix zonder slash -> chore"
+Assert-Equal 'feat'  (Get-BranchPrefix -Branch 'feat/new-plugin') "slash prefix 'feat/...' -> feat"
+Assert-Equal 'fix'   (Get-BranchPrefix -Branch 'fix/broken-frontmatter') "slash prefix 'fix/...' -> fix"
+Assert-Equal 'chore' (Get-BranchPrefix -Branch 'chore-loose-name') "hyphen prefix without slash -> chore"
 
 Write-Host "Get-BranchInfo" -ForegroundColor Cyan
-$feat = Get-BranchInfo -Branch 'feat/nieuwe-plugin'
-Assert-Equal $true        $feat.IsKnown  'bekend prefix -> IsKnown'
+$feat = Get-BranchInfo -Branch 'feat/new-plugin'
+Assert-Equal $true        $feat.IsKnown  'known prefix -> IsKnown'
 Assert-Equal 'enhancement' $feat.Label   'feat -> label enhancement'
 Assert-Equal 'Feat'        $feat.Type    'feat -> type Feat'
-Assert-Equal 'feat-nieuwe-plugin' $feat.SafeName 'SafeName vervangt / door -'
+Assert-Equal 'feat-new-plugin' $feat.SafeName 'SafeName replaces / with -'
 
-$docs = Get-BranchInfo -Branch 'docs/readme-bijwerken'
+$docs = Get-BranchInfo -Branch 'docs/update-readme'
 Assert-Equal 'documentation' $docs.Label 'docs -> label documentation'
 Assert-Equal 'Docs'          $docs.Type  'docs -> type Docs'
 
 $unknown = Get-BranchInfo -Branch 'wip/experiment'
-Assert-Equal $false $unknown.IsKnown 'onbekend prefix -> niet IsKnown'
-Assert-Equal $null  $unknown.Label   'onbekend prefix -> geen label'
-Assert-Equal $null  $unknown.Type    'onbekend prefix -> geen type'
+Assert-Equal $false $unknown.IsKnown 'unknown prefix -> not IsKnown'
+Assert-Equal $null  $unknown.Label   'unknown prefix -> no label'
+Assert-Equal $null  $unknown.Type    'unknown prefix -> no type'
 
-Write-Host "Get-BranchTypes (type-SSOT, issue #81)" -ForegroundColor Cyan
+Write-Host "Get-BranchTypes (type SSOT, issue #81)" -ForegroundColor Cyan
 $types = @(Get-BranchTypes)
-Assert-Equal 'Feat Fix Docs Chore' ($types -join ' ') 'canonieke typen in vaste volgorde'
+Assert-Equal 'Feat Fix Docs Chore' ($types -join ' ') 'canonical types in fixed order'
 
-# SSOT-contract: elke Type-waarde in de prefix-tabel is lid van Get-BranchTypes, en andersom heeft
-# elk canoniek type ten minste een prefix. Zo kan de tabel niet driften t.o.v. de canonieke lijst
-# (en release-lib.ps1, dat de lijst hergebruikt, blijft in sync).
+# SSOT contract: every Type value in the prefix table is a member of Get-BranchTypes, and
+# conversely every canonical type has at least one prefix. This keeps the table from drifting
+# relative to the canonical list (and release-lib.ps1, which reuses the list, stays in sync).
 $tableTypes = @($script:BranchPrefixTable.Values | ForEach-Object { $_.Type } | Sort-Object -Unique)
 foreach ($t in $tableTypes) {
-    Assert-True ($types -contains $t) "tabel-type '$t' zit in Get-BranchTypes"
+    Assert-True ($types -contains $t) "table type '$t' is in Get-BranchTypes"
 }
 foreach ($t in $types) {
-    Assert-True ($tableTypes -contains $t) "canoniek type '$t' heeft een prefix in de tabel"
+    Assert-True ($tableTypes -contains $t) "canonical type '$t' has a prefix in the table"
 }
 
-Write-Host "Test-BranchName (SSOT-validatiehelper, new-branch.ps1)" -ForegroundColor Cyan
-$validCheck = Test-BranchName -Branch 'feat/nieuwe-plugin'
-Assert-Equal $true $validCheck.IsValid 'geldige naam -> IsValid'
-Assert-Equal $null  $validCheck.Reason 'geldige naam -> geen Reason'
-Assert-Equal $true  $validCheck.IsKnown 'geldige naam (bekend prefix) -> IsKnown'
+Write-Host "Test-BranchName (SSOT validation helper, new-branch.ps1)" -ForegroundColor Cyan
+$validCheck = Test-BranchName -Branch 'feat/new-plugin'
+Assert-Equal $true $validCheck.IsValid 'valid name -> IsValid'
+Assert-Equal $null  $validCheck.Reason 'valid name -> no Reason'
+Assert-Equal $true  $validCheck.IsKnown 'valid name (known prefix) -> IsKnown'
 
 $mainCheck = Test-BranchName -Branch 'main'
 Assert-Equal $false $mainCheck.IsValid "'main' -> IsValid false"
-Assert-Equal "Branch-naam mag niet 'main' zijn." $mainCheck.Reason "'main' -> verwachte Reason"
+Assert-Equal "Branch name must not be 'main'." $mainCheck.Reason "'main' -> expected Reason"
 
-$finalCheck = Test-BranchName -Branch 'feat/final-versie'
-Assert-Equal $false $finalCheck.IsValid "naam met token 'final' -> IsValid false"
-Assert-Equal "Branch-naam mag het token 'final' niet bevatten." $finalCheck.Reason "token 'final' -> verwachte Reason"
+$finalCheck = Test-BranchName -Branch 'feat/final-version'
+Assert-Equal $false $finalCheck.IsValid "name with token 'final' -> IsValid false"
+Assert-Equal "Branch name must not contain the token 'final'." $finalCheck.Reason "token 'final' -> expected Reason"
 
 $emptyCheck = Test-BranchName -Branch ''
-Assert-Equal $false $emptyCheck.IsValid 'lege naam -> IsValid false'
-Assert-Equal "Branch-naam mag niet leeg zijn." $emptyCheck.Reason 'lege naam -> verwachte Reason'
+Assert-Equal $false $emptyCheck.IsValid 'empty name -> IsValid false'
+Assert-Equal "Branch name must not be empty." $emptyCheck.Reason 'empty name -> expected Reason'
 
 $wsCheck = Test-BranchName -Branch '   '
-Assert-Equal $false $wsCheck.IsValid 'whitespace-only naam -> IsValid false'
-Assert-Equal "Branch-naam mag niet leeg zijn." $wsCheck.Reason 'whitespace-only naam -> verwachte Reason'
+Assert-Equal $false $wsCheck.IsValid 'whitespace-only name -> IsValid false'
+Assert-Equal "Branch name must not be empty." $wsCheck.Reason 'whitespace-only name -> expected Reason'
 
 $unknownCheck = Test-BranchName -Branch 'wip/experiment'
-Assert-Equal $true  $unknownCheck.IsValid 'onbekend prefix -> IsValid true (soft-warn-pad, geen hard-reject)'
-Assert-Equal $false $unknownCheck.IsKnown 'onbekend prefix -> IsKnown false'
+Assert-Equal $true  $unknownCheck.IsValid 'unknown prefix -> IsValid true (soft-warn path, no hard reject)'
+Assert-Equal $false $unknownCheck.IsKnown 'unknown prefix -> IsKnown false'
 
 Write-Host ""
 if ($script:fail -gt 0) {
-    Write-Host "FAALT: $($script:fail) fout, $($script:pass) goed." -ForegroundColor Red
+    Write-Host "FAILS: $($script:fail) failed, $($script:pass) passed." -ForegroundColor Red
     exit 1
 }
-Write-Host "OK: alle $($script:pass) asserts geslaagd." -ForegroundColor Green
+Write-Host "OK: all $($script:pass) asserts passed." -ForegroundColor Green
 exit 0

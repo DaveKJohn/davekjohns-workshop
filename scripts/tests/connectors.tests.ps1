@@ -1,17 +1,17 @@
 <#
 .SYNOPSIS
-    Regressietests voor de connectors-check (scripts/sync/check-connectors.ps1) en de
-    SessionStart-hook (connector-sessioncheck.ps1).
+    Regression tests for the connectors check (scripts/sync/check-connectors.ps1) and the
+    SessionStart hook (connector-sessioncheck.ps1).
 
 .DESCRIPTION
-    Dependency-vrij: geen Pester, alleen PowerShell. Integratie-stijl -- draait de echte scripts
-    in een KINDPROCES tegen wegwerp-fixtures in de temp-map en assert op exit-code + output.
-    Registerchecks draaien met -SkipDrift en -SkipVersions tenzij een test juist dat codepad
-    dekt (de drift-check heeft zijn eigen suite; op CI bestaat geen plugin-administratie).
+    Dependency-free: no Pester, only PowerShell. Integration style -- runs the real scripts
+    in a CHILD PROCESS against throwaway fixtures in the temp folder and asserts on exit code + output.
+    Register checks run with -SkipDrift and -SkipVersions unless a test specifically covers that
+    code path (the drift check has its own suite; no plugin administration exists on CI).
 
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/connectors.tests.ps1
 
-    Puur ASCII (repo-conventie voor .ps1).
+    Pure ASCII (repo convention for .ps1).
 #>
 $ErrorActionPreference = 'Stop'
 
@@ -28,7 +28,7 @@ function Assert-Equal {
     if ($Expected -eq $Actual) {
         $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green
     } else {
-        $script:fail++; Write-Host "  [FAIL] $Name`n         verwacht: '$Expected'`n         kreeg:    '$Actual'" -ForegroundColor Red
+        $script:fail++; Write-Host "  [FAIL] $Name`n         expected: '$Expected'`n         got:      '$Actual'" -ForegroundColor Red
     }
 }
 
@@ -37,7 +37,7 @@ function Assert-Match {
     if ($Text -match $Pattern) {
         $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green
     } else {
-        $script:fail++; Write-Host "  [FAIL] $Name`n         patroon niet gevonden: '$Pattern'" -ForegroundColor Red
+        $script:fail++; Write-Host "  [FAIL] $Name`n         pattern not found: '$Pattern'" -ForegroundColor Red
     }
 }
 
@@ -46,7 +46,7 @@ function Assert-NotMatch {
     if ($Text -notmatch $Pattern) {
         $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green
     } else {
-        $script:fail++; Write-Host "  [FAIL] $Name`n         patroon gevonden dat er niet mag zijn: '$Pattern'" -ForegroundColor Red
+        $script:fail++; Write-Host "  [FAIL] $Name`n         pattern found that should not be there: '$Pattern'" -ForegroundColor Red
     }
 }
 
@@ -56,9 +56,9 @@ function Invoke-Ps {
     return [pscustomobject]@{ Code = $LASTEXITCODE; Out = ($out -join "`n") }
 }
 
-# Bouwt een fixture-consument met settings.json + opgegeven extensions. -Layout kiest waar de
-# lenzen wonen: 'legacy' (.claude/extensions/) of 'plugins'
-# (.claude/plugins/claude-specialists/specialists/, sinds de life-hub-pariteit).
+# Builds a fixture consumer with settings.json + given extensions. -Layout chooses where the
+# lenses live: 'legacy' (.claude/extensions/) or 'plugins'
+# (.claude/plugins/claude-specialists/specialists/, since life-hub parity).
 function New-FixtureConsumer {
     param([string[]]$ExtensionIds, [bool]$PluginEnabled = $true, [string]$Layout = 'legacy')
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
@@ -77,11 +77,11 @@ function New-FixtureConsumer {
     }
 }
 
-# Schrijft een fixture-manifest (per-repo-schema) en geeft het pad terug.
+# Writes a fixture manifest (per-repo schema) and returns its path.
 function New-FixtureManifest {
     param(
         [string[]]$Extensions,
-        [string]$LocalCheckout = 'onbestaand-fixture-pad',
+        [string]$LocalCheckout = 'nonexistent-fixture-path',
         [string]$Plugin = 'specialists@davekjohns-workshop'
     )
     $mfPath = Join-Path $Fixture 'manifest.json'
@@ -101,13 +101,13 @@ function New-FixtureManifest {
     return $mfPath
 }
 
-# Bouwt een stub-workshop (voor de hook-tests): marker + een nep-check-script met vaste uitvoer.
+# Builds a stub workshop (for the hook tests): marker + a fake check script with fixed output.
 function New-StubWorkshop {
     param([string]$Name, [string[]]$OutputLines, [int]$ExitCode, [bool]$ValidMarker = $true)
     $root = Join-Path $Fixture $Name
     New-Item -ItemType Directory -Path (Join-Path $root 'scripts\sync') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $root '.claude-plugin') -Force | Out-Null
-    $markerName = if ($ValidMarker) { 'davekjohns-workshop' } else { 'nep-marketplace' }
+    $markerName = if ($ValidMarker) { 'davekjohns-workshop' } else { 'fake-marketplace' }
     [System.IO.File]::WriteAllText((Join-Path $root '.claude-plugin\marketplace.json'), ('{ "name": "' + $markerName + '" }'))
     $body = (($OutputLines | ForEach-Object { 'Write-Host "' + $_ + '"' }) -join "`r`n") + "`r`nexit $ExitCode`r`n"
     [System.IO.File]::WriteAllText((Join-Path $root 'scripts\sync\check-connectors.ps1'), $body)
@@ -118,99 +118,99 @@ try {
     Write-Host "== connectors.tests ==" -ForegroundColor Cyan
     $base = @('-SkipDrift', '-SkipVersions')
 
-    # --- 1. Happy path: alles aanwezig en enabled -> exit 0 -------------------------------------
+    # --- 1. Happy path: everything present and enabled -> exit 0 -------------------------------------
     New-FixtureConsumer -ExtensionIds @('06-16', '06-17')
     $mf = New-FixtureManifest -Extensions @('06-16', '06-17')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
-    Assert-Equal 0 $r.Code 'happy path: exit-code 0'
-    Assert-Match '\[OK\]\s+plugin is enabled' $r.Out 'happy path: enabled-check OK'
+    Assert-Equal 0 $r.Code 'happy path: exit code 0'
+    Assert-Match '\[OK\]\s+plugin is enabled' $r.Out 'happy path: enabled check OK'
     Assert-Match 'all 2 registered extensions present' $r.Out 'happy path: extensions OK'
-    Assert-NotMatch 'manifest synced at' $r.Out 'happy path: geen manifest-versie-INFO meer (register-afslanking)'
+    Assert-NotMatch 'manifest synced at' $r.Out 'happy path: no more manifest-version INFO (register slimming)'
 
-    # --- 1b. Nieuwe lay-out: lenzen op het plugin-pad -> zelfde happy path -----------------------
+    # --- 1b. New layout: lenses on the plugin path -> same happy path -----------------------
     New-FixtureConsumer -ExtensionIds @('06-16', '06-17') -Layout 'plugins'
     $mf = New-FixtureManifest -Extensions @('06-16', '06-17')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
-    Assert-Equal 0 $r.Code 'plugin-pad: exit-code 0'
-    Assert-Match 'all 2 registered extensions present' $r.Out 'plugin-pad: extensions OK'
+    Assert-Equal 0 $r.Code 'plugin path: exit code 0'
+    Assert-Match 'all 2 registered extensions present' $r.Out 'plugin path: extensions OK'
 
-    # --- 2. Geregistreerde extension ontbreekt -> exit 1 ----------------------------------------
+    # --- 2. Registered extension is missing -> exit 1 ----------------------------------------
     New-FixtureConsumer -ExtensionIds @('06-16')
     $mf = New-FixtureManifest -Extensions @('06-16', '06-19')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
-    Assert-Equal 1 $r.Code 'ontbrekende extension: exit-code 1'
-    Assert-Match '\[ERROR\].*06-19' $r.Out 'ontbrekende extension: ERROR noemt het id'
+    Assert-Equal 1 $r.Code 'missing extension: exit code 1'
+    Assert-Match '\[ERROR\].*06-19' $r.Out 'missing extension: ERROR names the id'
 
-    # --- 3. Plugin niet enabled -> exit 1 --------------------------------------------------------
+    # --- 3. Plugin not enabled -> exit 1 --------------------------------------------------------
     New-FixtureConsumer -ExtensionIds @('06-16') -PluginEnabled $false
     $mf = New-FixtureManifest -Extensions @('06-16')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
-    Assert-Equal 1 $r.Code 'plugin uit: exit-code 1'
-    Assert-Match '\[ERROR\].*is NOT' $r.Out 'plugin uit: ERROR-melding'
+    Assert-Equal 1 $r.Code 'plugin disabled: exit code 1'
+    Assert-Match '\[ERROR\].*is NOT' $r.Out 'plugin disabled: ERROR message'
 
-    # --- 4. Checkout niet aanwezig -> SKIP, exit 0 -----------------------------------------------
+    # --- 4. Checkout not present -> SKIP, exit 0 -----------------------------------------------
     New-FixtureConsumer -ExtensionIds @('06-16')
-    $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout 'onbestaand-fixture-pad'
+    $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout 'nonexistent-fixture-path'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf))
-    Assert-Equal 0 $r.Code 'ontbrekende checkout: exit-code 0'
-    Assert-Match '\[SKIP\]' $r.Out 'ontbrekende checkout: SKIP-melding'
+    Assert-Equal 0 $r.Code 'missing checkout: exit code 0'
+    Assert-Match '\[SKIP\]' $r.Out 'missing checkout: SKIP message'
 
-    # --- 5. Niet-geregistreerde extension van deze plugin -> INFO, exit 0 ------------------------
+    # --- 5. Unregistered extension of this plugin -> INFO, exit 0 ------------------------
     New-FixtureConsumer -ExtensionIds @('06-16', '06-23')
     $mf = New-FixtureManifest -Extensions @('06-16')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
-    Assert-Equal 0 $r.Code 'niet-geregistreerd: exit-code 0 (INFO, geen fout)'
-    Assert-Match "\[INFO\].*'06-23'" $r.Out 'niet-geregistreerd: INFO noemt het id (eerste laag)'
+    Assert-Equal 0 $r.Code 'unregistered: exit code 0 (INFO, not an error)'
+    Assert-Match "\[INFO\].*'06-23'" $r.Out 'unregistered: INFO names the id (first layer)'
 
-    # --- 5b. Zelfde INFO-signaal vanaf het plugin-pad --------------------------------------------
+    # --- 5b. Same INFO signal from the plugin path --------------------------------------------
     New-FixtureConsumer -ExtensionIds @('06-16', '06-23') -Layout 'plugins'
     $mf = New-FixtureManifest -Extensions @('06-16')
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
-    Assert-Equal 0 $r.Code 'niet-geregistreerd op plugin-pad: exit-code 0'
-    Assert-Match "\[INFO\].*'06-23'" $r.Out 'niet-geregistreerd op plugin-pad: INFO noemt het id'
+    Assert-Equal 0 $r.Code 'unregistered on plugin path: exit code 0'
+    Assert-Match "\[INFO\].*'06-23'" $r.Out 'unregistered on plugin path: INFO names the id'
 
-    # --- 5c. -OnlyConsumer zonder manifest in het register -> INFO, exit 0 -----------------------
-    #     Een verse/niet-geregistreerde consument (zoals de SessionStart-hook via -OnlyConsumer
-    #     doorgeeft) hoort een informatief "niet-geregistreerd"-signaal te zien -- NIET de
-    #     geruststellende "in sync"-tak. De manifest-checkout bestaat niet, dus geen enkel manifest
-    #     matcht deze consument -> matched=0 (regressie: dit was een kale Write-Host die niet als
-    #     info-signaal telde, waardoor de hook "alle connectors in sync" toonde).
+    # --- 5c. -OnlyConsumer without a manifest in the register -> INFO, exit 0 -----------------------
+    #     A fresh/unregistered consumer (as the SessionStart hook passes via -OnlyConsumer) should
+    #     see an informational "not registered" signal -- NOT the reassuring "in sync" branch. The
+    #     manifest checkout does not exist, so no manifest matches this consumer -> matched=0
+    #     (regression: this used to be a bare Write-Host that did not count as an info signal,
+    #     causing the hook to show "all connectors in sync").
     New-FixtureConsumer -ExtensionIds @('06-16')
-    $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout 'onbestaand-fixture-pad'
+    $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout 'nonexistent-fixture-path'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-OnlyConsumer', $Fixture))
-    Assert-Equal 0 $r.Code 'onregistreerde consument: exit-code 0 (INFO, geen blokkade)'
-    Assert-Match '\[INFO\].*not registered' $r.Out 'onregistreerde consument: niet-geregistreerd-signaal'
-    Assert-Match '1 info signal' $r.Out 'onregistreerde consument: telt als info-signaal'
+    Assert-Equal 0 $r.Code 'unregistered consumer: exit code 0 (INFO, no block)'
+    Assert-Match '\[INFO\].*not registered' $r.Out 'unregistered consumer: not-registered signal'
+    Assert-Match '1 info signal' $r.Out 'unregistered consumer: counts as an info signal'
 
-    # --- 6. Echte manifesten van deze repo: het self-manifest checkt altijd ----------------------
+    # --- 6. Real manifests of this repo: the self-manifest always checks ----------------------
     $selfManifest = Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\connectors\davekjohns-workshop.json'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $selfManifest))
-    Assert-Equal 0 $r.Code 'self-manifest (werkplaats consumeert zichzelf): exit-code 0'
+    Assert-Equal 0 $r.Code 'self-manifest (workshop consumes itself): exit code 0'
 
-    # --- 7. Guardrails (advies Sean): manifestvelden worden niet blind vertrouwd -----------------
-    # 7a. Absoluut localCheckout-pad -> geweigerd, exit 1.
+    # --- 7. Guardrails (Sean's advice): manifest fields are not blindly trusted -----------------
+    # 7a. Absolute localCheckout path -> rejected, exit 1.
     New-FixtureConsumer -ExtensionIds @('06-16')
     $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout 'C:\Windows'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf))
-    Assert-Equal 1 $r.Code 'absoluut pad: exit-code 1'
-    Assert-Match '\[ERROR\].*rejected' $r.Out 'absoluut pad: geweigerd-melding'
+    Assert-Equal 1 $r.Code 'absolute path: exit code 1'
+    Assert-Match '\[ERROR\].*rejected' $r.Out 'absolute path: rejected message'
 
-    # 7b. Pad-traversal buiten de scope-root -> geweigerd, exit 1. '..\..\..' resolvet vanaf de
-    #     repo-root altijd tot boven de scope-root (= twee niveaus boven de repo-root).
+    # 7b. Path traversal outside the scope root -> rejected, exit 1. '..\..\..' resolved from
+    #     the repo root always ends up above the scope root (= two levels above the repo root).
     $mf = New-FixtureManifest -Extensions @('06-16') -LocalCheckout '..\..\..'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf))
-    Assert-Equal 1 $r.Code 'pad-traversal: exit-code 1'
-    Assert-Match '\[ERROR\].*outside the allowed scope' $r.Out 'pad-traversal: scope-melding'
+    Assert-Equal 1 $r.Code 'path traversal: exit code 1'
+    Assert-Match '\[ERROR\].*outside the allowed scope' $r.Out 'path traversal: scope message'
 
-    # 7c. Plugin-veld met pad-tekens -> geweigerd, exit 1.
+    # 7c. Plugin field with path characters -> rejected, exit 1.
     $mf = New-FixtureManifest -Extensions @('06-16') -Plugin '..\..\evil@davekjohns-workshop'
     $r = Invoke-Ps $Script ($base + @('-Manifest', $mf, '-ConsumerPathOverride', $Fixture))
-    Assert-Equal 1 $r.Code 'ongeldig plugin-veld: exit-code 1'
-    Assert-Match '\[ERROR\].*plugin field' $r.Out 'ongeldig plugin-veld: ERROR-melding'
+    Assert-Equal 1 $r.Code 'invalid plugin field: exit code 1'
+    Assert-Match '\[ERROR\].*plugin field' $r.Out 'invalid plugin field: ERROR message'
 
-    # --- 8. Machine-record-check (zonder -SkipVersions; vondst Victor) ---------------------------
-    # De administratie wordt gelezen via $env:USERPROFILE; het kindproces erft de env-var, dus we
-    # wijzen die tijdelijk naar de fixture. -SkipDrift blijft aan (eigen suite).
+    # --- 8. Machine-record check (without -SkipVersions; Victor's finding) ---------------------------
+    # The administration is read via $env:USERPROFILE; the child process inherits the env var, so
+    # we point it at the fixture temporarily. -SkipDrift stays on (own suite).
     function Set-FixtureAdmin([string]$RecordsJson) {
         $dir = Join-Path $Fixture '.claude\plugins'
         New-Item -ItemType Directory -Path $dir -Force | Out-Null
@@ -218,100 +218,100 @@ try {
     }
     $oldProfile = $env:USERPROFILE
     try {
-        # 8a. Stale record (projectPath bestaat niet) -> geen crash, INFO, exit 0.
+        # 8a. Stale record (projectPath does not exist) -> no crash, INFO, exit 0.
         New-FixtureConsumer -ExtensionIds @('06-16')
         $mf = New-FixtureManifest -Extensions @('06-16')
-        Set-FixtureAdmin '{ "version": 2, "plugins": { "specialists@davekjohns-workshop": [ { "scope": "project", "projectPath": "C:\\bestaat-niet-connectors-fixture", "installPath": "x", "version": "0.0.1" } ] } }'
+        Set-FixtureAdmin '{ "version": 2, "plugins": { "specialists@davekjohns-workshop": [ { "scope": "project", "projectPath": "C:\\does-not-exist-connectors-fixture", "installPath": "x", "version": "0.0.1" } ] } }'
         $env:USERPROFILE = $Fixture
         $r = Invoke-Ps $Script @('-SkipDrift', '-Manifest', $mf, '-ConsumerPathOverride', $Fixture)
-        Assert-Equal 0 $r.Code 'stale record: exit-code 0 (geen crash)'
-        Assert-Match '\[INFO\].*no machine record' $r.Out 'stale record: INFO-melding'
+        Assert-Equal 0 $r.Code 'stale record: exit code 0 (no crash)'
+        Assert-Match '\[INFO\].*no machine record' $r.Out 'stale record: INFO message'
 
-        # 8b. Record wijst naar de fixture maar met oudere versie dan de bron -> FOUT, exit 1.
+        # 8b. Record points to the fixture but with an older version than the source -> ERROR, exit 1.
         $fixtureEscaped = ($Fixture -replace '\\', '\\')
         Set-FixtureAdmin ('{ "version": 2, "plugins": { "specialists@davekjohns-workshop": [ { "scope": "project", "projectPath": "' + $fixtureEscaped + '", "installPath": "x", "version": "0.0.1" } ] } }')
         $r = Invoke-Ps $Script @('-SkipDrift', '-Manifest', $mf, '-ConsumerPathOverride', $Fixture)
-        Assert-Equal 1 $r.Code 'verouderd record: exit-code 1'
-        Assert-Match '\[ERROR\].*machine record is on v0\.0\.1' $r.Out 'verouderd record: ERROR-melding'
+        Assert-Equal 1 $r.Code 'outdated record: exit code 1'
+        Assert-Match '\[ERROR\].*machine record is on v0\.0\.1' $r.Out 'outdated record: ERROR message'
     } finally {
         $env:USERPROFILE = $oldProfile
     }
 
-    # --- 9. SessionStart-hook (connector-sessioncheck.ps1) ---------------------------------------
-    # 9a. Geen workshop-checkout vindbaar -> zachte melding, exit 0 (sessie nooit blokkeren).
+    # --- 9. SessionStart hook (connector-sessioncheck.ps1) ---------------------------------------
+    # 9a. No workshop checkout findable -> soft message, exit 0 (never block a session).
     New-FixtureConsumer -ExtensionIds @('06-16')
-    $r = Invoke-Ps $Hook @('-WorkshopPathOverride', (Join-Path $Fixture 'bestaat-niet'))
-    Assert-Equal 0 $r.Code 'hook zonder workshop: exit-code 0'
-    Assert-Match 'check skipped' $r.Out 'hook zonder workshop: skipped-melding'
+    $r = Invoke-Ps $Hook @('-WorkshopPathOverride', (Join-Path $Fixture 'does-not-exist'))
+    Assert-Equal 0 $r.Code 'hook without a workshop: exit code 0'
+    Assert-Match 'check skipped' $r.Out 'hook without a workshop: skipped message'
 
-    # 9b. Met de echte workshop: integratie-smoke. Welke tak (in-sync of signalen) hangt af van
-    #     de actuele register-staat van de repo (bv. manifesten die na een release-bump nog niet
-    #     bijgewerkt zijn) -- die is hier bewust niet ge-assert; de takken zelf worden
-    #     deterministisch gedekt door de stub-tests 9c en 9d (les van CI-run PR #54).
+    # 9b. With the real workshop: integration smoke. Which branch (in-sync or signals) fires depends
+    #     on the repo's current register state (e.g. manifests not yet updated after a release
+    #     bump) -- that is deliberately not asserted here; the branches themselves are
+    #     deterministically covered by the stub tests 9c and 9d (a lesson from CI run PR #54).
     $r = Invoke-Ps $Hook @('-WorkshopPathOverride', $RepoRoot, '-SkipDrift', '-SkipVersions')
-    Assert-Equal 0 $r.Code 'hook met workshop: exit-code 0'
-    Assert-Match 'connector-sessioncheck:' $r.Out 'hook met workshop: session-check-uitvoer'
+    Assert-Equal 0 $r.Code 'hook with a workshop: exit code 0'
+    Assert-Match 'connector-sessioncheck:' $r.Out 'hook with a workshop: session-check output'
 
-    # 9c. Stub-workshop met schone uitvoer incl. boilerplate-drifted-regels (vondst Victor):
-    #     de kale samenvattingsregels mogen NIET als signaal tellen.
-    $stub = New-StubWorkshop -Name 'stub-schoon' -ExitCode 0 -OutputLines @(
-        '  [OK]    alles goed',
+    # 9c. Stub workshop with clean output including boilerplate drifted lines (Victor's finding):
+    #     the bare summary lines must NOT count as a signal.
+    $stub = New-StubWorkshop -Name 'stub-clean' -ExitCode 0 -OutputLines @(
+        '  [OK]    all good',
         'Agent-def summary: 19 missing, 0 identical (dead copies), 0 drifted.',
         'Persona drift is INFORMATIONAL (does not affect the exit code): 0 drifted.'
     )
     $r = Invoke-Ps $Hook @('-WorkshopPathOverride', $stub)
-    Assert-Equal 0 $r.Code 'stub schoon: exit-code 0'
-    Assert-Match 'no errors' $r.Out 'stub schoon: boilerplate telt niet als signaal'
+    Assert-Equal 0 $r.Code 'clean stub: exit code 0'
+    Assert-Match 'no errors' $r.Out 'clean stub: boilerplate does not count as a signal'
 
-    # 9c2. Stub-workshop met alleen INFO-regels -> OK-tak, geen sessie-alert (wens Dave,
-    #      20 juli 2026): INFO is registeradministratie over consumenten-sync (vaak een andere
-    #      machine/gebruiker) en hoort niet bij elke sessiestart gemeld te worden.
+    # 9c2. Stub workshop with only INFO lines -> OK branch, no session alert (Dave's wish,
+    #      July 20, 2026): INFO is register administration about consumer sync (often another
+    #      machine/user) and should not be reported at every session start.
     $stub = New-StubWorkshop -Name 'stub-info' -ExitCode 0 -OutputLines @(
-        '  [INFO]  fixture-registeradministratie-signaal',
-        '  [INFO]  extension 06-24 bestaat in de consument maar staat niet in het register.'
+        '  [INFO]  fixture register-administration signal',
+        '  [INFO]  extension 06-24 exists in the consumer but is not in the register.'
     )
     $r = Invoke-Ps $Hook @('-WorkshopPathOverride', $stub)
-    Assert-Equal 0 $r.Code 'stub info: exit-code 0'
-    Assert-Match 'no errors' $r.Out 'stub info: OK-tak (INFO geeft geen sessie-alert)'
-    Assert-NotMatch 'fixture-registeradministratie-signaal' $r.Out 'stub info: INFO-regel NIET doorgegeven'
+    Assert-Equal 0 $r.Code 'info stub: exit code 0'
+    Assert-Match 'no errors' $r.Out 'info stub: OK branch (INFO gives no session alert)'
+    Assert-NotMatch 'fixture register-administration signal' $r.Out 'info stub: INFO line NOT passed through'
 
-    # 9d. Stub-workshop met een echte fout -> signalen-tak, regel komt door. BILINGUAAL: de hook moet
-    #     zowel de nieuwe [ERROR] als de legacy [FOUT] als blokkerend signaal herkennen, omdat de
-    #     plugin-cache (deze hook) en de workshop-checkout (check-connectors) op verschillende versies
-    #     kunnen staan.
-    $stub = New-StubWorkshop -Name 'stub-fout' -ExitCode 1 -OutputLines @(
-        '  [ERROR] fixture-error-nieuw',
-        '  [FOUT]  fixture-fout-legacy'
+    # 9d. Stub workshop with a real error -> signals branch, line comes through. BILINGUAL: the hook
+    #     must recognize both the new [ERROR] and the legacy [FOUT] as a blocking signal, because
+    #     the plugin cache (this hook) and the workshop checkout (check-connectors) can be on
+    #     different versions.
+    $stub = New-StubWorkshop -Name 'stub-error' -ExitCode 1 -OutputLines @(
+        '  [ERROR] fixture-error-new',
+        '  [FOUT]  fixture-error-legacy'
     )
     $r = Invoke-Ps $Hook @('-WorkshopPathOverride', $stub)
-    Assert-Equal 0 $r.Code 'stub fout: exit-code 0 (hook blokkeert nooit)'
-    Assert-Match 'signals found' $r.Out 'stub fout: signalen-tak'
-    Assert-Match 'fixture-error-nieuw' $r.Out 'stub fout: nieuwe [ERROR]-regel doorgegeven (bilinguaal)'
-    Assert-Match 'fixture-fout-legacy' $r.Out 'stub fout: legacy [FOUT]-regel doorgegeven (bilinguaal)'
+    Assert-Equal 0 $r.Code 'error stub: exit code 0 (the hook never blocks)'
+    Assert-Match 'signals found' $r.Out 'error stub: signals branch'
+    Assert-Match 'fixture-error-new' $r.Out 'error stub: new [ERROR] line passed through (bilingual)'
+    Assert-Match 'fixture-error-legacy' $r.Out 'error stub: legacy [FOUT] line passed through (bilingual)'
 
-    # 9d2. Stub met een blokkerend signaal (nieuwe [ERROR]) EN [INFO] in dezelfde run -> het signaal
-    #      komt door, de INFO blijft weg (het gevoeligste regressie-scenario voor de scheiding,
-    #      vondst Victor).
+    # 9d2. Stub with a blocking signal (new [ERROR]) AND [INFO] in the same run -> the signal
+    #      comes through, the INFO stays out (the most sensitive regression scenario for the
+    #      separation, Victor's finding).
     $stub = New-StubWorkshop -Name 'stub-mix' -ExitCode 1 -OutputLines @(
         '  [ERROR] fixture-mix-error',
         '  [INFO]  fixture-mix-info'
     )
     $r = Invoke-Ps $Hook @('-WorkshopPathOverride', $stub)
-    Assert-Match 'fixture-mix-error' $r.Out 'stub mix: [ERROR]-regel doorgegeven'
-    Assert-NotMatch 'fixture-mix-info' $r.Out 'stub mix: INFO-regel NIET doorgegeven'
+    Assert-Match 'fixture-mix-error' $r.Out 'mix stub: [ERROR] line passed through'
+    Assert-NotMatch 'fixture-mix-info' $r.Out 'mix stub: INFO line NOT passed through'
 
-    # 9e. Marker-check (guardrail Sean): kandidaat-pad zonder geldige marker wordt NIET uitgevoerd.
-    $stub = New-StubWorkshop -Name 'stub-nep' -ExitCode 0 -ValidMarker $false -OutputLines @(
+    # 9e. Marker check (Sean guardrail): a candidate path without a valid marker is NOT executed.
+    $stub = New-StubWorkshop -Name 'stub-fake' -ExitCode 0 -ValidMarker $false -OutputLines @(
         'FAKE-EXECUTED'
     )
     $r = Invoke-Ps $Hook @('-WorkshopPathOverride', $stub)
-    Assert-Equal 0 $r.Code 'nep-workshop: exit-code 0'
-    Assert-Match 'check skipped' $r.Out 'nep-workshop: geweigerd als workshop'
-    Assert-NotMatch 'FAKE-EXECUTED' $r.Out 'nep-workshop: script is NIET uitgevoerd'
+    Assert-Equal 0 $r.Code 'fake workshop: exit code 0'
+    Assert-Match 'check skipped' $r.Out 'fake workshop: rejected as a workshop'
+    Assert-NotMatch 'FAKE-EXECUTED' $r.Out 'fake workshop: script was NOT executed'
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
 }
 
-Write-Host "`nResultaat: $($script:pass) pass, $($script:fail) fail." -ForegroundColor $(if ($script:fail -gt 0) { 'Red' } else { 'Green' })
+Write-Host "`nResult: $($script:pass) pass, $($script:fail) fail." -ForegroundColor $(if ($script:fail -gt 0) { 'Red' } else { 'Green' })
 if ($script:fail -gt 0) { exit 1 }
 exit 0

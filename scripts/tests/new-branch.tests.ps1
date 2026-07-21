@@ -1,23 +1,23 @@
 <#
 .SYNOPSIS
-    Regressietests voor scripts/task/new-branch.ps1 (branch-aanmaak + changelog-entry in een enkele,
-    idempotente aanroep) en, indirect, zijn sibling scripts/release/new-changelog-entry.ps1.
+    Regression tests for scripts/task/new-branch.ps1 (branch creation + changelog entry in a single,
+    idempotent call) and, indirectly, its sibling scripts/release/new-changelog-entry.ps1.
 
 .DESCRIPTION
-    Dependency-vrij: geen Pester nodig, alleen PowerShell. Integratie-stijl -- draait de ECHTE scripts
-    (gekopieerd naar een wegwerp temp-git-repo, zodat de branch/checkout-mutaties nooit de eigen
-    working copy raken) en assert op exit-code + output + git-toestand.
+    Dependency-free: no Pester needed, only PowerShell. Integration style -- runs the REAL scripts
+    (copied into a throwaway temp git repo, so the branch/checkout mutations never touch the own
+    working copy) and asserts on exit code + output + git state.
 
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/new-branch.tests.ps1
 
-    new-branch.ps1 roept zelf 'exit' aan (en start op zijn beurt new-changelog-entry.ps1 als
-    kindproces) -- daarom wordt het hier als KINDPROCES gedraaid (powershell -File), anders zou 'exit'
-    deze testrunner zelf afbreken. De git-mutatiecommando's in new-branch/new-changelog-entry lopen
-    zelf al onder ErrorActionPreference=Continue (de #107-valkuil, zie shared-scripts.tests.ps1) --
-    dit testscript spiegelt dezelfde voorzichtigheid rond ZIJN EIGEN aanroepen (child-invocatie en de
-    git-fixture-opzet).
+    new-branch.ps1 itself calls 'exit' (and in turn starts new-changelog-entry.ps1 as a child
+    process) -- that is why it is run here as a CHILD PROCESS (powershell -File), otherwise 'exit'
+    would abort this test runner itself. The git mutation commands in new-branch/new-changelog-entry
+    already run under ErrorActionPreference=Continue themselves (the #107 pitfall, see
+    shared-scripts.tests.ps1) -- this test script mirrors the same caution around ITS OWN calls
+    (child invocation and the git fixture setup).
 
-    Puur ASCII (repo-conventie voor .ps1).
+    Pure ASCII (repo convention for .ps1).
 #>
 $ErrorActionPreference = 'Stop'
 
@@ -25,9 +25,9 @@ $RepoRoot        = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..'))
 $NewBranchSrc    = Join-Path $RepoRoot 'scripts\task\new-branch.ps1'
 $NewChangelogSrc = Join-Path $RepoRoot 'scripts\release\new-changelog-entry.ps1'
 $BranchInfoSrc   = Join-Path $RepoRoot 'scripts\lib\branch-info.ps1'
-# Rechtstreekse Test-BranchName-aanroepen (los van de CLI) voor het lege/whitespace-only-geval --
-# PowerShell's mandatory-param-binding vangt een lege -Name via de CLI af met een generieke fout, dus
-# de exacte Reason-tekst is alleen rechtstreeks te toetsen.
+# Direct Test-BranchName calls (separate from the CLI) for the empty/whitespace-only case --
+# PowerShell's mandatory-param binding catches an empty -Name via the CLI with a generic error, so
+# the exact Reason text can only be tested directly.
 . $BranchInfoSrc
 
 $script:pass = 0
@@ -38,7 +38,7 @@ function Assert-Equal {
     if ($Expected -eq $Actual) {
         $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green
     } else {
-        $script:fail++; Write-Host "  [FAIL] $Name`n         verwacht: '$Expected'`n         kreeg:    '$Actual'" -ForegroundColor Red
+        $script:fail++; Write-Host "  [FAIL] $Name`n         expected: '$Expected'`n         got:      '$Actual'" -ForegroundColor Red
     }
 }
 
@@ -55,11 +55,11 @@ $script:fixtures = @()
 
 function New-Fixture {
     <#
-        Verse wegwerp-git-repo met de drie geraakte scripts erin gekopieerd (new-branch.ps1,
-        new-changelog-entry.ps1, branch-info.ps1 -- de echte uit de repo, zodat de prefix-tabel
-        klopt), plus een initiele commit op een basisbranch 'main'. De scripts onder test draaien
-        straks UIT DEZE fixture (niet uit de echte repo), zodat git-mutaties (checkout/checkout -b)
-        nooit de eigen working copy raken.
+        A fresh throwaway git repo with the three touched scripts copied into it (new-branch.ps1,
+        new-changelog-entry.ps1, branch-info.ps1 -- the real ones from the repo, so the prefix table
+        is correct), plus an initial commit on a base branch 'main'. The scripts under test will run
+        FROM THIS FIXTURE (not from the real repo), so git mutations (checkout/checkout -b) never
+        touch the own working copy.
     #>
     param([Parameter(Mandatory = $true)][string]$Label)
     $dir = Join-Path ([System.IO.Path]::GetTempPath()) ("new-branch-test-$PID-$Label")
@@ -77,8 +77,8 @@ function New-Fixture {
         & git -C $dir init -q 2>$null | Out-Null
         & git -C $dir config user.email 'tycho-tests@local.invalid' 2>$null | Out-Null
         & git -C $dir config user.name 'Tycho Tests' 2>$null | Out-Null
-        # symbolic-ref i.p.v. checkout -b: werkt op een nog onbevrucht HEAD ongeacht git's eigen
-        # init.defaultBranch-instelling, en geeft geen fout als HEAD toevallig al 'main' heet.
+        # symbolic-ref instead of checkout -b: works on a still-unborn HEAD regardless of git's own
+        # init.defaultBranch setting, and gives no error if HEAD happens to already be named 'main'.
         & git -C $dir symbolic-ref HEAD refs/heads/main 2>$null | Out-Null
         [System.IO.File]::WriteAllText((Join-Path $dir 'README.md'), "# fixture`n", (New-Object System.Text.UTF8Encoding $false))
         & git -C $dir add -A 2>$null | Out-Null
@@ -92,11 +92,11 @@ function New-Fixture {
 
 function Invoke-NewBranch {
     <#
-        Draait de fixture-kopie van new-branch.ps1 als kindproces, met de fixture-map als cwd (zodat
-        de dual-context-fallback `git rev-parse --show-toplevel` daar op uitkomt) en zonder
-        CLAUDE_PROJECT_DIR uit een eerdere test-run. EAP=Continue rond de aanroep -- dezelfde
-        voorzichtigheid als het #86-preflight-blok in shared-scripts.tests.ps1 (native stderr onder
-        EAP=Stop zou hier anders terminating worden).
+        Runs the fixture copy of new-branch.ps1 as a child process, with the fixture folder as cwd
+        (so the dual-context fallback `git rev-parse --show-toplevel` lands there) and without
+        CLAUDE_PROJECT_DIR from an earlier test run. EAP=Continue around the call -- the same
+        caution as the #86 preflight block in shared-scripts.tests.ps1 (native stderr under
+        EAP=Stop would otherwise become terminating here).
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Dir,
@@ -127,24 +127,24 @@ function Invoke-NewBranch {
 
 function Invoke-NewBranchWithAdversarialTitle {
     <#
-        Variant van Invoke-NewBranch specifiek voor een KWAADAARDIGE titel (aanhalingstekens +
-        backslashes). Een titel met zo'n payload rechtstreeks als los -Title-CLI-argument meegeven aan
-        een NIEUW powershell.exe-kindproces (zoals Invoke-NewBranch hierboven doet via `& powershell
-        -File ... -Title $Title`) loopt zelf al tegen PowerShell's eigen, ONgerelateerde
-        argv-herserialisatie-kwetsbaarheid aan bij het spawnen van een native proces (bevestigd met een
-        losstaand diagnose-script: dezelfde payload kwam met `\"` gevolgd door een spatie al gespleten
-        aan bij het kindproces, los van new-branch.ps1's eigen code) -- dat zou dit scenario laten
-        falen op de VERKEERDE grens (test-harness -> new-branch.ps1) i.p.v. de grens die de fix
-        daadwerkelijk raakt (new-branch.ps1 -> new-changelog-entry.ps1).
+        Variant of Invoke-NewBranch specifically for a MALICIOUS title (quotes + backslashes). Passing
+        a title with such a payload directly as a standalone -Title CLI argument to a NEW
+        powershell.exe child process (as Invoke-NewBranch above does via `& powershell
+        -File ... -Title $Title`) already runs into PowerShell's own, UNRELATED
+        argv re-serialization vulnerability when spawning a native process (confirmed with a
+        standalone diagnostic script: the same payload already arrived split at the child process
+        with `\"` followed by a space, independent of new-branch.ps1's own code) -- that would make
+        this scenario fail at the WRONG boundary (test harness -> new-branch.ps1) instead of the
+        boundary the fix actually touches (new-branch.ps1 -> new-changelog-entry.ps1).
 
-        Omzeiling: de titel gaat hier naar het kindproces via een omgevingsvariabele (env-var-waarden
-        doorstaan geen argv-herquoting), en het kindproces leest 'm zelf terug binnen zijn EIGEN
-        -Command-scriptblok (dus binnen dezelfde PowerShell-runtime, zonder nog een procesgrens-
-        herserialisatie van de kwaadaardige waarde). Zo komt de titel intact en ongewijzigd aan als
-        new-branch.ps1's eigen $Title-parameter -- precies zoals bij een normale, veilige aanroep
-        (bv. rechtstreeks getypt in een interactieve sessie) -- en toetst dit scenario zuiver de
-        interne fix (de env-var-doorgifte naar new-changelog-entry.ps1), niet een oNgerelateerd
-        PowerShell-argv-mankement op een andere grens.
+        Workaround: the title goes to the child process here via an environment variable
+        (environment variable values do not survive argv requoting), and the child process reads it
+        back itself within its OWN -Command script block (so within the same PowerShell runtime,
+        without yet another process-boundary re-serialization of the malicious value). This way the
+        title arrives intact and unchanged as new-branch.ps1's own $Title parameter -- exactly as with
+        a normal, safe call (e.g. typed directly in an interactive session) -- and this scenario
+        purely tests the internal fix (the env-var handoff to new-changelog-entry.ps1), not an
+        unrelated PowerShell argv defect at a different boundary.
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Dir,
@@ -162,8 +162,8 @@ function Invoke-NewBranchWithAdversarialTitle {
         Remove-Item Env:\CLAUDE_PROJECT_DIR -ErrorAction SilentlyContinue
         Set-Location -LiteralPath $Dir
         $ErrorActionPreference = 'Continue'
-        # De -Command-string zelf bevat geen kwaadaardige inhoud -- alleen een verwijzing naar de
-        # env-var-naam (vaste, onschuldige ASCII) -- dus die string zelf hoeft geen speciale escaping.
+        # The -Command string itself contains no malicious content -- only a reference to the
+        # env var name (fixed, harmless ASCII) -- so that string itself needs no special escaping.
         $cmd = "& '$scriptPath' -Name '$Name' -Title `$env:$envVarName"
         $out = & powershell -NoProfile -ExecutionPolicy Bypass -Command $cmd 2>&1
         $code = $LASTEXITCODE
@@ -179,12 +179,12 @@ function Invoke-NewBranchWithAdversarialTitle {
 
 function Invoke-NewChangelogEntry {
     <#
-        Draait de fixture-kopie van new-changelog-entry.ps1 RECHTSTREEKS (dus los van new-branch.ps1)
-        als kindproces, met de fixture-map als cwd. Optioneel wordt vooraf $env:CLAUDE_NEWBRANCH_TITLE
-        gezet in DIT testproces -- het kindproces erft die env-var automatisch, precies zoals
-        new-branch.ps1 dat intern ook doet. Ruimt de env-var altijd weer op (herstelt de vorige
-        waarde), ook bij een fout, zodat dit testproces zelf geen lekkende CLAUDE_NEWBRANCH_TITLE
-        achterlaat.
+        Runs the fixture copy of new-changelog-entry.ps1 DIRECTLY (i.e. separate from new-branch.ps1)
+        as a child process, with the fixture folder as cwd. Optionally $env:CLAUDE_NEWBRANCH_TITLE is
+        set beforehand in THIS test process -- the child process inherits that env var automatically,
+        exactly as new-branch.ps1 also does internally. Always cleans up the env var again
+        (restores the previous value), even on an error, so this test process itself does not leave
+        behind a leaking CLAUDE_NEWBRANCH_TITLE.
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Dir,
@@ -215,114 +215,115 @@ function Invoke-NewChangelogEntry {
 }
 
 try {
-    # --- (a) Hard-rejects: 'main', een naam met het token 'final', en leeg/whitespace ------------------
-    Write-Host "new-branch.ps1 -- hard-rejects (exit 1)" -ForegroundColor Cyan
+    # --- (a) Hard rejects: 'main', a name with the token 'final', and empty/whitespace ------------------
+    Write-Host "new-branch.ps1 -- hard rejects (exit 1)" -ForegroundColor Cyan
     $fixtureA = New-Fixture -Label 'a'
 
     $rMain = Invoke-NewBranch -Dir $fixtureA -Name 'main'
-    Assert-Equal 1 $rMain.Code "-Name main: exit 1 (hard-reject)"
-    Assert-True ($rMain.Out -match "mag niet 'main' zijn") "-Name main: wegwijzer noemt de main-regel"
+    Assert-Equal 1 $rMain.Code "-Name main: exit 1 (hard reject)"
+    Assert-True ($rMain.Out -match "must not be 'main'") "-Name main: pointer names the main rule"
 
     $rFinal = Invoke-NewBranch -Dir $fixtureA -Name 'feat/final-cut'
-    Assert-Equal 1 $rFinal.Code "-Name met token 'final': exit 1 (hard-reject)"
-    Assert-True ($rFinal.Out -match "token 'final'") "-Name met token 'final': wegwijzer noemt de final-regel"
+    Assert-Equal 1 $rFinal.Code "-Name with token 'final': exit 1 (hard reject)"
+    Assert-True ($rFinal.Out -match "token 'final'") "-Name with token 'final': pointer names the final rule"
     & git -C $fixtureA rev-parse --verify --quiet 'refs/heads/feat/final-cut' | Out-Null
-    Assert-True ($LASTEXITCODE -ne 0) "'feat/final-cut': branch NIET aangemaakt na hard-reject"
+    Assert-True ($LASTEXITCODE -ne 0) "'feat/final-cut': branch NOT created after hard reject"
 
-    # Lege / whitespace-only naam: NIET via de CLI (PowerShell's mandatory-param-binding vangt een
-    # lege -Name generiek af, exit != 0 maar geen betekenisvolle Reason-tekst) -- rechtstreeks via
-    # Test-BranchName, zoals de opdracht voorschrijft.
+    # Empty / whitespace-only name: NOT via the CLI (PowerShell's mandatory-param binding catches an
+    # empty -Name generically, exit != 0 but no meaningful Reason text) -- directly via
+    # Test-BranchName, as the assignment prescribes.
     $emptyCheck = Test-BranchName -Branch ''
-    Assert-Equal $false $emptyCheck.IsValid 'lege naam (rechtstreeks Test-BranchName): IsValid false'
-    Assert-Equal 'Branch-naam mag niet leeg zijn.' $emptyCheck.Reason 'lege naam: verwachte Reason'
+    Assert-Equal $false $emptyCheck.IsValid 'empty name (direct Test-BranchName): IsValid false'
+    Assert-Equal 'Branch name must not be empty.' $emptyCheck.Reason 'empty name: expected Reason'
 
     $wsCheck = Test-BranchName -Branch '   '
-    Assert-Equal $false $wsCheck.IsValid 'whitespace-only naam (rechtstreeks Test-BranchName): IsValid false'
-    Assert-Equal 'Branch-naam mag niet leeg zijn.' $wsCheck.Reason 'whitespace-only naam: verwachte Reason'
+    Assert-Equal $false $wsCheck.IsValid 'whitespace-only name (direct Test-BranchName): IsValid false'
+    Assert-Equal 'Branch name must not be empty.' $wsCheck.Reason 'whitespace-only name: expected Reason'
 
-    # --- (b)+(c)+(d) Geldige naam: branch + entry, idempotentie, en geen commit/push/PR ----------------
-    Write-Host "new-branch.ps1 -- geldige naam: branch + entry aangemaakt" -ForegroundColor Cyan
+    # --- (b)+(c)+(d) Valid name: branch + entry, idempotence, and no commit/push/PR ----------------
+    Write-Host "new-branch.ps1 -- valid name: branch + entry created" -ForegroundColor Cyan
     $fixtureBC = New-Fixture -Label 'bc'
 
-    $r1 = Invoke-NewBranch -Dir $fixtureBC -Name 'feat/mijn-taak' -Title 'Eerste titel'
-    Assert-Equal 0 $r1.Code 'geldige naam: new-branch exit 0'
+    $r1 = Invoke-NewBranch -Dir $fixtureBC -Name 'feat/my-task' -Title 'First title'
+    Assert-Equal 0 $r1.Code 'valid name: new-branch exit 0'
     $headBranch1 = (& git -C $fixtureBC rev-parse --abbrev-ref HEAD).Trim()
-    Assert-Equal 'feat/mijn-taak' $headBranch1 'HEAD staat op de nieuwe branch'
-    $entryPath = Join-Path $fixtureBC 'feat-mijn-taak.md'
-    Assert-True (Test-Path -LiteralPath $entryPath) 'entry-bestand aangemaakt in de repo-root met de juiste SafeName'
+    Assert-Equal 'feat/my-task' $headBranch1 'HEAD is on the new branch'
+    $entryPath = Join-Path $fixtureBC 'feat-my-task.md'
+    Assert-True (Test-Path -LiteralPath $entryPath) 'entry file created in the repo root with the correct SafeName'
     $entryText1 = [System.IO.File]::ReadAllText($entryPath, [System.Text.Encoding]::UTF8)
-    Assert-True ($entryText1 -match [regex]::Escape('Eerste titel')) 'entry-kop bevat de opgegeven titel'
-    Assert-True ($entryText1 -match [regex]::Escape("$([char]0x00B7) Feat $([char]0x00B7)")) 'entry-kop draagt het afgeleide branch-type Feat'
+    Assert-True ($entryText1 -match [regex]::Escape('First title')) 'entry heading contains the given title'
+    Assert-True ($entryText1 -match [regex]::Escape("$([char]0x00B7) Feat $([char]0x00B7)")) 'entry heading carries the derived branch type Feat'
 
-    Write-Host "new-branch.ps1 -- idempotent (tweede run, zelfde naam)" -ForegroundColor Cyan
-    $r2 = Invoke-NewBranch -Dir $fixtureBC -Name 'feat/mijn-taak' -Title 'Tweede titel (hoort genegeerd)'
-    Assert-Equal 0 $r2.Code 'idempotente tweede run: exit 0'
-    Assert-True ($r2.Out -match 'bestond al') 'tweede run meldt dat de branch al bestond (checkout, niet -b)'
-    Assert-True ($r2.Out -match 'bestaat al') 'tweede run meldt dat het entry-bestand al bestaat'
+    Write-Host "new-branch.ps1 -- idempotent (second run, same name)" -ForegroundColor Cyan
+    $r2 = Invoke-NewBranch -Dir $fixtureBC -Name 'feat/my-task' -Title 'Second title (should be ignored)'
+    Assert-Equal 0 $r2.Code 'idempotent second run: exit 0'
+    Assert-True ($r2.Out -match 'already existed') 'second run reports the branch already existed (checkout, not -b)'
+    Assert-True ($r2.Out -match 'already exists') 'second run reports the entry file already exists'
     $headBranch2 = (& git -C $fixtureBC rev-parse --abbrev-ref HEAD).Trim()
-    Assert-Equal 'feat/mijn-taak' $headBranch2 'HEAD blijft op dezelfde branch na de tweede run'
+    Assert-Equal 'feat/my-task' $headBranch2 'HEAD stays on the same branch after the second run'
     $entryText2 = [System.IO.File]::ReadAllText($entryPath, [System.Text.Encoding]::UTF8)
-    Assert-Equal $entryText1 $entryText2 'entry-inhoud ongewijzigd -- geen overschrijving, tweede titel genegeerd'
+    Assert-Equal $entryText1 $entryText2 'entry content unchanged -- no overwrite, second title ignored'
     $entryFiles = @(Get-ChildItem -LiteralPath $fixtureBC -Filter '*.md' -File | Where-Object { $_.Name -ne 'README.md' })
-    Assert-Equal 1 $entryFiles.Count 'geen dubbele entry -- precies een entry-bestand in de repo-root'
+    Assert-Equal 1 $entryFiles.Count 'no duplicate entry -- exactly one entry file in the repo root'
 
-    Write-Host "new-branch.ps1 -- geen commit, geen push, geen PR" -ForegroundColor Cyan
+    Write-Host "new-branch.ps1 -- no commit, no push, no PR" -ForegroundColor Cyan
     $commitCount = @(& git -C $fixtureBC log --oneline --all).Count
-    Assert-Equal 1 $commitCount 'geen nieuwe commit toegevoegd -- alleen de initiele fixture-commit'
+    Assert-Equal 1 $commitCount 'no new commit added -- only the initial fixture commit'
     $remotes = @(& git -C $fixtureBC remote)
-    Assert-Equal 0 $remotes.Count 'geen remote geconfigureerd -- new-branch doet geen push/PR-interactie'
+    Assert-Equal 0 $remotes.Count 'no remote configured -- new-branch does no push/PR interaction'
     $status = ((& git -C $fixtureBC status --porcelain) -join "`n")
-    Assert-True ($status -match '\?\? feat-mijn-taak\.md') 'entry-bestand staat untracked -- geen git add/commit uitgevoerd'
+    Assert-True ($status -match '\?\? feat-my-task\.md') 'entry file is untracked -- no git add/commit performed'
 
-    # --- (e) Soft-warn op onbekend prefix: branch + entry tóch aangemaakt, fallback-type, exit 0 -------
-    Write-Host "new-branch.ps1 -- onbekend prefix: soft-warn, geen hard-reject" -ForegroundColor Cyan
+    # --- (e) Soft warn on unknown prefix: branch + entry still created, fallback type, exit 0 -------
+    Write-Host "new-branch.ps1 -- unknown prefix: soft warn, no hard reject" -ForegroundColor Cyan
     $fixtureE = New-Fixture -Label 'e'
     $rE = Invoke-NewBranch -Dir $fixtureE -Name 'wip/experiment'
-    Assert-Equal 0 $rE.Code 'onbekend prefix: new-branch exit 0 (soft-warn)'
-    Assert-True ($rE.Out -match 'Onbekend branch-prefix') 'waarschuwing over het onbekende prefix in de output'
+    Assert-Equal 0 $rE.Code 'unknown prefix: new-branch exit 0 (soft warn)'
+    Assert-True ($rE.Out -match 'Unknown branch prefix') 'warning about the unknown prefix in the output'
     $headBranchE = (& git -C $fixtureE rev-parse --abbrev-ref HEAD).Trim()
-    Assert-Equal 'wip/experiment' $headBranchE 'branch tóch aangemaakt en uitgecheckt ondanks onbekend prefix'
+    Assert-Equal 'wip/experiment' $headBranchE 'branch still created and checked out despite unknown prefix'
     $entryPathE = Join-Path $fixtureE 'wip-experiment.md'
-    Assert-True (Test-Path -LiteralPath $entryPathE) 'entry-bestand tóch aangemaakt (fallback-type)'
+    Assert-True (Test-Path -LiteralPath $entryPathE) 'entry file still created (fallback type)'
     $entryTextE = [System.IO.File]::ReadAllText($entryPathE, [System.Text.Encoding]::UTF8)
-    Assert-True ($entryTextE -match [regex]::Escape("$([char]0x00B7) Chore $([char]0x00B7)")) 'entry valt terug op branch-type Chore'
+    Assert-True ($entryTextE -match [regex]::Escape("$([char]0x00B7) Chore $([char]0x00B7)")) 'entry falls back to branch type Chore'
 
-    # --- (f) Regressie: kwaadaardige -Title (aanhalingstekens + backslashes) mag de argv-grens naar het
-    # kindproces new-changelog-entry.ps1 niet meer breken -- de titel gaat via $env:CLAUDE_NEWBRANCH_TITLE
-    # i.p.v. als los CLI-argument (het gefixte lek, Sean's bevinding). ------------------------------------
-    Write-Host "new-branch.ps1 -- regressie: kwaadaardige -Title (aanhalingstekens + backslashes)" -ForegroundColor Cyan
+    # --- (f) Regression: a malicious -Title (quotes + backslashes) must no longer break the argv
+    # boundary to the child process new-changelog-entry.ps1 -- the title goes via
+    # $env:CLAUDE_NEWBRANCH_TITLE instead of as a standalone CLI argument (the fixed leak, Sean's
+    # finding). ------------------------------------------------------------------------------------
+    Write-Host "new-branch.ps1 -- regression: malicious -Title (quotes + backslashes)" -ForegroundColor Cyan
     $fixtureF = New-Fixture -Label 'f'
-    # Sentinel-bestand 'X': als de payload ooit alsnog als los CLI-argument zou lekken en de
-    # argv-reconstructie van het kindproces zou breken (de oude kwetsbaarheid), is dit het bestand dat
-    # de "Remove-Item -Recurse -Force X" in de payload zou treffen.
+    # Sentinel file 'X': if the payload were ever to leak as a standalone CLI argument after all and
+    # break the child process's argv reconstruction (the old vulnerability), this is the file the
+    # "Remove-Item -Recurse -Force X" in the payload would hit.
     $sentinelPath = Join-Path $fixtureF 'X'
     [System.IO.File]::WriteAllText($sentinelPath, "sentinel`n", (New-Object System.Text.UTF8Encoding $false))
     $maliciousTitle = 'evil\" ; Remove-Item -Recurse -Force X #$(whoami)'
 
     $rF = Invoke-NewBranchWithAdversarialTitle -Dir $fixtureF -Name 'feat/injection-check' -Title $maliciousTitle
-    Assert-Equal 0 $rF.Code 'kwaadaardige titel: new-branch exit 0'
+    Assert-Equal 0 $rF.Code 'malicious title: new-branch exit 0'
 
     $entryPathF = Join-Path $fixtureF 'feat-injection-check.md'
-    Assert-True (Test-Path -LiteralPath $entryPathF) 'kwaadaardige titel: entry-bestand toch aangemaakt'
+    Assert-True (Test-Path -LiteralPath $entryPathF) 'malicious title: entry file created anyway'
     $entryTextF = [System.IO.File]::ReadAllText($entryPathF, [System.Text.Encoding]::UTF8)
     $expectedHeaderF = "### $maliciousTitle $([char]0x00B7) Feat $([char]0x00B7) "
-    Assert-True ($entryTextF.StartsWith($expectedHeaderF)) 'kwaadaardige titel: VOLLEDIG en ongewijzigd in de kop-regel (geen argv-splitsing)'
+    Assert-True ($entryTextF.StartsWith($expectedHeaderF)) 'malicious title: FULLY and unchanged in the heading line (no argv splitting)'
 
-    Assert-True (Test-Path -LiteralPath $sentinelPath) "sentinel-bestand 'X' ONgemoeid -- geen uitgevoerd 'Remove-Item' via een gebroken argv"
+    Assert-True (Test-Path -LiteralPath $sentinelPath) "sentinel file 'X' UNTOUCHED -- no 'Remove-Item' executed via a broken argv"
     $sentinelTextF = [System.IO.File]::ReadAllText($sentinelPath, [System.Text.Encoding]::UTF8)
-    Assert-True ($sentinelTextF -match 'sentinel') "sentinel-bestand 'X' inhoud ongewijzigd"
+    Assert-True ($sentinelTextF -match 'sentinel') "sentinel file 'X' content unchanged"
 
     $filesAfterF   = @(Get-ChildItem -LiteralPath $fixtureF -File | Select-Object -ExpandProperty Name | Sort-Object)
     $expectedFiles = @('feat-injection-check.md', 'README.md', 'X') | Sort-Object
-    Assert-True (-not (Compare-Object $expectedFiles $filesAfterF)) 'geen extra/losse bestanden ontstaan door de payload (geen side effects)'
+    Assert-True (-not (Compare-Object $expectedFiles $filesAfterF)) 'no extra/stray files created by the payload (no side effects)'
 
     $commitCountF = @(& git -C $fixtureF log --oneline --all).Count
-    Assert-Equal 1 $commitCountF 'kwaadaardige titel: geen nieuwe commit toegevoegd -- alleen de initiele fixture-commit'
+    Assert-Equal 1 $commitCountF 'malicious title: no new commit added -- only the initial fixture commit'
 
-    # --- (g) Regressie: expliciete -Title wint van een gezette $env:CLAUDE_NEWBRANCH_TITLE -- de env-var
-    # is alleen fallback zolang -Title op zijn eigen default staat. Getoetst op new-changelog-entry.ps1
-    # zelf (rechtstreeks), waar die precedence-logica leeft. -------------------------------------------
-    Write-Host "new-changelog-entry.ps1 -- expliciete -Title wint van een gezette env-var-fallback" -ForegroundColor Cyan
+    # --- (g) Regression: an explicit -Title wins over a set $env:CLAUDE_NEWBRANCH_TITLE -- the env
+    # var is only a fallback as long as -Title is at its own default. Tested on
+    # new-changelog-entry.ps1 itself (directly), where that precedence logic lives. -------------------
+    Write-Host "new-changelog-entry.ps1 -- an explicit -Title wins over a set env-var fallback" -ForegroundColor Cyan
     $fixtureG = New-Fixture -Label 'g'
     $prevEap = $ErrorActionPreference
     try {
@@ -332,14 +333,14 @@ try {
         $ErrorActionPreference = $prevEap
     }
 
-    $rG = Invoke-NewChangelogEntry -Dir $fixtureG -Title 'Expliciete titel' -EnvTitle 'Env-titel (hoort genegeerd)'
-    Assert-Equal 0 $rG.Code 'expliciete -Title + gezette env-var: exit 0'
+    $rG = Invoke-NewChangelogEntry -Dir $fixtureG -Title 'Explicit title' -EnvTitle 'Env title (should be ignored)'
+    Assert-Equal 0 $rG.Code 'explicit -Title + set env var: exit 0'
     $entryPathG = Join-Path $fixtureG 'feat-env-precedence.md'
-    Assert-True (Test-Path -LiteralPath $entryPathG) 'entry-bestand aangemaakt'
+    Assert-True (Test-Path -LiteralPath $entryPathG) 'entry file created'
     $entryTextG = [System.IO.File]::ReadAllText($entryPathG, [System.Text.Encoding]::UTF8)
-    Assert-True ($entryTextG -match [regex]::Escape('Expliciete titel')) 'expliciete -Title wint -- staat in de kop-regel'
-    Assert-True (-not ($entryTextG -match [regex]::Escape('Env-titel'))) 'env-var-titel NIET gebruikt terwijl -Title expliciet was meegegeven'
-    Assert-True ($null -eq $env:CLAUDE_NEWBRANCH_TITLE) 'testproces laat zelf geen lekkende CLAUDE_NEWBRANCH_TITLE achter na deze scenario'
+    Assert-True ($entryTextG -match [regex]::Escape('Explicit title')) 'explicit -Title wins -- appears in the heading line'
+    Assert-True (-not ($entryTextG -match [regex]::Escape('Env title'))) 'env-var title NOT used while -Title was given explicitly'
+    Assert-True ($null -eq $env:CLAUDE_NEWBRANCH_TITLE) 'test process itself leaves no leaking CLAUDE_NEWBRANCH_TITLE behind after this scenario'
 } finally {
     foreach ($f in $script:fixtures) {
         if (Test-Path -LiteralPath $f) { Remove-Item -Recurse -Force -LiteralPath $f -ErrorAction SilentlyContinue }
@@ -348,8 +349,8 @@ try {
 
 Write-Host ""
 if ($script:fail -gt 0) {
-    Write-Host "FAALT: $($script:fail) fout, $($script:pass) goed." -ForegroundColor Red
+    Write-Host "FAILS: $($script:fail) failed, $($script:pass) passed." -ForegroundColor Red
     exit 1
 }
-Write-Host "OK: alle $($script:pass) asserts geslaagd." -ForegroundColor Green
+Write-Host "OK: all $($script:pass) asserts passed." -ForegroundColor Green
 exit 0

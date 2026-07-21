@@ -1,56 +1,58 @@
 <#
 .SYNOPSIS
-    Snijdt een repo-brede release rechtstreeks op main: bumpt alle plugin-versies in lockstep,
-    genereert release-notes in releases/development/, zet in CHANGELOG.md een verwijzing onder
-    ## Releases, werkt de overzichtstabel in releases/README.md bij, commit dat op main, en zet +
-    pusht de git-tag vX.Y.Z.
+    Cuts a repo-wide release directly on main: bumps all plugin versions in lockstep,
+    generates release notes in releases/development/, puts a reference in CHANGELOG.md under
+    ## Releases, updates the overview table in releases/README.md, commits that on main, and sets +
+    pushes the git tag vX.Y.Z.
 
 .DESCRIPTION
-    Een release is hier een *vastgelegd moment*: alle drie de plugins krijgen hetzelfde versienummer
-    (lockstep, repo-breed) en de staat wordt getagd als vX.Y.Z. Er wordt niets naar GitHub Releases
-    gepubliceerd -- alleen een git-tag, release-notes in releases/, en een verwijzing in CHANGELOG.md.
+    A release here is a *recorded moment*: all three plugins get the same version number
+    (lockstep, repo-wide) and the state is tagged as vX.Y.Z. Nothing is published to GitHub
+    Releases -- only a git tag, release notes in releases/, and a reference in CHANGELOG.md.
 
-    Een release loopt bewust NIET via een branch + PR. Net als de fold-commit is de release-commit een
-    toegestane directe-op-main-actie (de tweede uitzondering op "alles via branch + PR" -- zie de
-    safety rules). Het script draait daarom op main zelf en wordt ALLEEN op Dave's expliciete verzoek
-    gestart.
+    A release deliberately does NOT run via a branch + PR. Like the fold commit, the release
+    commit is an allowed direct-on-main action (the second exception to "everything via branch +
+    PR" -- see the safety rules). The script therefore runs on main itself and is started ONLY at
+    Dave's explicit request.
 
-    Stappen (alles op main):
-      1. Vangrails: schone main, geen ongevouwen entry-bestanden in de root, lint-poort groen.
-      2. Leest de huidige lockstep-versie uit elke <plugin>/.claude-plugin/plugin.json; bepaalt de
-         nieuwe versie (-Version of -Bump) en het bump-type.
-      3. Genereert releases/development/<X.Y>/<X.Y.Z>.md uit de ## Pull Requests-entries (per
-         branch-type gegroepeerd), voegt een rij toe aan releases/README.md, zet in CHANGELOG.md een
-         verwijzing onder ## Releases en leegt de Pull-Requests-sectie, en bumpt alle plugin.json's.
-      3b. Schrijft per plugin de entries met een passende 'Plugins:'-regel (door de fold afgeleid
-          uit de PR-bestanden) bij in <plugin>/CHANGELOG.md -- de consument-gerichte geschiedenis
-          die met de plugin-cache meereist. Root-relatieve links worden daarbij herschreven naar
-          absolute GitHub-URLs.
-      3c. Schrijft/overschrijft voor ELKE plugin (niet alleen de geraakte -- de versie bumpt
-          lockstep) <plugin>/RELEASE.md: een kort kaartje ("You are on this release") dat een
-          consument laat zien op welke release hij zit, met of zonder eigen entries deze keer, plus
-          links naar de volledige notes en de eigen CHANGELOG.md. Model A (plugin-gedragen), bewust
-          zonder sessiestart-hook.
-      4. Commit dat rechtstreeks op main (release: vX.Y.Z) en zet een annotated tag vX.Y.Z.
-      5. Pusht main + de tag (tenzij -NoPush).
+    Steps (all on main):
+      1. Guardrails: clean main, no unfolded entry files in the root, lint gate green.
+      2. Reads the current lockstep version from every <plugin>/.claude-plugin/plugin.json;
+         determines the new version (-Version or -Bump) and the bump type.
+      3. Generates releases/development/<X.Y>/<X.Y.Z>.md from the ## Pull Requests entries
+         (grouped by branch type), adds a row to releases/README.md, puts a reference in
+         CHANGELOG.md under ## Releases and empties the Pull-Requests section, and bumps all
+         plugin.json's.
+      3b. Writes, per plugin, the entries with a matching 'Plugins:' line (derived by the fold
+          from the PR files) into <plugin>/CHANGELOG.md -- the consumer-facing history that
+          travels along with the plugin cache. Root-relative links are rewritten to absolute
+          GitHub URLs in the process.
+      3c. Writes/overwrites, for EVERY plugin (not just the touched ones -- the version bumps
+          lockstep), <plugin>/RELEASE.md: a short card ("You are on this release") that shows a
+          consumer which release they are on, with or without its own entries this time, plus
+          links to the full notes and its own CHANGELOG.md. Model A (plugin-carried), deliberately
+          without a session-start hook.
+      4. Commits that directly to main (release: vX.Y.Z) and sets an annotated tag vX.Y.Z.
+      5. Pushes main + the tag (unless -NoPush).
 
 .PARAMETER Version
-    Expliciete nieuwe versie X.Y.Z (bv. "1.1.0"). Gebruik dit OF -Bump.
+    Explicit new version X.Y.Z (e.g. "1.1.0"). Use this OR -Bump.
 
 .PARAMETER Bump
-    Verhoog de huidige versie automatisch: major | minor | patch. Gebruik dit OF -Version.
+    Bump the current version automatically: major | minor | patch. Use this OR -Version.
 
 .PARAMETER Title
-    Korte omschrijving van de release als geheel (1 zin, optioneel) -- komt in de notes + de tabelrij.
+    Short description of the release as a whole (1 sentence, optional) -- goes into the notes +
+    the table row.
 
 .PARAMETER NoPush
-    Alles lokaal (commit + tag) maar main/tag niet pushen -- voor inspectie vooraf.
+    Everything locally (commit + tag) but do not push main/tag -- for inspection beforehand.
 
 .PARAMETER SkipLint
-    Sla de lint-poort bewust over (noodklep).
+    Deliberately skip the lint gate (escape valve).
 
 .EXAMPLE
-    ./scripts/release/cut-release.ps1 -Version 1.0.0 -Title "Eerste officiele release"
+    ./scripts/release/cut-release.ps1 -Version 1.0.0 -Title "First official release"
 
 .EXAMPLE
     ./scripts/release/cut-release.ps1 -Bump minor -NoPush
@@ -69,10 +71,10 @@ $repoRoot = (git rev-parse --show-toplevel).Trim()
 Set-Location $repoRoot
 
 . (Join-Path $PSScriptRoot '..\lib\release-lib.ps1')
-# Repo-naam/blob-URL uit de lokale repo-config (enige bron) i.p.v. de literal-default in release-lib.
+# Repo name/blob URL from the local repo-config (single source) instead of release-lib's literal default.
 . (Join-Path $PSScriptRoot '..\repo-config.ps1')
 
-# BOM-loze UTF8 -- de rest van de repo heeft geen BOM.
+# BOM-less UTF8 -- the rest of the repo has no BOM.
 $Utf8NoBom = New-Object System.Text.UTF8Encoding $false
 function Write-Utf8NoBom([string]$Path, [string]$Content) {
     [System.IO.File]::WriteAllText($Path, $Content, $Utf8NoBom)
@@ -81,73 +83,73 @@ function Write-Utf8NoBom([string]$Path, [string]$Content) {
 $reservedRootMd = @('CHANGELOG.md', 'CLAUDE.md', 'README.md', 'LICENSE.md')
 
 function Get-PluginManifests {
-    # De marketplace-definitie is de bron van waarheid over wat een plugin is: de manifesten worden
-    # afgeleid uit plugins[].source (incl. containment-check) door Get-PluginManifestPaths in
-    # release-lib.ps1 -- daar puur en dus getest. Hier alleen de IO: lezen + bestaan-check.
+    # The marketplace definition is the source of truth about what a plugin is: the manifests are
+    # derived from plugins[].source (incl. containment check) by Get-PluginManifestPaths in
+    # release-lib.ps1 -- pure there and thus tested. Here only the IO: reading + existence check.
     $marketplacePath = Join-Path $repoRoot '.claude-plugin\marketplace.json'
     if (-not (Test-Path -LiteralPath $marketplacePath)) {
-        Write-Error ".claude-plugin/marketplace.json ontbreekt."; exit 1
+        Write-Error ".claude-plugin/marketplace.json is missing."; exit 1
     }
     $paths = @(Get-PluginManifestPaths -RepoRoot $repoRoot `
         -MarketplaceJson (Get-Content -Path $marketplacePath -Raw -Encoding UTF8))
     foreach ($manifest in $paths) {
         if (-not (Test-Path -LiteralPath $manifest)) {
             $pluginName = Split-Path (Split-Path (Split-Path $manifest -Parent) -Parent) -Leaf
-            Write-Error "Plugin '$pluginName' staat in marketplace.json maar mist zijn manifest ($manifest)."; exit 1
+            Write-Error "Plugin '$pluginName' is listed in marketplace.json but is missing its manifest ($manifest)."; exit 1
         }
     }
     $paths
 }
 
-# --- Vangrails: op main, schoon, geen ongevouwen entries ---------------------------------------
+# --- Guardrails: on main, clean, no unfolded entries ---------------------------------------
 $branch = (git rev-parse --abbrev-ref HEAD).Trim()
-if ($branch -ne 'main') { Write-Error "Een release wordt rechtstreeks op main gesneden; je staat op '$branch'."; exit 1 }
-if ((git status --porcelain)) { Write-Error "Working tree niet schoon -- commit/stash eerst."; exit 1 }
+if ($branch -ne 'main') { Write-Error "A release is cut directly on main; you are on '$branch'."; exit 1 }
+if ((git status --porcelain)) { Write-Error "Working tree not clean -- commit/stash first."; exit 1 }
 
 $strayEntries = Get-ChildItem -Path $repoRoot -Filter '*.md' -File |
     Where-Object { $reservedRootMd -notcontains $_.Name } |
     Select-Object -ExpandProperty Name
 if ($strayEntries.Count -gt 0) {
-    Write-Error "Er staan nog ongevouwen changelog entry-bestanden in de root: $($strayEntries -join ', '). Fold die eerst (fold-changelog-entry.ps1)."
+    Write-Error "There are still unfolded changelog entry files in the root: $($strayEntries -join ', '). Fold them first (fold-changelog-entry.ps1)."
     exit 1
 }
 
-# --- Versie + bump-type bepalen ------------------------------------------------------------------
+# --- Determine version + bump type ------------------------------------------------------------
 $manifests = @(Get-PluginManifests)
-if ($manifests.Count -eq 0) { Write-Error "Geen plugin-manifesten gevonden."; exit 1 }
+if ($manifests.Count -eq 0) { Write-Error "No plugin manifests found."; exit 1 }
 $manifestContents = @{}
 foreach ($m in $manifests) { $manifestContents[$m] = (Get-Content -Path $m -Raw -Encoding UTF8) }
 $current = Get-LockstepVersion -ManifestContents $manifestContents
 
 if ($Version) {
-    if ($Version -notmatch '^\d+\.\d+\.\d+$') { Write-Error "-Version moet de vorm X.Y.Z hebben (bv. 1.0.0)."; exit 1 }
+    if ($Version -notmatch '^\d+\.\d+\.\d+$') { Write-Error "-Version must have the form X.Y.Z (e.g. 1.0.0)."; exit 1 }
     $new = $Version
 } elseif ($Bump) {
     $new = Get-NextVersion -Current $current -BumpKind $Bump
 } else {
-    Write-Error "Geef -Version <X.Y.Z> of -Bump <major|minor|patch>. Huidige versie: $current."
+    Write-Error "Provide -Version <X.Y.Z> or -Bump <major|minor|patch>. Current version: $current."
     exit 1
 }
-if ($new -eq $current) { Write-Error "Nieuwe versie ($new) is gelijk aan de huidige -- niets te bumpen."; exit 1 }
+if ($new -eq $current) { Write-Error "New version ($new) equals the current one -- nothing to bump."; exit 1 }
 
 $bumpType = Get-BumpType -From $current -To $new
 $typeLabel = @{ major = 'Major'; minor = 'Minor'; patch = 'Patch' }[$bumpType]
 $tagName = "v$new"
-if ((git tag --list $tagName)) { Write-Error "Tag $tagName bestaat al."; exit 1 }
+if ((git tag --list $tagName)) { Write-Error "Tag $tagName already exists."; exit 1 }
 
-# --- Lint-poort ----------------------------------------------------------------------------------
+# --- Lint gate ----------------------------------------------------------------------------------
 if (-not $SkipLint) {
     $lintPath = Join-Path $PSScriptRoot '..\lint\check-plugin-integrity.ps1'
     if (Test-Path $lintPath) {
-        Write-Host "check-plugin-integrity: integriteitscheck voor de release..." -ForegroundColor Cyan
+        Write-Host "check-plugin-integrity: integrity check for the release..." -ForegroundColor Cyan
         & powershell -NoProfile -ExecutionPolicy Bypass -File $lintPath
-        if ($LASTEXITCODE -ne 0) { Write-Error "check-plugin-integrity vond fouten -- release afgebroken. Fix ze, of draai met -SkipLint."; exit 1 }
+        if ($LASTEXITCODE -ne 0) { Write-Error "check-plugin-integrity found errors -- release aborted. Fix them, or run with -SkipLint."; exit 1 }
     } else {
-        Write-Warning "check-plugin-integrity.ps1 niet gevonden -- lint-poort overgeslagen."
+        Write-Warning "check-plugin-integrity.ps1 not found -- lint gate skipped."
     }
 }
 
-# --- Inhoud opbouwen (voor de schrijf-acties, zodat een parse-fout niets achterlaat) --------------
+# --- Build content (before the write actions, so a parse error leaves nothing behind) --------
 $minorDir = ($new -split '\.')[0..1] -join '.'
 $notesRelPath = "releases/development/$minorDir/$new.md"
 $today = (Get-Date -Format 'yyyy-MM-dd')
@@ -158,15 +160,18 @@ $entries = @(Get-PullRequestEntries -Content $changelogRaw)
 $notesContent = Build-ReleaseNotes -Entries $entries -Version $new -Date $today -Type $typeLabel -Title $Title
 $changelogNew = Convert-ChangelogForRelease -Content $changelogRaw -Version $new -Date $today -Type $typeLabel -NotesRelPath $notesRelPath
 
-# --- Release-notes-bestand schrijven -------------------------------------------------------------
+# --- Write the release-notes file -------------------------------------------------------------
 $notesDir = Join-Path $repoRoot ("releases\development\$minorDir")
 New-Item -ItemType Directory -Force -Path $notesDir | Out-Null
 $notesAbs = Join-Path $repoRoot ($notesRelPath -replace '/', '\')
-if (Test-Path $notesAbs) { Write-Error "$notesRelPath bestaat al."; exit 1 }
+if (Test-Path $notesAbs) { Write-Error "$notesRelPath already exists."; exit 1 }
 Write-Utf8NoBom -Path $notesAbs -Content $notesContent
-Write-Host "  aangemaakt: $notesRelPath ($($entries.Count) entries)" -ForegroundColor DarkGray
+Write-Host "  created: $notesRelPath ($($entries.Count) entries)" -ForegroundColor DarkGray
 
-# --- releases/README.md overzichtstabel bijwerken ------------------------------------------------
+# --- Update the releases/README.md overview table ------------------------------------------------
+# NOTE: releases/README.md is history (deliberate language exception, see CLAUDE.md) -- its table
+# header stays in its original language ("Versie | Datum | Type | Titel"), so $headerRe below
+# deliberately keeps matching that literal text; do not "fix" it to English.
 $relReadme = Join-Path $repoRoot 'releases\README.md'
 $shortTitle = if ($Title) { $Title } else { "$typeLabel release" }
 $newRow = "| [$new](development/$minorDir/$new.md) | $today | $typeLabel | $shortTitle |"
@@ -179,29 +184,29 @@ if (Test-Path $relReadme) {
         $at = $hm.Index + $hm.Length
         $rm = $rm.Substring(0, $at) + $newRow + $rmNl + $rm.Substring($at)
         Write-Utf8NoBom -Path $relReadme -Content $rm
-        Write-Host "  bijgewerkt: releases/README.md" -ForegroundColor DarkGray
+        Write-Host "  updated: releases/README.md" -ForegroundColor DarkGray
     } else {
-        Write-Warning "Overzichtstabel niet gevonden in releases/README.md -- voeg de rij handmatig toe: $newRow"
+        Write-Warning "Overview table not found in releases/README.md -- add the row manually: $newRow"
     }
 } else {
-    Write-Warning "releases/README.md ontbreekt -- rij niet toegevoegd: $newRow"
+    Write-Warning "releases/README.md is missing -- row not added: $newRow"
 }
 
 Write-Utf8NoBom -Path $changelogPath -Content $changelogNew
 
-# --- Per-plugin CHANGELOG + RELEASE.md-kaartje (consument-gericht; reizen mee met de plugin-cache) -
-# Een gecombineerde lus per plugin (#103, Victor #7; voorheen twee aparte $manifests-lussen): beide
-# stappen delen dezelfde $pluginEntries-selectie (Get-EntryPlugins-filter + Remove-EntryPluginsLine),
-# dus die eenmaal per plugin bepalen i.p.v. tweemaal. De CHANGELOG-stap schrijft ALLEEN als de plugin
-# deze release daadwerkelijk entries heeft; de RELEASE.md-stap loopt bewust over ELKE plugin -- de
-# versie bumpt lockstep, dus ook een plugin die deze keer niet geraakt is moet de nieuwe versie tonen
-# (Build-PluginReleaseCard toont dan het "no changes"-blok i.p.v. te falen). RELEASE.md is een
-# snapshot (niet een geschiedenis zoals CHANGELOG.md), dus overschrijven is daar juist.
+# --- Per-plugin CHANGELOG + RELEASE.md card (consumer-facing; travel along with the plugin cache) -
+# A combined loop per plugin (#103, Victor #7; previously two separate $manifests loops): both
+# steps share the same $pluginEntries selection (Get-EntryPlugins filter + Remove-EntryPluginsLine),
+# so determine that once per plugin instead of twice. The CHANGELOG step writes ONLY if the plugin
+# actually has entries this release; the RELEASE.md step deliberately runs over EVERY plugin -- the
+# version bumps lockstep, so even a plugin not touched this time must show the new version
+# (Build-PluginReleaseCard then shows the "no changes" block instead of failing). RELEASE.md is a
+# snapshot (not a history like CHANGELOG.md), so overwriting is exactly right there.
 foreach ($m in $manifests) {
     $pluginDir = Split-Path (Split-Path $m -Parent) -Parent
     $pluginName = Split-Path $pluginDir -Leaf
-    # De Plugins:-regel is interne administratie (stuurde de selectie hier) -- strip hem voordat een
-    # entry in consument-gerichte content belandt.
+    # The Plugins: line is internal administration (drove the selection here) -- strip it before
+    # an entry lands in consumer-facing content.
     $pluginEntries = @($entries | Where-Object { @(Get-EntryPlugins -EntryText $_) -contains $pluginName })
     $pluginEntries = @($pluginEntries | ForEach-Object { Remove-EntryPluginsLine -EntryText $_ })
 
@@ -211,52 +216,52 @@ foreach ($m in $manifests) {
         $plChangelogPath = Join-Path $pluginDir 'CHANGELOG.md'
         $existing = if (Test-Path -LiteralPath $plChangelogPath) { Get-Content -Path $plChangelogPath -Raw -Encoding UTF8 } else { '' }
         Write-Utf8NoBom -Path $plChangelogPath -Content (Add-PluginChangelogSection -Existing $existing -Section $section -PluginName $pluginName)
-        Write-Host "  bijgewerkt: $pluginName/CHANGELOG.md ($($pluginEntries.Count) entries)" -ForegroundColor DarkGray
+        Write-Host "  updated: $pluginName/CHANGELOG.md ($($pluginEntries.Count) entries)" -ForegroundColor DarkGray
     }
 
     $card = Build-PluginReleaseCard -PluginName $pluginName -Version $new -Date $today -Type $typeLabel `
         -Title $Title -Entries $pluginEntries -RepoBlobUrl (Get-RepoBlobUrl)
     $releaseCardPath = Join-Path $pluginDir 'RELEASE.md'
     Write-Utf8NoBom -Path $releaseCardPath -Content $card
-    Write-Host "  bijgewerkt: $pluginName/RELEASE.md" -ForegroundColor DarkGray
+    Write-Host "  updated: $pluginName/RELEASE.md" -ForegroundColor DarkGray
 }
 
-# --- Plugin-versies bumpen (regex op de version-regel -- behoudt de JSON-opmaak) -----------------
+# --- Bump plugin versions (regex on the version line -- preserves the JSON formatting) -----------
 foreach ($m in $manifests) {
     $raw = Get-Content -Path $m -Raw -Encoding UTF8
     $bumped = [regex]::Replace($raw, '("version"\s*:\s*")\d+\.\d+\.\d+(")', "`${1}$new`$2", 1)
     Write-Utf8NoBom -Path $m -Content $bumped
     $pluginName = Split-Path (Split-Path (Split-Path $m -Parent) -Parent) -Leaf
-    Write-Host "  gebumpt: $pluginName/.claude-plugin/plugin.json -> $new" -ForegroundColor DarkGray
+    Write-Host "  bumped: $pluginName/.claude-plugin/plugin.json -> $new" -ForegroundColor DarkGray
 }
 
-# --- Commit + tag rechtstreeks op main ---------------------------------------------------------
-# Native git schrijft chatter naar stderr (de LF->CRLF-warning van `git add`, `remote:` bij push).
-# Onder ErrorActionPreference=Stop promoveert PowerShell 5.1 dat tot een terminating
-# NativeCommandError, nog voor de $LASTEXITCODE-checks -- dezelfde valkuil als #107 (open-pr), en die
-# brak het snijden van v1.12.0 op `git add`. Vanaf hier draaien we onder Continue en leunen puur op
-# $LASTEXITCODE. Dit is het laatste blok van het script, dus de preference hoeft niet hersteld.
+# --- Commit + tag directly on main ---------------------------------------------------------
+# Native git writes chatter to stderr (the LF->CRLF warning from `git add`, `remote:` on push).
+# Under ErrorActionPreference=Stop, PowerShell 5.1 promotes that to a terminating
+# NativeCommandError, before the $LASTEXITCODE checks -- the same pitfall as #107 (open-pr), and
+# that broke cutting v1.12.0 on `git add`. From here on we run under Continue and rely purely on
+# $LASTEXITCODE. This is the last block of the script, so the preference does not need restoring.
 $ErrorActionPreference = 'Continue'
 git add -A
-if ($LASTEXITCODE -ne 0) { Write-Error "git add mislukte."; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Error "git add failed."; exit 1 }
 git commit -m "release: v$new"
-if ($LASTEXITCODE -ne 0) { Write-Error "git commit mislukte."; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Error "git commit failed."; exit 1 }
 
 git tag -a $tagName -m "Release $tagName"
-if ($LASTEXITCODE -ne 0) { Write-Error "git tag mislukte."; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Error "git tag failed."; exit 1 }
 
 if ($NoPush) {
     Write-Host ""
-    Write-Host "Release v$new lokaal vastgelegd op main (commit + tag $tagName), niet gepusht." -ForegroundColor Green
-    Write-Host "Push zelf wanneer je klaar bent:" -ForegroundColor Cyan
+    Write-Host "Release v$new recorded locally on main (commit + tag $tagName), not pushed." -ForegroundColor Green
+    Write-Host "Push it yourself when ready:" -ForegroundColor Cyan
     Write-Host "  git push origin main; git push origin $tagName"
     exit 0
 }
 
 git push origin main
-if ($LASTEXITCODE -ne 0) { Write-Error "git push van main mislukte."; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Error "git push of main failed."; exit 1 }
 git push origin $tagName
-if ($LASTEXITCODE -ne 0) { Write-Error "git push van de tag mislukte."; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Error "git push of the tag failed."; exit 1 }
 
 Write-Host ""
-Write-Host "En... actie: v$new is gesneden ($current -> $new, $typeLabel), gecommit op main en getagd als $tagName. Vastgelegd." -ForegroundColor Green
+Write-Host "Done: v$new has been cut ($current -> $new, $typeLabel), committed on main and tagged as $tagName. Recorded." -ForegroundColor Green

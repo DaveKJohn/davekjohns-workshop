@@ -133,15 +133,39 @@ def you modify on a branch only takes effect after merge + push.
 
 ### Language
 
-The system-wide norm — repo content is English, the session-reply language stays separate and
-follows the user — lives in
+The system-wide norm — repo content is English (the entire script layer included: comments,
+docstrings, console output, and script-generated document content), the session-reply language
+stays separate and follows the user, with three explicit exceptions — lives in
 [Tessa #16's portable manual](claude-code-plugins/claude-specialists/specialists/manuals/06-16-manual.md#what-tessa-covers),
 under **"Guarding the language convention,"** so it travels to every consuming repo, not just this
-one. This slot only records this repo's own application of it: everything in this repo is
-**English**, unless a technical identifier (code, file name, flag) should keep its original form.
-History (folded changelog entries, `releases/`) is this repo's narrow exception to that norm and
-may remain in its original language. Decision by Dave, July 20, 2026 — the decision that in turn
-prompted the system-wide norm above.
+one. This slot records this repo's own concrete instances of that norm — **unambiguously
+everything**, not just docs/manuals/agent-defs:
+
+- **The script layer is fully in scope.** Every `.ps1` file under `scripts/**` (and the shared
+  mirrors under `claude-code-plugins/claude-specialists/*/scripts/`), the hooks, and the tests are
+  English throughout — comments, docstrings, and console output (`Write-Host`/`Write-Error`/
+  `Write-Warning`/`throw` text). New scripts and edits are written in English; no new non-English
+  text is added anywhere in scope.
+- **Script-*generated* document content is in scope too.** The CHANGELOG.md sections,
+  release-notes, and per-plugin CHANGELOGs that `scripts/lib/release-lib.ps1` builds are English
+  going forward: its document-generating template strings (the category labels, the reference line,
+  the `## Releases`/plugin-CHANGELOG intro texts, the date label) were translated in this pass.
+  Already-folded history (`releases/`, existing CHANGELOG entries) stays in its original language,
+  so a mix of older Dutch and newer English release notes is expected.
+- **Technical identifiers/flags** keep their original form — the scaffold marker `VUL-IN` (used
+  across the plugin's scaffold scripts, e.g. `bootstrap.ps1`, `new-branch.ps1`) is the concrete
+  example here; Dave's explicit decision.
+- **Legacy back-compat markers** deliberately keep recognizing existing, not-yet-migrated consumer
+  content and are not translation debt: the slot heading `## Specific to this repo` alongside its
+  legacy predecessor in the drift-check (`scripts/lint/check-consumer-drift.ps1`) and the bootstrap
+  templates, and the `[ERROR]` marker alongside its legacy predecessor in the connector session
+  hook (`connector-sessioncheck.ps1`).
+- **History** (folded changelog entries, `releases/`) is this repo's narrow exception to the norm
+  and may remain in its original language.
+
+Decision by Dave, July 20, 2026 (repo-wide English) — the decision that in turn prompted the
+system-wide norm above — sharpened July 21, 2026 to make explicit that it covers the script layer
+and script-generated content, not only docs/manuals/agent-defs.
 
 ### The team: roster & routing
 

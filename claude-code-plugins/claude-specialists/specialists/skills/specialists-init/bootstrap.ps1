@@ -143,7 +143,7 @@ Get-ChildItem -Path $personaDir -Filter '*-persona.md' -File | Sort-Object Name 
     $g = $Matches[1]; $id = $Matches[2]
     $dest = Join-Path $personaDest "$g-$id-extension.md"
     if (Test-Path -LiteralPath $dest -PathType Leaf) {
-        Write-Host "  [keep]  $(Split-Path $dest -Leaf) bestaat al -- not overwritten." -ForegroundColor DarkGray
+        Write-Host "  [keep]  $(Split-Path $dest -Leaf) already exists -- not overwritten." -ForegroundColor DarkGray
         $script:kept++
         return
     }
@@ -434,7 +434,7 @@ foreach ($s in $scriptScaffolds) {
     $dest = Join-Path $ConsumerRoot $s.Rel
     $relDisplay = $s.Rel -replace '\\', '/'
     if (Test-Path -LiteralPath $dest -PathType Leaf) {
-        Write-Host "  [keep]   $relDisplay bestaat al -- not overwritten." -ForegroundColor DarkGray
+        Write-Host "  [keep]   $relDisplay already exists -- not overwritten." -ForegroundColor DarkGray
         $scriptKept++
         continue
     }

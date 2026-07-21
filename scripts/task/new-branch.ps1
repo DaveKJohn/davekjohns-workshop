@@ -1,76 +1,78 @@
 <#
 .SYNOPSIS
-    Maakt (of hergebruikt idempotent) een branch en maakt meteen z'n changelog entry-bestand aan.
+    Creates (or idempotently reuses) a branch and immediately creates its changelog entry file.
 
 .DESCRIPTION
-    Kern-verbetering: branch-aanmaak en changelog-entry-aanmaak waren twee losse handmatige stappen
-    (new-branch dan new-changelog-entry.ps1) -- dit script voegt ze samen tot een enkele, idempotente
-    aanroep. Alleen git (checkout/checkout -b) + het aanmaken van de entry; geen push, geen PR, niets
-    repo-specifieks.
+    Core improvement: branch creation and changelog-entry creation used to be two separate manual
+    steps (new-branch then new-changelog-entry.ps1) -- this script merges them into a single,
+    idempotent call. Only git (checkout/checkout -b) + creating the entry; no push, no PR, nothing
+    repo-specific.
 
-    Validatie loopt via de gedeelde SSOT-helper Test-BranchName (scripts/lib/branch-info.ps1):
-      - Hard-reject (exit 1): lege naam, naam 'main', of een naam die de substring 'final' bevat.
-      - Soft-warn (ga door): onbekend branch-prefix -- valt verderop terug op 'Chore' (new-changelog-
-        entry) resp. 'question' (open-pr), consistent met die scripts. Validatie is bewust gedelegeerd
-        aan de tabel van de consument, zodat uitgebreide prefixes (bv. Shopify's style/, liquid/, ...)
-        gewoon kloppen zonder dat dit script ze hoeft te kennen.
+    Validation runs via the shared SSOT helper Test-BranchName (scripts/lib/branch-info.ps1):
+      - Hard reject (exit 1): empty name, name 'main', or a name that contains the substring
+        'final'.
+      - Soft warn (proceed): unknown branch prefix -- falls back further on 'Chore' (new-changelog-
+        entry) resp. 'question' (open-pr), consistent with those scripts. Validation is deliberately
+        delegated to the consumer's table, so extended prefixes (e.g. Shopify's style/, liquid/, ...)
+        simply work without this script needing to know them.
 
 .PARAMETER Name
-    De branch-naam, vorm <prefix>/<korte-naam> (bv. feat/nieuwe-plugin).
+    The branch name, form <prefix>/<short-name> (e.g. feat/new-plugin).
 
 .PARAMETER Title
-    (Optioneel) titel voor het changelog entry-bestand, doorgegeven aan new-changelog-entry.ps1.
-    Standaard gelijk aan new-changelog-entry's eigen default ("TODO: titel").
+    (Optional) title for the changelog entry file, passed through to new-changelog-entry.ps1.
+    Defaults to new-changelog-entry's own default ("TODO: title").
 
 .EXAMPLE
-    ./scripts/task/new-branch.ps1 -Name feat/nieuwe-plugin -Title "Nieuwe domein-plugin"
+    ./scripts/task/new-branch.ps1 -Name feat/new-plugin -Title "New domain plugin"
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][string]$Name,
-    [string]$Title = "TODO: titel"
+    [string]$Title = "TODO: title"
 )
 
 $ErrorActionPreference = 'Stop'
 
-# Repo-root -- dual-context: draait een consument de gedeelde plugin-spiegel, dan levert
-# CLAUDE_PROJECT_DIR diens repo-root; in de workshop-root (of buiten een sessie) valt het terug op de
-# git-root. Zo werkt DEZELFDE file in beide locaties, en blijven de root-kopie en de plugin-spiegel
-# byte-identiek (bewaakt door de shared-scripts-drift-lint).
+# Repo root -- dual context: if a consumer runs the shared plugin mirror, CLAUDE_PROJECT_DIR
+# supplies its repo root; in the workshop root (or outside a session) it falls back to the git
+# root. This way the SAME file works in both locations, and the root copy and the plugin mirror
+# stay byte-identical (guarded by the shared-scripts drift lint).
 $repoRoot = if ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR } else { (git rev-parse --show-toplevel).Trim() }
 
-# Pre-flight (#86): dit script leunt ALLEEN op scripts\lib\branch-info.ps1 in de repo-root van de
-# consument (geen repo-config, geen gh). Ontbreekt dat -- typisch op een schone consument -- stop
-# met een duidelijke wegwijzer i.p.v. een rauwe dot-source-fout hieronder.
+# Pre-flight (#86): this script relies ONLY on scripts\lib\branch-info.ps1 in the consumer's repo
+# root (no repo-config, no gh). If that is missing -- typically on a clean consumer -- stop with a
+# clear pointer instead of a raw dot-source error below.
 $branchInfoPath = Join-Path $repoRoot 'scripts\lib\branch-info.ps1'
 if (-not (Test-Path -LiteralPath $branchInfoPath)) {
-    Write-Error "new-branch kan niet draaien -- ontbrekend repo-eigen bestand: $branchInfoPath (Get-BranchInfo / Test-BranchName / de branch-prefix-tabel). Dit bestand is repo-specifiek en hoort in de repo-root van de consument. Maak het aan (de specialists-init-bootstrap zet een VUL-IN-scaffold neer, of neem een bestaande consument / de werkplaats-repo als model) en draai daarna opnieuw."
+    Write-Error "new-branch cannot run -- missing repo-owned file: $branchInfoPath (Get-BranchInfo / Test-BranchName / the branch prefix table). This file is repo-specific and belongs in the consumer's repo root. Create it (the specialists-init bootstrap lays down a VUL-IN scaffold, or take an existing consumer / the workshop repo as a model) and run again afterward."
     exit 1
 }
 . $branchInfoPath
 
-# Validatie via de gedeelde SSOT-helper -- geen inline-herhaling van de hard-reject-regels.
+# Validation via the shared SSOT helper -- no inline repetition of the hard-reject rules.
 $check = Test-BranchName -Branch $Name
 if (-not $check.IsValid) {
-    Write-Error "new-branch kan niet draaien -- ongeldige branch-naam '$Name': $($check.Reason)"
+    Write-Error "new-branch cannot run -- invalid branch name '$Name': $($check.Reason)"
     exit 1
 }
 if (-not $check.IsKnown) {
-    Write-Warning "Onbekend branch-prefix in '$Name' -- new-changelog-entry valt terug op 'Chore', open-pr straks op label 'question'. Classificeer handmatig indien nodig."
+    Write-Warning "Unknown branch prefix in '$Name' -- new-changelog-entry falls back to 'Chore', open-pr later to label 'question'. Classify manually if needed."
 }
 
-# Let op: Test-BranchName hierboven vangt alleen de expliciet genoemde hard-rejects (leeg/'main'/
-# 'final'). De bescherming tegen bv. backslashes, '..', of een leidend streepje in $Name leunt NIET
-# op eigen code hier, maar impliciet op git's eigen `check-ref-format`-validatie, die `git checkout
-# -b` hieronder zelf afdwingt (met exit 128 bij een ongeldige ref-naam). Wijzig je ooit het
-# checkout-mechanisme (bv. naar `git branch` + los `checkout`, of naar libgit2), controleer dan of
-# die impliciete poort niet stilzwijgend verdwijnt.
+# Note: Test-BranchName above only catches the explicitly named hard rejects (empty/'main'/
+# 'final'). Protection against e.g. backslashes, '..', or a leading hyphen in $Name does NOT rely
+# on custom code here, but implicitly on git's own `check-ref-format` validation, which `git checkout
+# -b` below enforces itself (with exit 128 on an invalid ref name). If you ever change the
+# checkout mechanism (e.g. to `git branch` + a separate `checkout`, or to libgit2), check whether
+# that implicit gate does not silently disappear.
 #
-# Idempotent: bestaat de branch al lokaal, dan gewoon checkout; anders aanmaken. Bewust `git -C
-# $repoRoot` i.p.v. Set-Location -- dit script blijft composable en muteert de aanroeper-cwd niet.
-# git schrijft voortgang/fouten soms naar stderr; onder ErrorActionPreference=Stop zou PS 5.1 dat tot
-# een terminating error promoveren nog voor de graceful $LASTEXITCODE-afhandeling (de #107-valkuil,
-# zie ook open-pr.ps1) -- daarom onder Continue draaien, output vangen, en pas dan oordelen.
+# Idempotent: if the branch already exists locally, just check it out; otherwise create it.
+# Deliberately `git -C $repoRoot` instead of Set-Location -- this script stays composable and does
+# not mutate the caller's cwd. git sometimes writes progress/errors to stderr; under
+# ErrorActionPreference=Stop, PS 5.1 would promote that to a terminating error before the graceful
+# $LASTEXITCODE handling (the #107 pitfall, see also open-pr.ps1) -- so run under Continue, capture
+# output, and only then judge.
 $prevEap = $ErrorActionPreference
 try {
     $ErrorActionPreference = 'Continue'
@@ -95,27 +97,27 @@ try {
 }
 $checkoutOutput | ForEach-Object { Write-Host $_ }
 if ($checkoutCode -ne 0) {
-    Write-Error "git checkout van '$Name' mislukte."
+    Write-Error "git checkout of '$Name' failed."
     exit 1
 }
 if ($branchExists) {
-    Write-Host "Branch '$Name' bestond al -- uitgecheckt." -ForegroundColor Yellow
+    Write-Host "Branch '$Name' already existed -- checked out." -ForegroundColor Yellow
 } else {
-    Write-Host "Branch '$Name' aangemaakt en uitgecheckt." -ForegroundColor Green
+    Write-Host "Branch '$Name' created and checked out." -ForegroundColor Green
 }
 
-# Entry-aanmaak als CHILD-proces: new-changelog-entry.ps1 kan intern `exit 0` (entry bestaat al) of
-# `exit 1` (op main) doen -- als kindproces sloopt die exit niet dit script, alleen het kind. Sibling
-# gedeeld script relatief aan $PSScriptRoot (beide scripts reizen samen als mirror-paar, zie
-# scripts/lib/shared-scripts-lib.ps1). `checkout`/`checkout -b` hierboven heeft HEAD al omgezet, dus
-# new-changelog-entry leidt de juiste branch zelf af uit HEAD.
+# Entry creation as a CHILD process: new-changelog-entry.ps1 can internally do `exit 0` (entry
+# already exists) or `exit 1` (on main) -- as a child process that exit does not kill this script,
+# only the child. Sibling shared script relative to $PSScriptRoot (both scripts travel together as
+# a mirror pair, see scripts/lib/shared-scripts-lib.ps1). `checkout`/`checkout -b` above has already
+# switched HEAD, so new-changelog-entry derives the right branch itself from HEAD.
 #
-# $Title als los CLI-argument over deze native procesgrens is een injectie-primitief: vrije tekst
-# (bv. plausibel gekopieerd uit een externe issue/PR-titel) met `"`/backslashes kan de argv-
-# reconstructie van het kindproces breken. Daarom hier NIET als `-Title $Title` doorgeven, maar via
-# een omgevingsvariabele -- env-var-waarden gaan niet door argv-requoting, dus de injectie
-# verdwijnt. `finally` ruimt de var ook bij een fout op, zodat er niets lekt naar een volgend proces
-# in dezelfde sessie.
+# $Title as a standalone CLI argument across this native process boundary is an injection
+# primitive: free text (e.g. plausibly copied from an external issue/PR title) with `"`/backslashes
+# can break the child process's argv reconstruction. Therefore it is NOT passed here as
+# `-Title $Title`, but via an environment variable -- environment variable values do not go through
+# argv requoting, so the injection disappears. `finally` also cleans up the var on an error, so
+# nothing leaks to a subsequent process in the same session.
 try {
     $env:CLAUDE_NEWBRANCH_TITLE = $Title
     $entryScript = Join-Path $PSScriptRoot '..\release\new-changelog-entry.ps1'

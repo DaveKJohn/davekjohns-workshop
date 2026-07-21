@@ -1,33 +1,33 @@
 <#
 .SYNOPSIS
-    Gedeelde branch-conventies voor de workflow-scripts (single source of truth).
+    Shared branch conventions for the workflow scripts (single source of truth).
 
 .DESCRIPTION
-    Dot-source dit bestand vanuit een script in scripts/release/:
+    Dot-source this file from a script in scripts/release/:
 
         . (Join-Path $PSScriptRoot '..\lib\branch-info.ps1')
 
-    Levert Get-BranchPrefix, Get-BranchInfo en Get-BranchTypes. De prefix-tabel bepaalt zowel het
-    GitHub-label van de PR als het changelog-entry-type, en volgt de standaard GitHub-labels:
+    Supplies Get-BranchPrefix, Get-BranchInfo and Get-BranchTypes. The prefix table determines both
+    the GitHub label of the PR and the changelog entry type, and follows the standard GitHub labels:
     Enhancement -> label 'enhancement', Bug -> 'bug', Documentation -> 'documentation'.
-    Wijzigt de tabel? Dan hier ook - en nergens anders: alle scripts lezen deze ene tabel.
+    Changing the table? Do it here too -- and nowhere else: every script reads this one table.
 
-    De branch-typen (Feat/Fix/Docs/Chore) zijn hier de enige bron. release-lib.ps1 leest ze via
-    Get-BranchTypes voor de release-notes-groepering, zodat de lijst niet op twee plekken drift
-    (voorheen dupliceerde release-lib.ps1 diezelfde typen als $catOrder).
+    The branch types (Feat/Fix/Docs/Chore) have their single source here. release-lib.ps1 reads
+    them via Get-BranchTypes for the release-notes grouping, so the list does not drift across two
+    places (previously release-lib.ps1 duplicated the same types as $catOrder).
 
-    Geen Set-StrictMode hier: dot-sourcen zou de strict-mode van het aanroepende script
-    veranderen en daar losse code kunnen breken.
+    No Set-StrictMode here: dot-sourcing would change the strict mode of the calling script
+    and could break loose code there.
 #>
 
-# De canonieke branch-typen, in de volgorde waarin ze in de release-notes verschijnen. Enige bron:
-# elke Type-waarde in de tabel hieronder is lid van deze lijst, en release-lib.ps1 leest hem via
-# Get-BranchTypes. Voeg je een type toe, dan hier -- en nergens anders.
+# The canonical branch types, in the order they appear in the release notes. Single source: every
+# Type value in the table below is a member of this list, and release-lib.ps1 reads it via
+# Get-BranchTypes. Adding a type? Do it here -- and nowhere else.
 $script:BranchTypeOrder = @('Feat', 'Fix', 'Docs', 'Chore')
 
-# prefix -> GitHub-label (PR) + branch-type (changelog-entry).
-# Let op: een release loopt NIET via een branch/PR (cut-release.ps1 commit rechtstreeks op main),
-# dus er is bewust geen 'release'-prefix hier.
+# prefix -> GitHub label (PR) + branch type (changelog entry).
+# Note: a release does NOT run via a branch/PR (cut-release.ps1 commits directly to main),
+# so there is deliberately no 'release' prefix here.
 $script:BranchPrefixTable = @{
     feat  = @{ Label = 'enhancement';   Type = 'Feat' }
     fix   = @{ Label = 'bug';           Type = 'Fix' }
@@ -36,13 +36,13 @@ $script:BranchPrefixTable = @{
 }
 
 function Get-BranchTypes {
-    # De canonieke branch-typen in release-notes-volgorde (SSOT voor release-lib.ps1).
+    # The canonical branch types in release-notes order (SSOT for release-lib.ps1).
     return $script:BranchTypeOrder
 }
 
 function Get-BranchPrefix {
     param([Parameter(Mandatory = $true)][string]$Branch)
-    # 'feat/naam' -> 'feat'; zonder slash geldt het stuk voor het eerste koppelteken
+    # 'feat/name' -> 'feat'; without a slash, the part before the first hyphen applies
     if ($Branch -match '/') { return ($Branch -split '/')[0] }
     return ($Branch -split '-')[0]
 }
@@ -57,37 +57,38 @@ function Get-BranchInfo {
         IsKnown  = $known
         Label    = $(if ($known) { $script:BranchPrefixTable[$prefix].Label } else { $null })
         Type     = $(if ($known) { $script:BranchPrefixTable[$prefix].Type } else { $null })
-        # Dezelfde naam wordt gebruikt voor het changelog-entry-bestand <SafeName>.md in de repo-root.
+        # The same name is used for the changelog entry file <SafeName>.md in the repo root.
         SafeName = $Branch -replace '/', '-'
     }
 }
 
 function Test-BranchName {
     <#
-        Additieve SSOT-helper (naast Get-BranchInfo) voor scripts die een branch-naam moeten
-        VALIDEREN voor ze hem gebruiken (bv. new-branch.ps1), i.p.v. de hard-reject-regels inline
-        te herhalen. Raakt Get-BranchInfo/Get-BranchTypes/de prefix-tabel niet aan.
+        Additive SSOT helper (alongside Get-BranchInfo) for scripts that need to VALIDATE a branch
+        name before using it (e.g. new-branch.ps1), instead of repeating the hard-reject rules
+        inline. Does not touch Get-BranchInfo/Get-BranchTypes/the prefix table.
 
-        Hard-rejects (IsValid = $false, Reason gevuld):
-          - lege/whitespace-only naam
-          - naam gelijk aan 'main'
-          - naam bevat de substring 'final' (case-insensitief, dus ook 'finalize'/'refinalization' --
-            Derek's harde regel, bewust breed)
+        Hard rejects (IsValid = $false, Reason filled in):
+          - empty/whitespace-only name
+          - name equal to 'main'
+          - name contains the substring 'final' (case-insensitive, so also 'finalize'/'refinalization' --
+            Derek's hard rule, deliberately broad)
 
-        Onbekend prefix is GEEN hard-reject (IsValid blijft $true); de aanroeper leest IsKnown en
-        beslist zelf of/hoe een soft-warn nodig is, consistent met new-changelog-entry/open-pr die
-        bij een onbekend prefix ook terugvallen (Chore/'question') i.p.v. te blokkeren.
+        An unknown prefix is NOT a hard reject (IsValid stays $true); the caller reads IsKnown and
+        decides for itself whether/how a soft warning is needed, consistent with
+        new-changelog-entry/open-pr which also fall back (Chore/'question') on an unknown prefix
+        instead of blocking.
     #>
     param([Parameter(Mandatory = $true)][AllowEmptyString()][string]$Branch)
 
     if ([string]::IsNullOrWhiteSpace($Branch)) {
-        return [pscustomobject]@{ IsValid = $false; Reason = "Branch-naam mag niet leeg zijn."; IsKnown = $false }
+        return [pscustomobject]@{ IsValid = $false; Reason = "Branch name must not be empty."; IsKnown = $false }
     }
     if ($Branch -eq 'main') {
-        return [pscustomobject]@{ IsValid = $false; Reason = "Branch-naam mag niet 'main' zijn."; IsKnown = $false }
+        return [pscustomobject]@{ IsValid = $false; Reason = "Branch name must not be 'main'."; IsKnown = $false }
     }
     if ($Branch -match 'final') {
-        return [pscustomobject]@{ IsValid = $false; Reason = "Branch-naam mag het token 'final' niet bevatten."; IsKnown = $false }
+        return [pscustomobject]@{ IsValid = $false; Reason = "Branch name must not contain the token 'final'."; IsKnown = $false }
     }
 
     $info = Get-BranchInfo -Branch $Branch

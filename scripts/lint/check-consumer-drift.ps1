@@ -1,60 +1,60 @@
 <#
 .SYNOPSIS
-    Drift-lint voor de gedeelde Claude-Specialists-plugin: vergelijkt eventuele lokale, mogelijk
-    verouderde agent-def-kopieen in een consumerende repo (life-hub/smartwatchbanden) met de
-    canonieke bron in dit plugin-repo, en signaleert drift voordat zo'n kopie wordt opgeruimd.
+    Drift lint for the shared Claude Specialists plugin: compares any local, possibly outdated
+    agent-def copies in a consuming repo (life-hub/smartwatchbanden) with the canonical source in
+    this plugin repo, and flags drift before such a copy is cleaned up.
 .DESCRIPTION
-    Topologie: life-hub en swb wijzen via een remote `github`-marketplace-source
-    (`DaveKJohn/davekjohns-workshop`) naar dit repo -- de Claude Code CLI clonet en cachet het zelf
-    (zie README.md, sectie "Consumptie"). Er is dus GEEN fysieke kopie nodig zodra een consumerende
-    repo is omgebouwd naar de gedeelde bron. Tijdens de overgang (Fase 3) kan een consumerende repo
-    echter nog een eigen lokale kopie hebben van een
-    agent-def die inmiddels ook hier gedeeld is (bv. life-hub .claude/agents/<group>-<id>-agent.md,
-    of swb .claude-plugins/specialists/agents/<group>-<id>-agent.md). Dit script:
+    Topology: life-hub and swb point via a remote `github` marketplace source
+    (`DaveKJohn/davekjohns-workshop`) to this repo -- the Claude Code CLI clones and caches it
+    itself (see README.md, "Consumption" section). So NO physical copy is needed once a consuming
+    repo has been converted to the shared source. During the transition (Phase 3), however, a
+    consuming repo can still have its own local copy of an
+    agent def that has meanwhile also been shared here (e.g. life-hub .claude/agents/<group>-<id>-agent.md,
+    or swb .claude-plugins/specialists/agents/<group>-<id>-agent.md). This script:
 
-      1. Leest de ids + groups uit alle drie de plugins (specialists, specialists-lifehub,
-         specialists-shopify) in dit repo (bron van waarheid) -- de gedeelde kern plus de twee
-         domein-groepen.
-      2. Zoekt in de opgegeven consumerende repo op de bekende legacy-paden naar een lokaal bestand
-         met datzelfde id.
-      3. Meldt per gevonden id een van drie uitkomsten:
-           - MISSING   geen lokale kopie gevonden -- al gemigreerd, geen actie nodig.
-           - IDENTICAL de lokale kopie is (na normalisatie van regeleindes/trailing whitespace)
-                       gelijk aan de canonieke versie -- een dode kopie, veilig te verwijderen.
-           - DRIFTED   de inhoud wijkt af -- eerst bekijken voor het verwijderen; kan een
-                       nog-niet-teruggelegde wijziging zijn die eerst hierheen moet.
+      1. Reads the ids + groups from all three plugins (specialists, specialists-lifehub,
+         specialists-shopify) in this repo (source of truth) -- the shared core plus the two
+         domain groups.
+      2. Looks in the given consuming repo, at the known legacy paths, for a local file with that
+         same id.
+      3. Reports one of three outcomes per found id:
+           - MISSING   no local copy found -- already migrated, no action needed.
+           - IDENTICAL the local copy is (after normalizing line endings/trailing whitespace) equal
+                       to the canonical version -- a dead copy, safe to remove.
+           - DRIFTED   the content differs -- review before removing; may be a not-yet-returned
+                       change that first needs to go back here.
 
-    Naast de agent-def-kopieen vergelijkt dit script ook de PERSONA'S (de orchestrator +
-    hoofdloop-specialisten zoals Chris/Derek/Rendall). Die hebben bewust geen agent-def; hun
-    draagbare bron woont in <plugin>/personas/<g>-<id>-persona.md en wordt bij het bootstrappen naar
-    de repo-laag van een consument gekopieerd: .claude/plugins/claude-specialists/<plugin>/
-    <g>-<id>-extension.md (sinds de life-hub-pariteit) of het legacy-pad
-    .claude/extensions/<g>-<id>-extension.md. Voor elke
-    plugin-persona vergelijkt dit script de DRAAGBARE BODY (alles boven de slot-marker -- 'Eigen aan
-    deze repo' of 'Specific to this repo'; de repo-lens eronder is per repo verschillend en wordt niet
-    vergeleken) met de
-    body van de consument-kopie. Een consument die het lens-only-model draait (de extension opent met
-    een '> Repo-lens (lens-only persona)'-blockquote en draagt bewust geen body-kopie) wordt als
-    LENS-ONLY gerapporteerd -- de body komt rechtstreeks uit de plugin, dus er valt niets te
-    vergelijken. Deze persona-bevindingen zijn INFORMATIEF: ze tellen niet mee in de
-    exit-code, want een bestaande consument met een handgeschreven persona is per definitie DRIFTED
-    tot hij gecoordineerd is gereconcilieerd -- dat is het signaal, geen poortbreuk.
+    Besides the agent-def copies, this script also compares the PERSONAS (the orchestrator +
+    main-loop specialists such as Chris/Derek/Rendall). Those deliberately have no agent def; their
+    portable source lives in <plugin>/personas/<g>-<id>-persona.md and is copied, when a consumer
+    bootstraps, to the consumer's repo layer: .claude/plugins/claude-specialists/<plugin>/
+    <g>-<id>-extension.md (since life-hub parity) or the legacy path
+    .claude/extensions/<g>-<id>-extension.md. For every
+    plugin persona this script compares the PORTABLE BODY (everything above the slot marker --
+    'Eigen aan deze repo' or 'Specific to this repo'; the repo lens below it differs per repo and
+    is not compared) with the
+    body of the consumer copy. A consumer running the lens-only model (the extension opens with a
+    '> Repo-lens (lens-only persona)' blockquote and deliberately carries no body copy) is reported
+    as LENS-ONLY -- the body comes directly from the plugin, so there is nothing to compare. These
+    persona findings are INFORMATIONAL: they do not count toward the
+    exit code, since an existing consumer with a hand-written persona is by definition DRIFTED
+    until it has been reconciled with the source -- that is the signal, not a gate breach.
 
-    Dit script wijzigt NIETS in de consumerende repo -- puur read-only signalering. Opruimen of
-    het instellen van de marketplace-source zelf is Fase-3-werk in de consumerende repo (Sylvester
-    daar), niet iets wat dit plugin-repo cross-repo doet.
+    This script changes NOTHING in the consuming repo -- purely read-only signaling. Cleaning up or
+    setting up the marketplace source itself is Phase-3 work in the consuming repo (Sylvester
+    there), not something this plugin repo does cross-repo.
 
-    Exit-code: 0 = geen DRIFTED agent-def-bevindingen. 1 = minstens een DRIFTED agent-def-bevinding
-    (bruikbaar als lokale poort in de consumerende repo, naast diens eigen lint-brain.ps1).
-    Persona-drift beinvloedt de exit-code NIET.
+    Exit code: 0 = no DRIFTED agent-def findings. 1 = at least one DRIFTED agent-def finding
+    (usable as a local gate in the consuming repo, alongside its own lint-brain.ps1).
+    Persona drift does NOT affect the exit code.
 .PARAMETER ConsumerPath
-    Pad naar de root van de consumerende repo (life-hub of smartwatchbanden). Verplicht.
+    Path to the root of the consuming repo (life-hub or smartwatchbanden). Required.
 .PARAMETER Quiet
-    Toon alleen ids met een bevinding (DRIFTED/IDENTICAL); onderdruk MISSING-regels.
+    Show only ids with a finding (DRIFTED/IDENTICAL); suppress MISSING lines.
 .EXAMPLE
-    ./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\pad\naar\life-hub
+    ./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\path\to\life-hub
 .EXAMPLE
-    ./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\pad\naar\smartwatchbanden -Quiet
+    ./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\path\to\smartwatchbanden -Quiet
 #>
 param(
     [Parameter(Mandatory = $true)][string]$ConsumerPath,
@@ -65,9 +65,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $PluginRoot = Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')
-# Alle drie de plugins dragen canonieke agent-defs: de gedeelde kern (specialists) plus de twee
-# domein-groepen (specialists-lifehub, specialists-shopify). We scannen ze alle drie, zodat de
-# drift-check ook de domein-specialisten van een consumerende repo dekt.
+# All three plugins carry canonical agent defs: the shared core (specialists) plus the two domain
+# groups (specialists-lifehub, specialists-shopify). We scan all three, so the drift check also
+# covers a consuming repo's domain specialists.
 $SourceDirs = @(
     (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists\agents')
     (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists-lifehub\agents')
@@ -86,18 +86,19 @@ $ConsumerRoot = (Resolve-Path -LiteralPath $ConsumerPath).Path
 function Read-NormalizedText {
     param([string]$Path)
     $raw = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
-    # Regeleindes en trailing whitespace per regel normaliseren -- puur een tekstuele vergelijking,
-    # geen semantische diff. Zie categorie B/C in lint-brain.ps1 (life-hub) voor dezelfde heuristiek-aanpak.
+    # Normalize line endings and trailing whitespace per line -- purely a textual comparison,
+    # no semantic diff. See category B/C in lint-brain.ps1 (life-hub) for the same heuristic approach.
     $lines = $raw -split "`r?`n" | ForEach-Object { $_.TrimEnd() }
     return ($lines -join "`n").Trim()
 }
 
 function Get-PortableBody {
-    # Haalt de DRAAGBARE body uit een persona-sjabloon of een extensions-kopie: alles vanaf de eerste
-    # markdown-H1-kop (^# ) tot NET VOOR de slot-marker ('Eigen aan deze repo' of 'Specific to this
-    # repo'). Frontmatter en leidende
-    # HTML-commentaren vallen er vanzelf buiten (ze staan voor de eerste #-kop). Zelfde normalisatie
-    # als Read-NormalizedText, zodat een puur tekstuele vergelijking mogelijk is.
+    # Extracts the PORTABLE body from a persona template or an extensions copy: everything from
+    # the first markdown H1 heading (^# ) up to JUST BEFORE the slot marker ('Eigen aan deze repo'
+    # or 'Specific to this
+    # repo'). Frontmatter and leading HTML comments fall outside it automatically (they come
+    # before the first # heading). Same normalization as Read-NormalizedText, so a purely textual
+    # comparison is possible.
     param([string]$Path)
     $raw = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
     $lines = $raw -split "`r?`n"
@@ -107,19 +108,20 @@ function Get-PortableBody {
         if (-not $started) {
             if ($line -match '^#\s') { $started = $true } else { continue }
         }
-        # Back-compat: herken zowel de legacy Nederlandse slot-kop ('Eigen aan deze repo') als de
-        # nieuwe Engelse ('Specific to this repo'), zodat een consument met een oude Nederlandse slot
-        # nog steeds correct op de marker splitst.
+        # Back-compat: recognize both the legacy Dutch slot heading ('Eigen aan deze repo') and the
+        # new English one ('Specific to this repo'), so a consumer with an old Dutch slot still
+        # splits correctly on the marker.
         if ($line -match '^##\s+(Eigen aan deze repo|Specific to this repo)') { break }
-        # De indexregel onder de titel is sinds inbound #64 locatie-onafhankelijk (platte tekst, geen
-        # pad-diepte-afhankelijke CLAUDE.md-link meer). Een consument kan de body daardoor op elk pad
-        # byte-identiek overnemen -- een zuiver tekstuele vergelijking volstaat, geen link-normalisatie.
+        # The index line under the title has been location-independent since inbound #64 (plain
+        # text, no longer a path-depth-dependent CLAUDE.md link). A consumer can therefore adopt
+        # the body byte-identically at any path -- a purely textual comparison suffices, no link
+        # normalization.
         $body.Add($line.TrimEnd())
     }
     return (($body -join "`n").Trim())
 }
 
-# --- Bron van waarheid inlezen: id, group en inhoud per gedeelde specialist ------------------------
+# --- Read the source of truth: id, group and content per shared specialist --------------------------
 $sourceById = @{}
 Get-ChildItem -Path $SourceDirs -Filter '*-agent.md' -File | ForEach-Object {
     $text = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8)
@@ -144,7 +146,7 @@ if ($sourceById.Count -eq 0) {
     exit 0
 }
 
-# --- Bekende legacy-locaties in een consumerende repo, in volgorde van waarschijnlijkheid ----------
+# --- Known legacy locations in a consuming repo, in order of likelihood -----------------------------
 function Get-LegacyCandidates {
     param([string]$Root, [string]$Id, [string]$Group)
     @(
@@ -171,7 +173,7 @@ foreach ($id in ($sourceById.Keys | Sort-Object)) {
     $results.Add([pscustomobject]@{ Id = $id; Status = $status; Path = $found })
 }
 
-# --- Rapport -----------------------------------------------------------------------------------------
+# --- Report ------------------------------------------------------------------------------------------
 Write-Host "== check-consumer-drift -- $ConsumerRoot ==" -ForegroundColor Cyan
 $driftCount = 0
 $identicalCount = 0
@@ -196,7 +198,7 @@ foreach ($r in ($results | Sort-Object Id)) {
 Write-Host ""
 Write-Host "Agent-def summary: $missingCount missing, $identicalCount identical (dead copies), $driftCount drifted." -ForegroundColor Cyan
 
-# --- Persona-drift (informatief): draagbare body van de plugin-persona's vs. de consument-kopie -----
+# --- Persona drift (informational): portable body of the plugin personas vs. the consumer copy ------
 $personaDirs = @(@(
     (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists\personas')
     (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists-lifehub\personas')
@@ -209,8 +211,8 @@ if ($personaDirs.Count -gt 0) {
         if ($_.BaseName -notmatch '^(\d{2})-(\d{2})-persona$') { return }
         $g = $Matches[1]; $id = $Matches[2]
         $srcBody = Get-PortableBody $_.FullName
-        # De consument-kopie kan op het plugin-pad wonen (.claude/plugins/claude-specialists/
-        # <plugin>/, sinds de life-hub-pariteit) of op het legacy-pad (.claude/extensions/).
+        # The consumer copy can live on the plugin path (.claude/plugins/claude-specialists/
+        # <plugin>/, since life-hub parity) or on the legacy path (.claude/extensions/).
         $pluginName = Split-Path (Split-Path $_.DirectoryName -Parent) -Leaf
         $consumerExt = $null
         foreach ($candidate in @(
@@ -224,10 +226,10 @@ if ($personaDirs.Count -gt 0) {
         } else {
             $extRaw = [System.IO.File]::ReadAllText($consumerExt, [System.Text.Encoding]::UTF8)
             if ($extRaw -match '(?m)^>\s*Repo-lens \(lens-only persona\)') {
-                # Lens-only-model: de extension is puur de repo-lens en draagt geen body-kopie -- de
-                # draagbare body komt rechtstreeks uit de plugin, dus er valt niets te vergelijken.
-                # Zonder deze herkenning vergelijkt Get-PortableBody de lens-tekst met de
-                # sjabloon-body en meldt de persona eeuwig als DRIFTED (inbound life-hub #69).
+                # Lens-only model: the extension is purely the repo lens and carries no body copy --
+                # the portable body comes directly from the plugin, so there is nothing to compare.
+                # Without this recognition, Get-PortableBody would compare the lens text with the
+                # template body and report the persona as DRIFTED forever (inbound life-hub #69).
                 $personaResults.Add([pscustomobject]@{ Name = $_.Name; Status = 'LENS-ONLY'; Path = $consumerExt })
             } else {
                 $localBody = Get-PortableBody $consumerExt

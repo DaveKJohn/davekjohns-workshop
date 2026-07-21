@@ -1,15 +1,23 @@
 <#
 .SYNOPSIS
-    Regressietests voor scripts/lib/release-lib.ps1 (de pure release-helpers).
+    Regression tests for scripts/lib/release-lib.ps1 (the pure release helpers).
 
 .DESCRIPTION
-    Dependency-vrij: geen Pester nodig, alleen PowerShell. Dot-source't de lib en draait een reeks
-    asserts. Exit-code 0 als alles slaagt, 1 bij de eerste faal -- zo bruikbaar in een CI-poort.
+    Dependency-free: no Pester needed, only PowerShell. Dot-sources the lib and runs a series of
+    asserts. Exit code 0 if everything passes, 1 on the first failure -- so usable as a CI gate.
 
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/release-lib.tests.ps1
 
-    Puur ASCII (repo-conventie voor .ps1). Verwachte niet-ASCII output-tekens (middot, em-dash) worden
-    via [char]0x.. gebouwd, net als in de lib zelf.
+    Pure ASCII (repo convention for .ps1). Expected non-ASCII output characters (middot, em-dash)
+    are built via [char]0x.. , just like in the lib itself.
+
+    NOTE (Sylvester, English script-layer sweep, #114 follow-up): the DOCUMENT-GENERATING template
+    strings this suite asserts against (category headings, the reference/date labels, the
+    ## Releases genesis intro) are now English, matching release-lib.ps1's own follow-up -- see the
+    NOTE in its file header. A few fixture strings (arbitrary sample entry titles/bodies like
+    "Tweede feature" or "Zie [de lint]...") stay in Dutch on purpose: those are stand-ins for
+    contributor-authored PR-entry content, not release-lib.ps1's own generated template text, so
+    their language is irrelevant to what is under test here.
 #>
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\release-lib.ps1')
@@ -22,7 +30,7 @@ function Assert-Equal {
     if ($Expected -eq $Actual) {
         $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green
     } else {
-        $script:fail++; Write-Host "  [FAIL] $Name`n         verwacht: '$Expected'`n         kreeg:    '$Actual'" -ForegroundColor Red
+        $script:fail++; Write-Host "  [FAIL] $Name`n         expected: '$Expected'`n         got:      '$Actual'" -ForegroundColor Red
     }
 }
 
@@ -31,13 +39,13 @@ function Assert-Match {
     if ($Text -match $Pattern) {
         $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green
     } else {
-        $script:fail++; Write-Host "  [FAIL] $Name (patroon '$Pattern' niet gevonden)" -ForegroundColor Red
+        $script:fail++; Write-Host "  [FAIL] $Name (pattern '$Pattern' not found)" -ForegroundColor Red
     }
 }
 
 function Assert-Throws {
     param([scriptblock]$Block, [string]$Name)
-    try { & $Block; $script:fail++; Write-Host "  [FAIL] $Name (verwachtte een exception)" -ForegroundColor Red }
+    try { & $Block; $script:fail++; Write-Host "  [FAIL] $Name (expected an exception)" -ForegroundColor Red }
     catch { $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green }
 }
 
@@ -45,10 +53,10 @@ $midDot = [char]0x00B7
 $emDash = [char]0x2014
 
 Write-Host "Get-NextVersion" -ForegroundColor Cyan
-Assert-Equal '0.2.0' (Get-NextVersion -Current '0.1.0' -BumpKind 'minor') 'minor bumpt tweede cijfer, nult patch'
-Assert-Equal '0.1.1' (Get-NextVersion -Current '0.1.0' -BumpKind 'patch') 'patch bumpt derde cijfer'
-Assert-Equal '1.0.0' (Get-NextVersion -Current '0.9.9' -BumpKind 'major') 'major nult minor + patch'
-Assert-Throws { Get-NextVersion -Current 'x.y.z' -BumpKind 'patch' } 'ongeldige huidige versie gooit'
+Assert-Equal '0.2.0' (Get-NextVersion -Current '0.1.0' -BumpKind 'minor') 'minor bumps the second digit, zeroes patch'
+Assert-Equal '0.1.1' (Get-NextVersion -Current '0.1.0' -BumpKind 'patch') 'patch bumps the third digit'
+Assert-Equal '1.0.0' (Get-NextVersion -Current '0.9.9' -BumpKind 'major') 'major zeroes minor + patch'
+Assert-Throws { Get-NextVersion -Current 'x.y.z' -BumpKind 'patch' } 'invalid current version throws'
 
 Write-Host "Get-BumpType" -ForegroundColor Cyan
 Assert-Equal 'major' (Get-BumpType -From '0.1.0' -To '1.0.0') '0.1.0->1.0.0 = major'
@@ -56,11 +64,11 @@ Assert-Equal 'minor' (Get-BumpType -From '1.0.0' -To '1.1.0') '1.0.0->1.1.0 = mi
 Assert-Equal 'patch' (Get-BumpType -From '1.1.0' -To '1.1.1') '1.1.0->1.1.1 = patch'
 
 Write-Host "Get-LockstepVersion" -ForegroundColor Cyan
-Assert-Equal '0.1.0' (Get-LockstepVersion -ManifestContents @{ a = '{"version": "0.1.0"}'; b = '{"version": "0.1.0"}' }) 'gelijke versies -> die versie'
-Assert-Throws { Get-LockstepVersion -ManifestContents @{ a = '{"version": "0.1.0"}'; b = '{"version": "0.2.0"}' } } 'ongelijke versies gooit'
-Assert-Throws { Get-LockstepVersion -ManifestContents @{ a = '{"name": "x"}' } } 'ontbrekende version gooit'
+Assert-Equal '0.1.0' (Get-LockstepVersion -ManifestContents @{ a = '{"version": "0.1.0"}'; b = '{"version": "0.1.0"}' }) 'equal versions -> that version'
+Assert-Throws { Get-LockstepVersion -ManifestContents @{ a = '{"version": "0.1.0"}'; b = '{"version": "0.2.0"}' } } 'unequal versions throws'
+Assert-Throws { Get-LockstepVersion -ManifestContents @{ a = '{"name": "x"}' } } 'missing version throws'
 
-# Gedeeld sample-CHANGELOG voor de transformatie-tests.
+# Shared sample CHANGELOG for the transformation tests.
 $sample = @"
 # Changelog
 
@@ -86,57 +94,77 @@ Body een.
 
 ## Releases
 
-Nog geen releases vastgelegd. Versiebeheer loopt per plugin.
+No releases recorded yet. Versioning runs per plugin.
 "@
 
 Write-Host "Get-PullRequestEntries" -ForegroundColor Cyan
 $entries = @(Get-PullRequestEntries -Content $sample)
-Assert-Equal 2 $entries.Count 'twee entries geextraheerd'
-Assert-Match $entries[0] '^### #2 ' 'eerste entry begint met ### #2'
-Assert-Match $entries[0] '\[PR #2\]' 'eerste entry bevat de PR-link'
-Assert-Throws { Get-PullRequestEntries -Content "# Changelog`n`n## Pull Requests`n`nIntro.`n`n## Releases`n" } 'lege PR-sectie gooit'
+Assert-Equal 2 $entries.Count 'two entries extracted'
+Assert-Match $entries[0] '^### #2 ' 'first entry starts with ### #2'
+Assert-Match $entries[0] '\[PR #2\]' 'first entry contains the PR link'
+Assert-Throws { Get-PullRequestEntries -Content "# Changelog`n`n## Pull Requests`n`nIntro.`n`n## Releases`n" } 'empty PR section throws'
 
-Write-Host "Convert-ChangelogForRelease (verwijzing)" -ForegroundColor Cyan
+Write-Host "Convert-ChangelogForRelease (reference)" -ForegroundColor Cyan
 $notesPath = 'releases/development/0.2/0.2.0.md'
 $result = Convert-ChangelogForRelease -Content $sample -Version '0.2.0' -Date '2026-07-14' -Type 'Minor' -NotesRelPath $notesPath
-Assert-Match $result '### \[v0\.2\.0\] - 2026-07-14 .* Minor' 'verwijzingskop met versie/datum/type'
-Assert-Match $result ([regex]::Escape("[$notesPath]($notesPath)")) 'verwijzing naar het notes-bestand'
+Assert-Match $result '### \[v0\.2\.0\] - 2026-07-14 .* Minor' 'reference heading with version/date/type'
+Assert-Match $result ([regex]::Escape("[$notesPath]($notesPath)")) 'reference to the notes file'
 $prSection = ($result -split '## Releases')[0]
-Assert-Equal $false ([bool]($prSection -match '(?m)^### ')) 'Pull Requests-sectie bevat geen entries meer'
-Assert-Match $result '(?s)Intro van de PR-sectie' 'PR-intro blijft staan'
-Assert-Equal $false ([bool]($result -match '(?m)^- #\d')) 'geen inline PR-bullets meer (alleen verwijzing)'
+Assert-Equal $false ([bool]($prSection -match '(?m)^### ')) 'Pull Requests section no longer contains entries'
+Assert-Match $result '(?s)Intro van de PR-sectie' 'PR intro remains'
+Assert-Equal $false ([bool]($result -match '(?m)^- #\d')) 'no inline PR bullets anymore (reference only)'
+
+Write-Host "Convert-ChangelogForRelease (genesis intro, no prior releases)" -ForegroundColor Cyan
+$genesisResult = Convert-ChangelogForRelease -Content $sample -Version '0.1.0' -Date '2026-07-14' -Type 'Minor' -NotesRelPath $notesPath
+Assert-Match $genesisResult 'The recorded versions of the marketplace .* newest at the top' 'genesis ## Releases intro (no prior releases yet) is English'
 
 Write-Host "Build-ReleaseNotes" -ForegroundColor Cyan
 $notes = Build-ReleaseNotes -Entries $entries -Version '0.2.0' -Date '2026-07-14' -Type 'Minor' -Title 'Test-release'
-Assert-Match $notes '^# Release notes v0\.2\.0' 'kop met versie'
-Assert-Match $notes '\*\*Type:\*\* Minor' 'type-regel'
-Assert-Match $notes 'Test-release' 'titel opgenomen'
-Assert-Match $notes '## Nieuwe features & verbeteringen' 'Feat-categorie-sectie'
-Assert-Match $notes '## Fixes' 'Fix-categorie-sectie'
-Assert-Match $notes '(?s)## Nieuwe features.*## Fixes' 'Feat staat voor Fix (categorie-volgorde)'
-Assert-Match $notes '### #2 .* Tweede feature' 'entry #2 aanwezig met volledige kop'
-Assert-Match $notes '\[PR #1\]' 'PR-link van entry #1 behouden'
+Assert-Match $notes '^# Release notes v0\.2\.0' 'heading with version'
+Assert-Match $notes '\*\*Date:\*\* 2026-07-14' 'date line'
+Assert-Match $notes '\*\*Type:\*\* Minor' 'type line'
+Assert-Match $notes 'Test-release' 'title included'
+Assert-Match $notes '## New features & improvements' 'Feat category section'
+Assert-Match $notes '## Fixes' 'Fix category section'
+Assert-Match $notes '(?s)## New features.*## Fixes' 'Feat comes before Fix (category order)'
+Assert-Match $notes '### #2 .* Tweede feature' 'entry #2 present with full heading'
+Assert-Match $notes '\[PR #1\]' 'PR link of entry #1 preserved'
 
-# Link-herschrijving: repo-root-relatieve links krijgen het prefix, externe/anker niet.
+Write-Host "Build-ReleaseNotes (full category label coverage: Docs, Chore, Other, #114 follow-up)" -ForegroundColor Cyan
+# Feat/Fix are already covered above; this closes the gap for the other two canonical catTitle
+# labels (Docs, Chore) plus the 'Other' catch-all for an entry whose type is not a known branch
+# type at all -- guards catOrder/catTitle staying in sync after the Overig -> Other key rename.
+$docsEntry  = "### #10 $midDot Docs sample $midDot Docs $midDot 2026-01-10`n`nBody docs.`n`n[PR #10](https://example.com/10)"
+$choreEntry = "### #11 $midDot Chore sample $midDot Chore $midDot 2026-01-11`n`nBody chore.`n`n[PR #11](https://example.com/11)"
+$otherEntry = "### #12 $midDot Other sample $midDot Weird $midDot 2026-01-12`n`nBody weird.`n`n[PR #12](https://example.com/12)"
+$catEntries = @($entries[0], $entries[1], $docsEntry, $choreEntry, $otherEntry)
+$catNotes = Build-ReleaseNotes -Entries $catEntries -Version '0.3.0' -Date '2026-07-21' -Type 'Minor'
+Assert-Match $catNotes '## Documentation' 'Docs category renders as Documentation'
+Assert-Match $catNotes '## Maintenance \(scripts, tooling, config\)' 'Chore category renders as Maintenance (scripts, tooling, config)'
+Assert-Match $catNotes '## Other' 'unrecognized type falls into the Other catch-all category'
+Assert-Match $catNotes '(?s)## New features.*## Fixes.*## Documentation.*## Maintenance \(scripts, tooling, config\).*## Other' 'category order: Feat, Fix, Docs, Chore, Other (canonical branch types + catch-all)'
+Assert-Match $catNotes '### #12 .* Other sample' 'entry with an unrecognized type still included under Other (not dropped)'
+
+# Link rewriting: repo-root-relative links get the prefix, external/anchor do not.
 $linkEntry = @("### #3 $midDot Iets $midDot Fix $midDot 2026-01-03", '', 'Zie [de lint](scripts/lint/x.ps1) en [de site](https://example.com) en [#kop](#kop).', '', '[PR #3](https://example.com/3)') -join "`n"
 $ln = Build-ReleaseNotes -Entries @($linkEntry) -Version '0.2.1' -Date '2026-07-14' -Type 'Patch' -LinkPrefix '../../../'
-Assert-Match $ln '\[de lint\]\(\.\./\.\./\.\./scripts/lint/x\.ps1\)' 'root-relatieve link krijgt ../../../-prefix'
-Assert-Match $ln '\[de site\]\(https://example\.com\)' 'externe link ongemoeid'
-Assert-Match $ln '\[#kop\]\(#kop\)' 'anker-link ongemoeid'
-Assert-Match $ln '\[PR #3\]\(https://example\.com/3\)' 'PR-link ongemoeid'
+Assert-Match $ln '\[de lint\]\(\.\./\.\./\.\./scripts/lint/x\.ps1\)' 'root-relative link gets the ../../../ prefix'
+Assert-Match $ln '\[de site\]\(https://example\.com\)' 'external link untouched'
+Assert-Match $ln '\[#kop\]\(#kop\)' 'anchor link untouched'
+Assert-Match $ln '\[PR #3\]\(https://example\.com/3\)' 'PR link untouched'
 
 Write-Host "Get-PluginManifestPaths" -ForegroundColor Cyan
-# Puur (raakt de schijf niet), dus een fictieve root volstaat.
+# Pure (does not touch disk), so a fictional root suffices.
 $fakeRoot = 'C:\fake-repo'
 $goodJson = '{"plugins": [{"name": "a", "source": "./fam/a"}, {"name": "b", "source": "./fam/b"}]}'
 $paths = @(Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson $goodJson)
-Assert-Equal 2 $paths.Count 'twee geregistreerde plugins -> twee manifest-paden'
-Assert-Equal 'C:\fake-repo\fam\a\.claude-plugin\plugin.json' $paths[0] 'relatieve ./-source resolve''t binnen de repo'
-Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"plugins": [{"name": "x", "source": "../buiten"}]}' } 'source met ..-pad buiten de repo gooit (containment)'
-Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"plugins": [{"name": "x", "source": "C:\\elders"}]}' } 'absolute source gooit (containment)'
-Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"plugins": [{"name": "x"}]}' } 'ontbrekende source gooit'
-Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"name": "leeg"}' } 'ontbrekende plugins-lijst gooit'
-Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson 'geen json' } 'corrupte JSON gooit'
+Assert-Equal 2 $paths.Count 'two registered plugins -> two manifest paths'
+Assert-Equal 'C:\fake-repo\fam\a\.claude-plugin\plugin.json' $paths[0] 'relative ./ source resolves within the repo'
+Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"plugins": [{"name": "x", "source": "../buiten"}]}' } 'source with a ..-path outside the repo throws (containment)'
+Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"plugins": [{"name": "x", "source": "C:\\elders"}]}' } 'absolute source throws (containment)'
+Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"plugins": [{"name": "x"}]}' } 'missing source throws'
+Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson '{"name": "leeg"}' } 'missing plugins list throws'
+Assert-Throws { Get-PluginManifestPaths -RepoRoot $fakeRoot -MarketplaceJson 'geen json' } 'corrupt JSON throws'
 
 Write-Host "Get-TouchedPlugins" -ForegroundColor Cyan
 $touchedFiles = @(
@@ -148,111 +176,111 @@ $touchedFiles = @(
     'scripts/lib/release-lib.ps1'
 )
 $touched = @(Get-TouchedPlugins -Files $touchedFiles)
-Assert-Equal 2 $touched.Count 'twee geraakte plugins (gededupliceerd + gesorteerd)'
-Assert-Equal 'specialists' $touched[0] 'eerste plugin-naam alfabetisch'
-Assert-Equal 'specialists-lifehub' $touched[1] 'tweede plugin-naam alfabetisch'
-Assert-Equal $false ([bool]($touched -contains 'connectors')) 'connectors-map telt niet mee als plugin'
-Assert-Equal 0 (@(Get-TouchedPlugins -Files @())).Count 'lege input -> lege set'
-Assert-Equal 0 (@(Get-TouchedPlugins -Files @('README.md', 'scripts/lib/release-lib.ps1'))).Count 'niet-plugin-paden genegeerd'
-Assert-Equal 0 (@(Get-TouchedPlugins -Files @('claude-code-plugins/claude-specialists/Specialists/agents/x.md'))).Count 'uppercase plugin-slug telt niet mee (-cmatch lowercase-regel)'
+Assert-Equal 2 $touched.Count 'two touched plugins (deduplicated + sorted)'
+Assert-Equal 'specialists' $touched[0] 'first plugin name alphabetically'
+Assert-Equal 'specialists-lifehub' $touched[1] 'second plugin name alphabetically'
+Assert-Equal $false ([bool]($touched -contains 'connectors')) 'connectors folder does not count as a plugin'
+Assert-Equal 0 (@(Get-TouchedPlugins -Files @())).Count 'empty input -> empty set'
+Assert-Equal 0 (@(Get-TouchedPlugins -Files @('README.md', 'scripts/lib/release-lib.ps1'))).Count 'non-plugin paths ignored'
+Assert-Equal 0 (@(Get-TouchedPlugins -Files @('claude-code-plugins/claude-specialists/Specialists/agents/x.md'))).Count 'uppercase plugin slug does not count (-cmatch lowercase rule)'
 $dedupFiles = @(
     'claude-code-plugins/claude-specialists/specialists/agents/a.md',
     'claude-code-plugins/claude-specialists/specialists/agents/b.md',
     'claude-code-plugins/claude-specialists/specialists/manuals/c.md'
 )
 $dedupTouched = @(Get-TouchedPlugins -Files $dedupFiles)
-Assert-Equal 1 $dedupTouched.Count 'dezelfde plugin over meerdere files -> eenmaal in de set'
-Assert-Equal 'specialists' $dedupTouched[0] 'gededupliceerde naam correct'
+Assert-Equal 1 $dedupTouched.Count 'same plugin across multiple files -> once in the set'
+Assert-Equal 'specialists' $dedupTouched[0] 'deduplicated name correct'
 
 Write-Host "Get-EntryPlugins" -ForegroundColor Cyan
 $entryMetPlugins = @("### #4 $midDot Iets $midDot Feat $midDot 2026-01-04", '', 'Body vier.', '', 'Plugins: specialists, specialists-lifehub', '', '[PR #4](https://example.com/4)') -join "`n"
 $plugs = @(Get-EntryPlugins -EntryText $entryMetPlugins)
-Assert-Equal 2 $plugs.Count 'twee plugins uit de Plugins-regel'
-Assert-Equal 'specialists' $plugs[0] 'eerste plugin-naam correct'
-Assert-Equal 0 (@(Get-EntryPlugins -EntryText "### #5 x`n`nBody.")).Count 'geen Plugins-regel -> lege lijst'
+Assert-Equal 2 $plugs.Count 'two plugins from the Plugins line'
+Assert-Equal 'specialists' $plugs[0] 'first plugin name correct'
+Assert-Equal 0 (@(Get-EntryPlugins -EntryText "### #5 x`n`nBody.")).Count 'no Plugins line -> empty list'
 
 Write-Host "Remove-EntryPluginsLine" -ForegroundColor Cyan
 $schoon = Remove-EntryPluginsLine -EntryText $entryMetPlugins
-Assert-Equal $false ([bool]($schoon -match '(?m)^Plugins:')) 'Plugins-regel verwijderd'
-Assert-Match $schoon '(?s)Body vier\.\n\n\[PR #4\]' 'geen dubbele lege regel achtergebleven'
-Assert-Equal "### #5 x`n`nBody." (Remove-EntryPluginsLine -EntryText "### #5 x`n`nBody.") 'entry zonder Plugins-regel blijft ongewijzigd'
+Assert-Equal $false ([bool]($schoon -match '(?m)^Plugins:')) 'Plugins line removed'
+Assert-Match $schoon '(?s)Body vier\.\n\n\[PR #4\]' 'no double blank line left behind'
+Assert-Equal "### #5 x`n`nBody." (Remove-EntryPluginsLine -EntryText "### #5 x`n`nBody.") 'entry without a Plugins line stays unchanged'
 
 Write-Host "Convert-EntryLinksForPluginChangelog" -ForegroundColor Cyan
 $conv = Convert-EntryLinksForPluginChangelog -EntryText 'Zie [de lint](scripts/lint/x.ps1) en [site](https://example.com) en [#kop](#kop).' -RepoBlobUrl 'https://gh.test/blob/main/'
-Assert-Match $conv '\[de lint\]\(https://gh\.test/blob/main/scripts/lint/x\.ps1\)' 'root-relatieve link wordt GitHub-URL'
-Assert-Match $conv '\[site\]\(https://example\.com\)' 'externe link ongemoeid (plugin-variant)'
-Assert-Match $conv '\[#kop\]\(#kop\)' 'anker-link ongemoeid (plugin-variant)'
+Assert-Match $conv '\[de lint\]\(https://gh\.test/blob/main/scripts/lint/x\.ps1\)' 'root-relative link becomes a GitHub URL'
+Assert-Match $conv '\[site\]\(https://example\.com\)' 'external link untouched (plugin variant)'
+Assert-Match $conv '\[#kop\]\(#kop\)' 'anchor link untouched (plugin variant)'
 
 Write-Host "Build-PluginChangelogSection + Add-PluginChangelogSection" -ForegroundColor Cyan
 $section = Build-PluginChangelogSection -Entries @($entryMetPlugins) -Version '1.5.0' -Date '2026-07-17'
-Assert-Match $section '^## v1\.5\.0 ' 'sectiekop met versie'
-Assert-Match $section '### #4 ' 'entry opgenomen in de sectie'
+Assert-Match $section '^## v1\.5\.0 ' 'section heading with version'
+Assert-Match $section '### #4 ' 'entry included in the section'
 $sectionSchoon = Build-PluginChangelogSection -Entries @(Remove-EntryPluginsLine -EntryText $entryMetPlugins) -Version '1.5.0' -Date '2026-07-17'
-Assert-Equal $false ([bool]($sectionSchoon -match '(?m)^Plugins:')) 'sectie via het cut-release-pad bevat geen Plugins-regel'
+Assert-Equal $false ([bool]($sectionSchoon -match '(?m)^Plugins:')) 'section via the cut-release path contains no Plugins line'
 $fresh = Add-PluginChangelogSection -Existing '' -Section $section -PluginName 'specialists'
-Assert-Match $fresh '^# Changelog .* specialists' 'nieuwe CHANGELOG krijgt intro-header'
-Assert-Match $fresh '(?s)# Changelog.*## v1\.5\.0' 'sectie staat na de intro'
+Assert-Match $fresh '^# Changelog .* specialists' 'new CHANGELOG gets an intro header'
+Assert-Match $fresh '(?s)# Changelog.*## v1\.5\.0' 'section comes after the intro'
 $section2 = Build-PluginChangelogSection -Entries @($entryMetPlugins) -Version '1.6.0' -Date '2026-07-18'
 $appended = Add-PluginChangelogSection -Existing $fresh -Section $section2 -PluginName 'specialists'
-Assert-Match $appended '(?s)## v1\.6\.0.*## v1\.5\.0' 'nieuwste release staat bovenaan'
-Assert-Equal 1 (@([regex]::Matches($appended, '(?m)^# Changelog')).Count) 'intro-header niet gedupliceerd'
+Assert-Match $appended '(?s)## v1\.6\.0.*## v1\.5\.0' 'newest release is at the top'
+Assert-Equal 1 (@([regex]::Matches($appended, '(?m)^# Changelog')).Count) 'intro header not duplicated'
 
-Write-Host "Add-PluginChangelogSection (aangescherpte ## v-match, #103)" -ForegroundColor Cyan
-# Een niet-versie '## '-kop (bv. handmatig toegevoegde '## Notes') mag de invoegpositie niet
-# verstoren: de nieuwe sectie hoort v??r de eerste ECHTE '## vX.Y.Z'-kop te landen, niet ervoor de
-# Notes-kop of er middenin.
+Write-Host "Add-PluginChangelogSection (tightened ## v match, #103)" -ForegroundColor Cyan
+# A non-version '## ' heading (e.g. a manually added '## Notes') must not disturb the insertion
+# position: the new section should land BEFORE the first REAL '## vX.Y.Z' heading, not before the
+# Notes heading or in the middle of it.
 $existingMetNotes = "# Changelog $emDash specialists`n`n## Notes`n`nHandmatige notitie, geen versie.`n`n## v1.0.0 $emDash 2026-01-01`n`nOude inhoud.`n"
 $sectionVoorNotesTest = "## v1.1.0 $emDash 2026-01-02`n`nNieuwe inhoud."
 $metNotesResultaat = Add-PluginChangelogSection -Existing $existingMetNotes -Section $sectionVoorNotesTest -PluginName 'specialists'
-Assert-Match $metNotesResultaat '(?s)## Notes.*Handmatige notitie.*## v1\.1\.0.*## v1\.0\.0' 'nieuwe sectie ingevoegd na de Notes-kop, voor de eerste echte versie-kop'
+Assert-Match $metNotesResultaat '(?s)## Notes.*Handmatige notitie.*## v1\.1\.0.*## v1\.0\.0' 'new section inserted after the Notes heading, before the first real version heading'
 $notesKopMatches = @([regex]::Matches($metNotesResultaat, '(?m)^## Notes'))
-Assert-Equal 1 $notesKopMatches.Count 'Notes-kop blijft eenmalig staan (niet verdubbeld of overschreven)'
+Assert-Equal 1 $notesKopMatches.Count 'Notes heading stays present exactly once (not duplicated or overwritten)'
 $notesIdx = $metNotesResultaat.IndexOf('## Notes')
 $v11Idx = $metNotesResultaat.IndexOf('## v1.1.0')
 $v10Idx = $metNotesResultaat.IndexOf('## v1.0.0')
-Assert-Equal $true ($notesIdx -lt $v11Idx -and $v11Idx -lt $v10Idx) 'volgorde is Notes, dan de nieuwe v1.1.0-sectie, dan de bestaande v1.0.0-sectie'
-# Normale geval (alleen versiekoppen, geen niet-versie-kop) blijft werken -- dezelfde uitkomst als
-# de bestaande 'nieuwste release staat bovenaan'-test hierboven, hier als expliciete regressie-guard
-# voor de aangescherpte regex.
+Assert-Equal $true ($notesIdx -lt $v11Idx -and $v11Idx -lt $v10Idx) 'order is Notes, then the new v1.1.0 section, then the existing v1.0.0 section'
+# Normal case (only version headings, no non-version heading) still works -- the same outcome as
+# the existing 'newest release is at the top' test above, here as an explicit regression guard
+# for the tightened regex.
 $alleenVersiesResultaat = Add-PluginChangelogSection -Existing $fresh -Section $section2 -PluginName 'specialists'
-Assert-Match $alleenVersiesResultaat '(?s)## v1\.6\.0.*## v1\.5\.0' 'normale geval (alleen versiekoppen) blijft correct invoegen'
+Assert-Match $alleenVersiesResultaat '(?s)## v1\.6\.0.*## v1\.5\.0' 'normal case (only version headings) keeps inserting correctly'
 
-Write-Host "Build-PluginChangelogSection (LF-normalisatie, punt e, #103)" -ForegroundColor Cyan
+Write-Host "Build-PluginChangelogSection (LF normalization, point e, #103)" -ForegroundColor Cyan
 $crlfEntry = "### #7 $midDot CRLF-test $midDot Fix $midDot 2026-01-07`r`n`r`nBody met`r`nCRLF-regels.`r`n`r`n[PR #7](https://example.com/7)"
 $lfSection = Build-PluginChangelogSection -Entries @($crlfEntry) -Version '1.7.0' -Date '2026-07-20'
-Assert-Equal $false ($lfSection.Contains("`r")) 'Build-PluginChangelogSection-output bevat geen CR, ook bij een CRLF-invoerentry'
-Assert-Match $lfSection '### #7 .* CRLF-test' 'entry-inhoud toch correct opgenomen ondanks de normalisatie'
+Assert-Equal $false ($lfSection.Contains("`r")) 'Build-PluginChangelogSection output contains no CR, even with a CRLF input entry'
+Assert-Match $lfSection '### #7 .* CRLF-test' 'entry content still included correctly despite the normalization'
 $cardMetCrlf = Build-PluginReleaseCard -PluginName 'specialists' -Version '1.7.0' -Date '2026-07-20' -Type 'Fix' -Entries @($crlfEntry)
-Assert-Equal $false ($cardMetCrlf.Contains("`r")) 'Build-PluginReleaseCard blijft LF-puur ondanks een CRLF-invoerentry'
+Assert-Equal $false ($cardMetCrlf.Contains("`r")) 'Build-PluginReleaseCard stays pure LF despite a CRLF input entry'
 
 Write-Host "Build-PluginReleaseCard" -ForegroundColor Cyan
 $cardEntries = @($linkEntry)
 $card = Build-PluginReleaseCard -PluginName 'specialists' -Version '1.5.0' -Date '2026-07-19' -Type 'Minor' -Title 'Test-titel' -Entries $cardEntries -RepoBlobUrl 'https://gh.test/blob/main/'
-Assert-Match $card '^# Release v1\.5\.0' 'kop met versie'
-Assert-Match $card '\*\*Date:\*\* 2026-07-19' 'datumregel'
-Assert-Match $card '\*\*Type:\*\* Minor' 'type-regel'
-Assert-Match $card 'Test-titel' 'titel opgenomen'
-Assert-Match $card 'You are on this release\.' 'you-are-on-this-release-regel'
-Assert-Match $card '(?s)Test-titel.*You are on this release\.' 'titel staat voor de you-are-on-this-release-regel'
-Assert-Match $card '(?m)^## v1\.5\.0 ' 'sectiekop uit Build-PluginChangelogSection (met entries)'
-Assert-Match $card '### #3 .* Iets' 'entry-fragment opgenomen in de body'
-Assert-Match $card '\[de lint\]\(https://gh\.test/blob/main/scripts/lint/x\.ps1\)' 'root-relatieve link in de body herschreven zoals Convert-EntryLinksForPluginChangelog doet'
-Assert-Match $card '\[de site\]\(https://example\.com\)' 'externe link in de body blijft ongemoeid'
+Assert-Match $card '^# Release v1\.5\.0' 'heading with version'
+Assert-Match $card '\*\*Date:\*\* 2026-07-19' 'date line'
+Assert-Match $card '\*\*Type:\*\* Minor' 'type line'
+Assert-Match $card 'Test-titel' 'title included'
+Assert-Match $card 'You are on this release\.' 'you-are-on-this-release line'
+Assert-Match $card '(?s)Test-titel.*You are on this release\.' 'title comes before the you-are-on-this-release line'
+Assert-Match $card '(?m)^## v1\.5\.0 ' 'section heading from Build-PluginChangelogSection (with entries)'
+Assert-Match $card '### #3 .* Iets' 'entry fragment included in the body'
+Assert-Match $card '\[de lint\]\(https://gh\.test/blob/main/scripts/lint/x\.ps1\)' 'root-relative link in the body rewritten as Convert-EntryLinksForPluginChangelog does'
+Assert-Match $card '\[de site\]\(https://example\.com\)' 'external link in the body stays untouched'
 $card2 = Build-PluginReleaseCard -PluginName 'specialists' -Version '1.5.0' -Date '2026-07-19' -Type 'Minor' -Entries @() -RepoBlobUrl 'https://gh.test/blob/main/'
-Assert-Match $card2 "No changes to this plugin in this release $([char]0x2014) see the full notes\." 'lege-entries-tak: exact het no-changes-blok'
-Assert-Equal $false ([bool]($card2 -match '(?m)^## v')) 'lege-entries-tak: geen sectiekop'
-Assert-Match $card2 '\*\*Type:\*\* Minor' 'lege-entries-tak: kop blijft wel intact'
-Assert-Match $card '\[releases/development/1\.5/1\.5\.0\.md\]\(https://gh\.test/blob/main/releases/development/1\.5/1\.5\.0\.md\)' 'footer: blob-URL naar de volledige release-notes'
-Assert-Match $card '\[CHANGELOG\.md\]\(CHANGELOG\.md\)' 'footer: map-relatieve link naar CHANGELOG.md'
-Assert-Match $card2 '\[releases/development/1\.5/1\.5\.0\.md\]\(https://gh\.test/blob/main/releases/development/1\.5/1\.5\.0\.md\)' 'lege-entries-tak: footer-links blijven kloppen'
+Assert-Match $card2 "No changes to this plugin in this release $([char]0x2014) see the full notes\." 'empty-entries branch: exactly the no-changes block'
+Assert-Equal $false ([bool]($card2 -match '(?m)^## v')) 'empty-entries branch: no section heading'
+Assert-Match $card2 '\*\*Type:\*\* Minor' 'empty-entries branch: heading stays intact'
+Assert-Match $card '\[releases/development/1\.5/1\.5\.0\.md\]\(https://gh\.test/blob/main/releases/development/1\.5/1\.5\.0\.md\)' 'footer: blob URL to the full release notes'
+Assert-Match $card '\[CHANGELOG\.md\]\(CHANGELOG\.md\)' 'footer: folder-relative link to CHANGELOG.md'
+Assert-Match $card2 '\[releases/development/1\.5/1\.5\.0\.md\]\(https://gh\.test/blob/main/releases/development/1\.5/1\.5\.0\.md\)' 'empty-entries branch: footer links stay correct'
 
 $cardNoTitle = Build-PluginReleaseCard -PluginName 'specialists' -Version '2.0.0' -Date '2026-07-19' -Type 'Major' -Entries @()
-Assert-Match $cardNoTitle '(?s)\*\*Type:\*\* Major\n\nYou are on this release\.' 'zonder -Title precies een lege regel (geen extra) voor you-are-on-this-release'
+Assert-Match $cardNoTitle '(?s)\*\*Type:\*\* Major\n\nYou are on this release\.' 'without -Title exactly one blank line (no extra) before you-are-on-this-release'
 
 Write-Host ""
 if ($script:fail -gt 0) {
-    Write-Host "FAALT: $($script:fail) fout, $($script:pass) goed." -ForegroundColor Red
+    Write-Host "FAILS: $($script:fail) failed, $($script:pass) passed." -ForegroundColor Red
     exit 1
 }
-Write-Host "OK: alle $($script:pass) asserts geslaagd." -ForegroundColor Green
+Write-Host "OK: all $($script:pass) asserts passed." -ForegroundColor Green
 exit 0

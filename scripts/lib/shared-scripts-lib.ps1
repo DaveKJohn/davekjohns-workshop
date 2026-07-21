@@ -1,30 +1,31 @@
 <#
 .SYNOPSIS
-    Registry + helpers voor de gedeelde workflow-scripts (root-kopie <-> plugin-spiegel).
+    Registry + helpers for the shared workflow scripts (root copy <-> plugin mirror).
 
 .DESCRIPTION
-    Dot-source dit bestand:
+    Dot-source this file:
 
         . (Join-Path $PSScriptRoot '..\lib\shared-scripts-lib.ps1')
 
-    Sommige workflow-scripts zijn repo-agnostisch en worden als gedeelde bron in de plugin gespiegeld,
-    zodat consumenten ze niet dupliceren (issue #81). Het model: de **workshop-root-kopie is de
-    canonieke, geteste bron**; de **plugin-spiegel** is wat een consument via een skill draait. Beide
-    zijn LF-genormaliseerd identiek -- mogelijk doordat de scripts hun repo-root dual-context oplossen
-    (CLAUDE_PROJECT_DIR bij een consument, anders de git-root).
+    Some workflow scripts are repo-agnostic and are mirrored into the plugin as a shared source, so
+    consumers do not duplicate them (issue #81). The model: the **workshop root copy is the
+    canonical, tested source**; the **plugin mirror** is what a consumer runs via a skill. Both are
+    LF-normalized identical -- made possible because the scripts resolve their repo root
+    dual-context (CLAUDE_PROJECT_DIR for a consumer, otherwise the git root).
 
-    Levert Get-SharedScriptPairs (het register) en Get-NormalizedScriptContent (LF-genormaliseerd
-    lezen). De generator (scripts/sync/build-shared-scripts.ps1), de lint-poort
-    (check-plugin-integrity.ps1) en de test (scripts/tests/shared-scripts.tests.ps1) delen deze ene bron.
+    Supplies Get-SharedScriptPairs (the registry) and Get-NormalizedScriptContent (LF-normalized
+    read). The generator (scripts/sync/build-shared-scripts.ps1), the lint gate
+    (check-plugin-integrity.ps1), and the test (scripts/tests/shared-scripts.tests.ps1) share this
+    one source.
 
-    Geen Set-StrictMode hier: dot-sourcen zou de strict-mode van het aanroepende script veranderen.
-    Puur ASCII (repo-conventie voor .ps1).
+    No Set-StrictMode here: dot-sourcing would change the strict mode of the calling script.
+    Pure ASCII (repo convention for .ps1).
 #>
 
 function Get-SharedScriptPairs {
     <#
-        Het register van gedeelde scripts. Elk paar: de canonieke root-bron (Source) en de
-        plugin-spiegel (Mirror), beide repo-root-relatief. Uitgebreid per gecentraliseerd script.
+        The registry of shared scripts. Each pair: the canonical root source (Source) and the
+        plugin mirror (Mirror), both repo-root-relative. Extend per centralized script.
     #>
     param([Parameter(Mandatory = $true)][string]$RepoRoot)
 
@@ -68,7 +69,7 @@ function Get-SharedScriptPairs {
 }
 
 function Get-NormalizedScriptContent {
-    <# Leest een script LF-genormaliseerd (CRLF -> LF); $null als het bestand ontbreekt. #>
+    <# Reads a script LF-normalized (CRLF -> LF); $null if the file is missing. #>
     param([Parameter(Mandatory = $true)][string]$Path)
     if (-not (Test-Path -LiteralPath $Path)) { return $null }
     $raw = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
