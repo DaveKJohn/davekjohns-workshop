@@ -247,6 +247,28 @@ function Convert-ChangelogForRelease {
     return (($out -join $nl).TrimEnd() + $nl)
 }
 
+function Get-TouchedPlugins {
+    <#
+        Pure: leidt de geraakte plugin-namen af uit een lijst PR-bestandspaden (repo-root-relatief,
+        zoals gh pr list --json files levert -- $Files zijn hier al platte pad-strings, niet de
+        gh-objecten zelf). Alleen paden onder claude-code-plugins/claude-specialists/<plugin>/
+        tellen mee; de connectors-map is werkplaats-administratie en telt niet mee (zelfde regel als
+        voorheen inline in fold-changelog-entry.ps1). -cmatch (advies Sean): -match is
+        case-insensitief en zou de kleine-letters-tekenklasse stilzwijgend oprekken; plugin-mapnamen
+        zijn altijd lowercase slugs. Retourneert een gesorteerde, gededupliceerde array van
+        plugin-namen (leeg als niets een plugin raakt). Getrokken naar hier (#103, Victor #3) zodat
+        de detectie los testbaar is, i.p.v. inline logica in fold-changelog-entry.ps1.
+    #>
+    param([string[]]$Files = @())
+    $touched = @()
+    foreach ($f in $Files) {
+        if ($f -cmatch '^claude-code-plugins/claude-specialists/([a-z0-9][a-z0-9-]*)/') {
+            if ($Matches[1] -ne 'connectors' -and $touched -notcontains $Matches[1]) { $touched += $Matches[1] }
+        }
+    }
+    return @($touched | Sort-Object)
+}
+
 function Get-EntryPlugins {
     <#
         Leest de optionele 'Plugins: a, b'-regel uit een entry-blok (door fold-changelog-entry.ps1
@@ -302,7 +324,14 @@ function Convert-EntryLinksForPluginChangelog {
 function Build-PluginChangelogSection {
     <#
         Bouwt het '## v<Version> <emDash> <Date>'-blok voor een plugin-CHANGELOG uit de entries die
-        die plugin raken. Pure string-uit (LF-newlines).
+        die plugin raken. Pure string-uit -- BEWUST hard LF (i.p.v. het $nl-detectiepatroon dat
+        Split-Changelog/Convert-ChangelogForRelease gebruiken): dit blok wordt in een NIEUW,
+        zelfstandig plugin-CHANGELOG.md geschreven, dat geen eigen bestaande newline-stijl heeft om
+        naar te matchen -- anders dan de root CHANGELOG.md (die wel CRLF is en zijn eigen stijl via
+        $nl detecteert en aanhoudt). $Entries komen echter uit die CRLF-root-CHANGELOG (via
+        Get-PullRequestEntries) -- daarom hier expliciet naar LF genormaliseerd (#103, Victor #5),
+        anders zou de CRLF binnen een entry-body de beloofde pure-LF-output alsnog doorkruisen (het
+        gevonden mixed-EOL-effect in de bestaande plugin-CHANGELOGs/RELEASE.md's/release-notes).
     #>
     param(
         [Parameter(Mandatory)][string[]]$Entries,
@@ -310,14 +339,14 @@ function Build-PluginChangelogSection {
         [Parameter(Mandatory)][string]$Date
     )
     $emDash = [char]0x2014
-    $body = (@($Entries | ForEach-Object { $_.Trim() }) -join "`n`n---`n`n")
+    $body = (@($Entries | ForEach-Object { ($_.Trim() -replace "`r`n", "`n") }) -join "`n`n---`n`n")
     return "## v$Version $emDash $Date`n`n$body`n"
 }
 
 function Add-PluginChangelogSection {
     <#
         Voegt een release-sectie bovenaan een plugin-CHANGELOG toe (na de intro, voor de eerste
-        '## '-kop, nieuwste eerst); bestaat er nog geen inhoud, dan wordt de volledige CHANGELOG
+        versie-kop, nieuwste eerst); bestaat er nog geen inhoud, dan wordt de volledige CHANGELOG
         inclusief intro-header opgebouwd. Pure string-in/uit.
     #>
     param(
@@ -334,7 +363,11 @@ function Add-PluginChangelogSection {
             "``releases/``.`n`n"
         return ($intro + $Section.TrimEnd() + "`n")
     }
-    $m = [regex]::Match($Existing, '(?m)^## ')
+    # Aangescherpt (#103, Victor #5): match specifiek een versie-kop ('## vX.Y.Z ...', exact het
+    # patroon dat Build-PluginChangelogSection zelf schrijft), niet elke willekeurige '## '-kop --
+    # anders zou een handmatig toegevoegde niet-versie-kop (bv. '## Notes') de invoegpositie laten
+    # verkeerd matchen en de nieuwe sectie er middenin proppen i.p.v. ervoor.
+    $m = [regex]::Match($Existing, '(?m)^## v\d+\.\d+\.\d+\b')
     if ($m.Success) {
         return $Existing.Substring(0, $m.Index) + $Section.TrimEnd() + "`n`n---`n`n" + $Existing.Substring($m.Index)
     }
@@ -396,7 +429,12 @@ function Build-PluginReleaseCard {
 function Build-ReleaseNotes {
     <#
         Bouwt de volledige release-notes (het releases/development/<X.Y>/<X.Y.Z>.md-bestand) uit de
-        entry-blokken, gegroepeerd per branch-type. Pure string-uit (LF-newlines).
+        entry-blokken, gegroepeerd per branch-type. Pure string-uit -- BEWUST hard LF (zie
+        Build-PluginChangelogSection hierboven voor dezelfde afweging: dit is een NIEUW,
+        zelfstandig bestand zonder eigen bestaande newline-stijl, anders dan de root CHANGELOG.md
+        die via $nl zijn CRLF-stijl detecteert en aanhoudt). $Entries komen uit die CRLF-root-
+        CHANGELOG -- daarom hier expliciet naar LF genormaliseerd (#103, Victor #5), naast de
+        link-herschrijving hieronder.
     #>
     param(
         [Parameter(Mandatory)][string[]]$Entries,
@@ -412,9 +450,10 @@ function Build-ReleaseNotes {
 
     # Entries zijn geschreven met repo-root-relatieve links; herschrijf ze zodat ze vanuit het
     # notes-bestand kloppen. Externe (http/mailto), anker- (#) en absolute (/) links blijven ongemoeid,
-    # net als links die al met ../ beginnen.
+    # net als links die al met ../ beginnen. Ook naar LF genormaliseerd, zodat de CRLF van de bron-
+    # CHANGELOG de pure-LF-output hierbeneden niet doorkruist.
     $Entries = @($Entries | ForEach-Object {
-        Convert-RootRelativeLinks -EntryText $_ -Prefix $LinkPrefix
+        (Convert-RootRelativeLinks -EntryText $_ -Prefix $LinkPrefix) -replace "`r`n", "`n"
     })
     # Categorie-volgorde = de canonieke branch-typen (branch-info.ps1, enige bron) + 'Overig' als
     # vangnet voor entries met een onbekend type. $catTitle levert de weergavenaam per type; een type

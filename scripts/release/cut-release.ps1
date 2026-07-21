@@ -189,33 +189,31 @@ if (Test-Path $relReadme) {
 
 Write-Utf8NoBom -Path $changelogPath -Content $changelogNew
 
-# --- Per-plugin CHANGELOGs bijschrijven (consument-gericht; reist mee met de plugin-cache) --------
+# --- Per-plugin CHANGELOG + RELEASE.md-kaartje (consument-gericht; reizen mee met de plugin-cache) -
+# Een gecombineerde lus per plugin (#103, Victor #7; voorheen twee aparte $manifests-lussen): beide
+# stappen delen dezelfde $pluginEntries-selectie (Get-EntryPlugins-filter + Remove-EntryPluginsLine),
+# dus die eenmaal per plugin bepalen i.p.v. tweemaal. De CHANGELOG-stap schrijft ALLEEN als de plugin
+# deze release daadwerkelijk entries heeft; de RELEASE.md-stap loopt bewust over ELKE plugin -- de
+# versie bumpt lockstep, dus ook een plugin die deze keer niet geraakt is moet de nieuwe versie tonen
+# (Build-PluginReleaseCard toont dan het "no changes"-blok i.p.v. te falen). RELEASE.md is een
+# snapshot (niet een geschiedenis zoals CHANGELOG.md), dus overschrijven is daar juist.
 foreach ($m in $manifests) {
     $pluginDir = Split-Path (Split-Path $m -Parent) -Parent
     $pluginName = Split-Path $pluginDir -Leaf
-    $pluginEntries = @($entries | Where-Object { @(Get-EntryPlugins -EntryText $_) -contains $pluginName })
-    if ($pluginEntries.Count -eq 0) { continue }
-    # De Plugins:-regel is interne administratie (stuurde de selectie hierboven) -- strip hem
-    # voordat de entry in de consument-gerichte CHANGELOG belandt.
-    $pluginEntries = @($pluginEntries | ForEach-Object { Convert-EntryLinksForPluginChangelog -EntryText (Remove-EntryPluginsLine -EntryText $_) -RepoBlobUrl (Get-RepoBlobUrl) })
-    $section = Build-PluginChangelogSection -Entries $pluginEntries -Version $new -Date $today
-    $plChangelogPath = Join-Path $pluginDir 'CHANGELOG.md'
-    $existing = if (Test-Path -LiteralPath $plChangelogPath) { Get-Content -Path $plChangelogPath -Raw -Encoding UTF8 } else { '' }
-    Write-Utf8NoBom -Path $plChangelogPath -Content (Add-PluginChangelogSection -Existing $existing -Section $section -PluginName $pluginName)
-    Write-Host "  bijgewerkt: $pluginName/CHANGELOG.md ($($pluginEntries.Count) entries)" -ForegroundColor DarkGray
-}
-
-# --- RELEASE.md-kaartje per plugin (Model A, plugin-gedragen) --------------------------------------
-# Anders dan de per-plugin CHANGELOG hierboven (die alleen schrijft als een plugin daadwerkelijk
-# entries heeft) loopt dit over ALLE manifesten: de versie bumpt lockstep, dus ELKE plugin moet na
-# deze release de nieuwe versie tonen -- ook een plugin die deze keer niet geraakt is (Build-
-# PluginReleaseCard toont dan het "no changes"-blok in plaats van te falen). RELEASE.md is een
-# snapshot (niet een geschiedenis zoals CHANGELOG.md), dus overschrijven is hier juist.
-foreach ($m in $manifests) {
-    $pluginDir = Split-Path (Split-Path $m -Parent) -Parent
-    $pluginName = Split-Path $pluginDir -Leaf
+    # De Plugins:-regel is interne administratie (stuurde de selectie hier) -- strip hem voordat een
+    # entry in consument-gerichte content belandt.
     $pluginEntries = @($entries | Where-Object { @(Get-EntryPlugins -EntryText $_) -contains $pluginName })
     $pluginEntries = @($pluginEntries | ForEach-Object { Remove-EntryPluginsLine -EntryText $_ })
+
+    if ($pluginEntries.Count -gt 0) {
+        $convertedEntries = @($pluginEntries | ForEach-Object { Convert-EntryLinksForPluginChangelog -EntryText $_ -RepoBlobUrl (Get-RepoBlobUrl) })
+        $section = Build-PluginChangelogSection -Entries $convertedEntries -Version $new -Date $today
+        $plChangelogPath = Join-Path $pluginDir 'CHANGELOG.md'
+        $existing = if (Test-Path -LiteralPath $plChangelogPath) { Get-Content -Path $plChangelogPath -Raw -Encoding UTF8 } else { '' }
+        Write-Utf8NoBom -Path $plChangelogPath -Content (Add-PluginChangelogSection -Existing $existing -Section $section -PluginName $pluginName)
+        Write-Host "  bijgewerkt: $pluginName/CHANGELOG.md ($($pluginEntries.Count) entries)" -ForegroundColor DarkGray
+    }
+
     $card = Build-PluginReleaseCard -PluginName $pluginName -Version $new -Date $today -Type $typeLabel `
         -Title $Title -Entries $pluginEntries -RepoBlobUrl (Get-RepoBlobUrl)
     $releaseCardPath = Join-Path $pluginDir 'RELEASE.md'

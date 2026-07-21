@@ -52,6 +52,16 @@ if ($repo -match 'VUL-IN') {
     exit 1
 }
 
+# De 'Plugins:'-detectie leunt op Get-TouchedPlugins uit scripts\lib\release-lib.ps1 (#103, Victor
+# #3) -- maar release-lib.ps1 is bewust NIET gemirrord naar de plugin (workshop-specifieke tooling,
+# zie scripts\lib\shared-scripts-lib.ps1), anders dan dit fold-script zelf. In de workshop-root
+# bestaat het gewoon; in een consumer-repo die de plugin-mirror draait ontbreekt het, en blijft de
+# Plugins-regel achterwege -- functioneel gelijk aan voorheen, want
+# claude-code-plugins/claude-specialists/<plugin>/-paden bestaan daar toch niet.
+$releaseLibPath = Join-Path $repoRoot 'scripts\lib\release-lib.ps1'
+$canDetectPlugins = Test-Path -LiteralPath $releaseLibPath
+if ($canDetectPlugins) { . $releaseLibPath }
+
 # BOM-loze UTF8 -- Set-Content -Encoding UTF8 voegt in Windows PowerShell 5.1 altijd een BOM
 # toe, en de rest van de repo (CHANGELOG.md etc.) heeft geen BOM.
 $Utf8NoBom = New-Object System.Text.UTF8Encoding $false
@@ -105,9 +115,11 @@ foreach ($file in $entryFiles) {
     # gh kan meldingen naar stderr schrijven; onder ErrorActionPreference=Stop zou PS 5.1 dat tot een
     # terminating error promoveren nog voor de graceful $LASTEXITCODE-afhandeling hieronder (de #107-
     # valkuil). Draai onder Continue en gooi stderr weg (2>$null), zodat het ook de gevangen JSON niet
-    # kan vervuilen.
+    # kan vervuilen. 'files' zit gewoon in --json mee (Victor #4, #103) -- gh pr list levert het
+    # veld net zo goed als gh pr view, dus de tweede gh-call (voorheen gh pr view --json files) is
+    # vervallen: een PR-lookup volstaat voor zowel het nummer/url als de geraakte bestanden.
     $prevEap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
-    $prJson = gh pr list --head $branchForPr --state all --json number,url --limit 1 --repo $repo 2>$null
+    $prJson = gh pr list --head $branchForPr --state all --json number,url,files --limit 1 --repo $repo 2>$null
     $ghCode = $LASTEXITCODE
     $ErrorActionPreference = $prevEap
     if ($ghCode -ne 0) { Write-Host "  (gh pr list gaf exitcode $ghCode -- PR-nummer-verrijking overgeslagen; draai gh handmatig voor de reden.)" -ForegroundColor DarkYellow }
@@ -118,27 +130,15 @@ foreach ($file in $entryFiles) {
 
         # Geraakte plugins afleiden uit de PR-bestanden (automation-first): paden onder
         # claude-code-plugins/claude-specialists/<plugin>/ worden een 'Plugins:'-regel, waarmee
-        # cut-release.ps1 later de per-plugin CHANGELOGs bijschrijft. De connectors-map is
-        # werkplaats-administratie en telt niet mee.
-        $prevEap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
-        $filesJson = gh pr view $num --json files --repo $repo 2>$null
-        $ghViewCode = $LASTEXITCODE
-        $ErrorActionPreference = $prevEap
-        if ($ghViewCode -ne 0) { Write-Host "  (gh pr view gaf exitcode $ghViewCode -- Plugins:-regel overgeslagen; draai gh handmatig voor de reden.)" -ForegroundColor DarkYellow }
-        if ($ghViewCode -eq 0 -and $filesJson) {
-            $touched = @()
-            foreach ($f in @(($filesJson | ConvertFrom-Json).files)) {
-                # -cmatch (advies Sean): -match is case-insensitief en zou de kleine-letters-
-                # tekenklasse stilzwijgend oprekken; plugin-mapnamen zijn altijd lowercase slugs.
-                if ($f.path -cmatch '^claude-code-plugins/claude-specialists/([a-z0-9][a-z0-9-]*)/') {
-                    if ($Matches[1] -ne 'connectors' -and $touched -notcontains $Matches[1]) { $touched += $Matches[1] }
-                }
-            }
+        # cut-release.ps1 later de per-plugin CHANGELOGs bijschrijft. De detectie zelf zit in de
+        # pure Get-TouchedPlugins (release-lib.ps1, #103) -- hier alleen de guard; 'files' kwam al
+        # mee met de gh pr list-call hierboven, dus geen aparte gh-roundtrip meer nodig.
+        if ($canDetectPlugins) {
+            $paths = @($prs[0].files | ForEach-Object { $_.path })
+            $touched = @(Get-TouchedPlugins -Files $paths)
             if ($touched.Count -gt 0) {
-                $entryContent = $entryContent.TrimEnd() + "$nl$nl" + ('Plugins: ' + ((@($touched) | Sort-Object) -join ', '))
+                $entryContent = $entryContent.TrimEnd() + "$nl$nl" + ('Plugins: ' + ($touched -join ', '))
             }
-        } else {
-            Write-Host "  Kon de PR-bestanden niet ophalen - entry zonder Plugins-regel." -ForegroundColor Yellow
         }
 
         $entryContent = $entryContent.TrimEnd() + "$nl$nl[PR #$num]($($prs[0].url))"

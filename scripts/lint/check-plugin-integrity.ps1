@@ -19,7 +19,10 @@
          subagent -- en worden daarom door de agent-def<->manual-koppeling van check 6 met rust gelaten.
       4. dode relatieve links EN kapotte anchors in README.md, CHANGELOG.md, CLAUDE.md, elke
          .claude/extensions/*.md, elke <plugin>/skills/*/SKILL.md, elke <plugin>/manuals/*-manual.md,
-         elke <plugin>/personas/*-persona.md en elke releases/**/*.md. Gecontroleerd: (a) het gelinkte
+         elke <plugin>/personas/*-persona.md, elke releases/**/*.md, elke <plugin>/RELEASE.md,
+         claude-code-plugins/claude-specialists/README.md (de family-README) en QUICKSTART.md, en
+         elke plugin-eigen claude-code-plugins/claude-specialists/<plugin>/CHANGELOG.md (#103).
+         Gecontroleerd: (a) het gelinkte
          bestand bestaat, en (b) als de link
          een #anchor heeft, dat die anchor als kop bestaat in het doelbestand (GitHub-slugregels).
          Externe http(s)-/mailto-links worden overgeslagen.
@@ -222,6 +225,16 @@ foreach ($root in 'README.md', 'CHANGELOG.md', 'CLAUDE.md') {
 # Het specialisten-handboek woont naast de lenzen (op familie-niveau) -- ook zijn links valideren.
 $handbook = Join-Path $RepoRoot '.claude\plugins\claude-specialists\README.md'
 if (Test-Path -LiteralPath $handbook) { $linkFiles += $handbook }
+# De family-README + QUICKSTART.md van de specialists-familie (claude-code-plugins/claude-specialists/)
+# en elke plugin-eigen CHANGELOG.md (het consument-gerichte kaartje dat cut-release.ps1 bijschrijft)
+# hoorden nog niet in de scanset thuis -- toegevoegd (#103).
+foreach ($familyDoc in 'README.md', 'QUICKSTART.md') {
+    $p = Join-Path $RepoRoot "claude-code-plugins\claude-specialists\$familyDoc"
+    if (Test-Path -LiteralPath $p) { $linkFiles += $p }
+}
+$linkFiles += (Get-ChildItem -Path (Join-Path $RepoRoot 'claude-code-plugins\claude-specialists') -Recurse -Filter 'CHANGELOG.md' -File |
+    Where-Object { $_.FullName -notmatch '\\connectors\\' } |
+    Select-Object -ExpandProperty FullName)
 # De repo-lenzen wonen op het plugin-pad (.claude/plugins/claude-specialists/specialists/, de
 # standaard) of op het legacy-pad (.claude/extensions/) -- scan beide, waar ze ook staan.
 foreach ($extDir in @(
