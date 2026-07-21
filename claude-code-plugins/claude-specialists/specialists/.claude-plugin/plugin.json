@@ -2,7 +2,7 @@
   "name": "specialists",
   "displayName": "Claude Specialists",
   "description": "Draagbare uitvoerbare kern van het Claude-Specialists-systeem: de gedeelde subagents plus de draagbare persona-sjablonen (personas/) van de hoofdloop-specialisten en de generieke bootstrap-skill specialists-init. Bevat bewust GEEN safety-/guardrail-hooks en GEEN repo-SPECIFIEKE skills — de governance-laag (CLAUDE.md + repo-lenzen), de safety-hooks en de repo-eigen specialisten blijven op repo-niveau. Twee bewuste, repo-neutrale uitzonderingen: de skill specialists-init (het adoptiepad zelf) en de informatieve SessionStart-hook connector-sessioncheck (hooks/, read-only, blokkeert nooit — zie het connectors-README in de marketplace-repo).",
-  "version": "1.12.1",
+  "version": "1.13.0",
   "author": { "name": "DaveKJohn" },
   "keywords": ["specialists", "workflow", "claude-code"]
 }

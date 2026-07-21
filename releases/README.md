@@ -13,6 +13,7 @@ meereizend met de plugin-cache via `claude plugin update`).
 
 | Versie | Datum | Type | Titel |
 |---|---|---|---|
+| [1.13.0](development/1.13/1.13.0.md) | 2026-07-21 | Minor | Consumer release cards, branch-creates-changelog-entry, and English agent-shared block names |
 | [1.12.1](development/1.12/1.12.1.md) | 2026-07-20 | Patch | Ship the git/gh stderr-under-Stop sweep to consumers (the open-pr + fold shared-script mirrors from #113) |
 | [1.12.0](development/1.12/1.12.0.md) | 2026-07-20 | Minor | Workshop switched to English (phases A-C) and the roster-sync feature (detect, signal, stage recovery); plus the open-pr push-stderr fix and the shared language-directive block |
 | [1.11.0](development/1.11/1.11.0.md) | 2026-07-20 | Minor | Stillere sessiestart (alleen FOUT/DRIFTED) en een afgeslankt connectors-register zonder versie-boekhouding |
