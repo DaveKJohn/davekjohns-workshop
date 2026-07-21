@@ -1,21 +1,21 @@
 <#
 .SYNOPSIS
-    Bouwt de agent-defs: vult elke gedeelde-blok-regio (<!-- BEGIN/END shared:NAME -->) met de
-    canonieke bron uit claude-code-plugins/claude-specialists/agent-shared/<naam>.md.
+    Builds the agent defs: fills every shared-block region (<!-- BEGIN/END shared:NAME -->) with
+    the canonical source from claude-code-plugins/claude-specialists/agent-shared/<name>.md.
 .DESCRIPTION
-    Verbatim-gedeelde bullets onder **Grenzen** (bv. de inbound-regel, 19/19) worden op EEN plek
-    onderhouden (agent-shared/) en hier in alle agent-defs ingevuld. Wijzig je een gedeeld blok,
-    draai dan dit script: alle agent-defs die het blok dragen worden bijgewerkt. De inhoud blijft
-    letterlijk in de agent-def staan (altijd-geladen, self-contained); dit script houdt hem in sync.
+    Verbatim-shared bullets under **Boundaries** (e.g. the inbound rule, 19/19) are maintained in
+    ONE place (agent-shared/) and filled in here across all agent defs. If you change a shared
+    block, run this script: every agent def carrying that block gets updated. The content stays
+    literally in the agent def (always-loaded, self-contained); this script keeps it in sync.
 
-    Draait over alle <plugin>/agents/*-agent.md in de drie plugins. Schrijft BOM-loos, LF, alleen als
-    er iets verandert.
+    Runs over all <plugin>/agents/*-agent.md in the three plugins. Writes BOM-less, LF, only when
+    something changes.
 
-    -Check: schrijft niets; meldt drift (een blok dat afwijkt van zijn bron) of een structureel
-    probleem (BEGIN zonder END, onbekend blok) en eindigt met exit-code 1. Dit is de modus die
-    check-plugin-integrity.ps1 en CI gebruiken als poort.
+    -Check: writes nothing; reports drift (a block that deviates from its source) or a structural
+    problem (BEGIN without END, unknown block) and ends with exit code 1. This is the mode
+    check-plugin-integrity.ps1 and CI use as a gate.
 
-    Puur ASCII (repo-conventie voor .ps1).
+    Pure ASCII (repo convention for .ps1).
 .EXAMPLE
     ./scripts/agents/build-agent-defs.ps1
 .EXAMPLE
@@ -32,7 +32,7 @@ $SharedDir = Get-AgentSharedDir -RepoRoot $RepoRoot
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
 if (-not (Test-Path -LiteralPath $SharedDir -PathType Container)) {
-    Write-Host "Bron-map agent-shared/ ontbreekt ($SharedDir) -- stop." -ForegroundColor Red
+    Write-Host "Source folder agent-shared/ is missing ($SharedDir) -- stopping." -ForegroundColor Red
     exit 1
 }
 
@@ -49,17 +49,17 @@ foreach ($f in $agentFiles) {
     $problems = New-Object System.Collections.Generic.List[string]
     $expanded = Expand-AgentDefShared -Content $raw -SharedDir $SharedDir -Problems $problems
     foreach ($p in $problems) {
-        Write-Host "  [probleem]   ${rel}: $p" -ForegroundColor Red
+        Write-Host "  [problem]    ${rel}: $p" -ForegroundColor Red
         $problemCount++
     }
     $current = ($raw -replace "`r`n", "`n")
     if ($expanded -ne $current) {
         $changed++
         if ($Check) {
-            Write-Host "  [drift]      $rel -- gedeeld blok wijkt af van de bron (draai build-agent-defs.ps1)" -ForegroundColor Red
+            Write-Host "  [drift]      $rel -- shared block deviates from the source (run build-agent-defs.ps1)" -ForegroundColor Red
         } else {
             [System.IO.File]::WriteAllText($f.FullName, $expanded, $Utf8NoBom)
-            Write-Host "  [bijgewerkt] $rel" -ForegroundColor Green
+            Write-Host "  [updated]    $rel" -ForegroundColor Green
         }
     }
 }
@@ -67,15 +67,15 @@ foreach ($f in $agentFiles) {
 Write-Host ""
 if ($Check) {
     if ($changed -gt 0 -or $problemCount -gt 0) {
-        Write-Host "Samenvatting: $changed drift, $problemCount probleem -- NIET in sync." -ForegroundColor Red
+        Write-Host "Summary: $changed drift, $problemCount problem -- NOT in sync." -ForegroundColor Red
         exit 1
     }
-    Write-Host "Samenvatting: alle gedeelde blokken in sync met de bron." -ForegroundColor Green
+    Write-Host "Summary: all shared blocks in sync with the source." -ForegroundColor Green
     exit 0
 }
 if ($problemCount -gt 0) {
-    Write-Host "Samenvatting: $changed bijgewerkt, $problemCount probleem (los die eerst op)." -ForegroundColor Yellow
+    Write-Host "Summary: $changed updated, $problemCount problem (fix that first)." -ForegroundColor Yellow
     exit 1
 }
-Write-Host "Samenvatting: $changed agent-def(s) bijgewerkt, rest al in sync." -ForegroundColor Cyan
+Write-Host "Summary: $changed agent def(s) updated, the rest already in sync." -ForegroundColor Cyan
 exit 0

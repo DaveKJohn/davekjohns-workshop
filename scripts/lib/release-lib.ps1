@@ -1,46 +1,56 @@
 <#
 .SYNOPSIS
-    Pure release-helpers (versiebepaling + CHANGELOG-transformatie + release-notes-opbouw), los van
-    git/filesystem-orkestratie.
+    Pure release helpers (version determination + CHANGELOG transformation + release-notes
+    building), separate from git/filesystem orchestration.
 
 .DESCRIPTION
-    Dot-source dit bestand:
+    Dot-source this file:
 
         . (Join-Path $PSScriptRoot '..\lib\release-lib.ps1')
 
-    Levert Get-NextVersion, Get-BumpType, Get-LockstepVersion, Get-PluginManifestPaths,
-    Get-PullRequestEntries, Convert-ChangelogForRelease, Build-ReleaseNotes, en voor de
+    Supplies Get-NextVersion, Get-BumpType, Get-LockstepVersion, Get-PluginManifestPaths,
+    Get-PullRequestEntries, Convert-ChangelogForRelease, Build-ReleaseNotes, and for the
     per-plugin CHANGELOGs: Get-EntryPlugins, Convert-EntryLinksForPluginChangelog,
-    Build-PluginChangelogSection en Add-PluginChangelogSection. Ook Build-PluginReleaseCard: het
-    per-plugin RELEASE.md-kaartje (Model A, plugin-gedragen) dat toont op welke release de plugin nu
-    zit, ook als die specifieke release de plugin niet raakte (lockstep-versie, kaartje mag leeg zijn
-    aan entries). Deze functies zijn bewust puur (string/waarde in, string/waarde uit) zodat ze los
-    te testen zijn zonder een release te draaien -- scripts/release/cut-release.ps1 gebruikt ze, en
-    de tests dekken ze af.
+    Build-PluginChangelogSection and Add-PluginChangelogSection. Also Build-PluginReleaseCard: the
+    per-plugin RELEASE.md card (Model A, plugin-carried) that shows which release the plugin is
+    currently on, even if this particular release did not touch the plugin (lockstep version, the
+    card may have no entries). These functions are deliberately pure (string/value in,
+    string/value out) so they can be tested separately without running a release --
+    scripts/release/cut-release.ps1 uses them, and the tests cover them.
 
-    Model: de release-inhoud verhuist naar releases/development/<X.Y>/<X.Y.Z>.md; het ## Releases-blok
-    in CHANGELOG.md wordt een korte VERWIJZING naar dat bestand (net als life-hub, maar zonder
-    GitHub Releases). De ## Pull Requests-sectie wordt daarbij geleegd tot zijn intro.
+    Model: the release content moves to releases/development/<X.Y>/<X.Y.Z>.md; the ## Releases
+    block in CHANGELOG.md becomes a short REFERENCE to that file (like life-hub, but without GitHub
+    Releases). The ## Pull Requests section is emptied down to its intro in the process.
 
-    Geen Set-StrictMode hier: dot-sourcen zou de strict-mode van het aanroepende script veranderen.
+    No Set-StrictMode here: dot-sourcing would change the strict mode of the calling script.
 
-    Let op: dit bestand is bewust puur ASCII (repo-conventie voor .ps1). Niet-ASCII output-tekens
-    (middot, em-dash) worden via [char]0x.. gebouwd, niet als literal -- Windows PowerShell 5.1 leest
-    een BOM-loos script als ANSI en zou een literal anders verhaspelen.
+    Note: this file is deliberately pure ASCII (repo convention for .ps1). Non-ASCII output
+    characters (middot, em-dash) are built via [char]0x.. rather than as a literal -- Windows
+    PowerShell 5.1 reads a BOM-less script as ANSI and would otherwise mangle a literal.
+
+    NOTE (Sylvester, English script-layer sweep, #114 follow-up): the DOCUMENT-GENERATING template
+    strings in this file (the catTitle category labels, the "See [...] for the full release notes"
+    reference line, the ## Releases / plugin-CHANGELOG intro texts, the **Date:** label) now produce
+    ENGLISH CHANGELOG.md / release-notes / per-plugin-CHANGELOG content, per Dave's follow-up
+    decision to also migrate this generated-content language (not just comments/console output).
+    Existing history is the deliberate exception and is left untouched: already-folded CHANGELOG.md
+    sections and the releases/** notes stay in whatever language they were written in -- only
+    FUTURE output from these templates changed, so a mix of Dutch history and English new content is
+    expected and fine.
 #>
 
-# De branch-typen (Feat/Fix/Docs/Chore) hebben een enige bron in branch-info.ps1; Build-ReleaseNotes
-# leest ze via Get-BranchTypes i.p.v. een eigen kopie. Zelfde map, dus CI-veilig vanaf een kale
-# checkout. Geen Set-StrictMode-wijziging: branch-info definieert alleen functies + data.
+# The branch types (Feat/Fix/Docs/Chore) have a single source in branch-info.ps1; Build-ReleaseNotes
+# reads them via Get-BranchTypes instead of its own copy. Same folder, so CI-safe from a bare
+# checkout. No Set-StrictMode change: branch-info only defines functions + data.
 . (Join-Path $PSScriptRoot 'branch-info.ps1')
 
 function Get-NextVersion {
-    <# Verhoogt een SemVer X.Y.Z volgens $BumpKind (major|minor|patch). #>
+    <# Bumps a SemVer X.Y.Z according to $BumpKind (major|minor|patch). #>
     param(
         [Parameter(Mandatory)][string]$Current,
         [Parameter(Mandatory)][ValidateSet('major', 'minor', 'patch')][string]$BumpKind
     )
-    if ($Current -notmatch '^\d+\.\d+\.\d+$') { throw "Huidige versie '$Current' is geen geldige X.Y.Z." }
+    if ($Current -notmatch '^\d+\.\d+\.\d+$') { throw "Current version '$Current' is not a valid X.Y.Z." }
     $p = $Current -split '\.'
     [int]$maj = $p[0]; [int]$min = $p[1]; [int]$pat = $p[2]
     switch ($BumpKind) {
@@ -52,12 +62,12 @@ function Get-NextVersion {
 }
 
 function Get-BumpType {
-    <# Bepaalt het bump-type (major/minor/patch) uit een oude en nieuwe SemVer. #>
+    <# Determines the bump type (major/minor/patch) from an old and new SemVer. #>
     param(
         [Parameter(Mandatory)][string]$From,
         [Parameter(Mandatory)][string]$To
     )
-    if ($From -notmatch '^\d+\.\d+\.\d+$' -or $To -notmatch '^\d+\.\d+\.\d+$') { throw "From/To moeten X.Y.Z zijn." }
+    if ($From -notmatch '^\d+\.\d+\.\d+$' -or $To -notmatch '^\d+\.\d+\.\d+$') { throw "From/To must be X.Y.Z." }
     $f = $From -split '\.'; $t = $To -split '\.'
     if ([int]$t[0] -ne [int]$f[0]) { return 'major' }
     if ([int]$t[1] -ne [int]$f[1]) { return 'minor' }
@@ -66,35 +76,36 @@ function Get-BumpType {
 
 function Get-LockstepVersion {
     <#
-        Bepaalt de gedeelde (lockstep) versie uit een set plugin.json-inhouden. Input is een hashtable
-        van naam/pad -> ruwe JSON-tekst. Gooit als een versie ontbreekt of als ze niet gelijk zijn.
+        Determines the shared (lockstep) version from a set of plugin.json contents. Input is a
+        hashtable of name/path -> raw JSON text. Throws if a version is missing or if they are not
+        equal.
     #>
     param([Parameter(Mandatory)][hashtable]$ManifestContents)
-    if ($ManifestContents.Count -eq 0) { throw "Geen plugin-manifesten meegegeven." }
+    if ($ManifestContents.Count -eq 0) { throw "No plugin manifests given." }
     $versions = @{}
     foreach ($key in $ManifestContents.Keys) {
         if ($ManifestContents[$key] -match '"version"\s*:\s*"(\d+\.\d+\.\d+)"') {
             $versions[$key] = $matches[1]
         } else {
-            throw "Kon geen geldige 'version' (X.Y.Z) vinden in '$key'."
+            throw "Could not find a valid 'version' (X.Y.Z) in '$key'."
         }
     }
     $distinct = @($versions.Values | Sort-Object -Unique)
     if ($distinct.Count -ne 1) {
         $detail = ($versions.GetEnumerator() | ForEach-Object { "  $($_.Key): $($_.Value)" }) -join "`n"
-        throw "Plugin-versies staan niet in lockstep (moeten gelijk zijn voor een repo-brede release):`n$detail"
+        throw "Plugin versions are not in lockstep (must be equal for a repo-wide release):`n$detail"
     }
     return $distinct[0]
 }
 
 function Get-PluginManifestPaths {
     <#
-        Leidt de plugin-manifest-paden af uit plugins[].source in de marketplace-JSON -- de
-        marketplace is de bron van waarheid over wat een plugin is. Puur (raakt de schijf niet):
-        input is de ruwe JSON-tekst + de repo-root, output is een array van volledige manifest-paden.
-        Gooit bij een ontbrekende plugins-lijst, een ontbrekend source-veld, en (containment,
-        advies Sean) bij een source die via een absoluut of ..-pad buiten de repo-root wijst --
-        de versie-bump mag nooit buiten de repo schrijven.
+        Derives the plugin manifest paths from plugins[].source in the marketplace JSON -- the
+        marketplace is the source of truth about what a plugin is. Pure (does not touch disk):
+        input is the raw JSON text + the repo root, output is an array of full manifest paths.
+        Throws on a missing plugins list, a missing source field, and (containment, Sean's advice)
+        on a source that points outside the repo root via an absolute or ..-path -- the version
+        bump must never write outside the repo.
     #>
     param(
         [Parameter(Mandatory)][string]$RepoRoot,
@@ -102,25 +113,25 @@ function Get-PluginManifestPaths {
     )
     $marketplace = $MarketplaceJson | ConvertFrom-Json
     if (-not ($marketplace.PSObject.Properties.Name -contains 'plugins') -or -not $marketplace.plugins) {
-        throw "marketplace.json heeft geen 'plugins'-lijst."
+        throw "marketplace.json has no 'plugins' list."
     }
     $rootPrefix = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd('\') + '\'
     foreach ($p in $marketplace.plugins) {
-        if (-not $p.source) { throw "plugin '$($p.name)' mist een 'source'." }
-        # Een absolute source is per definitie buiten de repo-conventie -- expliciet melden i.p.v.
-        # de verwarrende Join-Path/GetFullPath-fout die er anders uit zou rollen.
+        if (-not $p.source) { throw "plugin '$($p.name)' is missing a 'source'." }
+        # An absolute source is by definition outside the repo convention -- report explicitly
+        # instead of the confusing Join-Path/GetFullPath error that would otherwise roll out.
         if ([System.IO.Path]::IsPathRooted($p.source)) {
-            throw "plugin '$($p.name)': source '$($p.source)' wijst buiten de repo (absoluut pad)."
+            throw "plugin '$($p.name)': source '$($p.source)' points outside the repo (absolute path)."
         }
         $manifest = $null
         try {
             $manifest = [System.IO.Path]::GetFullPath(
                 (Join-Path $RepoRoot (Join-Path $p.source '.claude-plugin\plugin.json')))
         } catch {
-            throw "plugin '$($p.name)': source '$($p.source)' is geen geldig pad."
+            throw "plugin '$($p.name)': source '$($p.source)' is not a valid path."
         }
         if (-not $manifest.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
-            throw "plugin '$($p.name)': source '$($p.source)' wijst buiten de repo ($manifest)."
+            throw "plugin '$($p.name)': source '$($p.source)' points outside the repo ($manifest)."
         }
         $manifest
     }
@@ -128,9 +139,9 @@ function Get-PluginManifestPaths {
 
 function Split-Changelog {
     <#
-        Prive-helper: ontleedt CHANGELOG.md in zijn onderdelen. Retourneert een object met Nl, Head
-        (t/m de '## Pull Requests'-regel), PrIntro, Entries (array van entry-blokken), RelIntro en
-        ExistingReleases. Gooit als de secties ontbreken of er geen entries te releasen zijn.
+        Private helper: parses CHANGELOG.md into its parts. Returns an object with Nl, Head
+        (through the '## Pull Requests' line), PrIntro, Entries (array of entry blocks), RelIntro
+        and ExistingReleases. Throws if the sections are missing or there are no entries to release.
     #>
     param([Parameter(Mandatory)][string]$Content)
 
@@ -143,22 +154,22 @@ function Split-Changelog {
         if ($lines[$i] -match '^##\s+Pull Requests\s*$') { $prIdx = $i }
         elseif ($lines[$i] -match '^##\s+Releases\s*$') { $relIdx = $i }
     }
-    if ($prIdx -lt 0) { throw "Kon '## Pull Requests' niet vinden in CHANGELOG.md." }
-    if ($relIdx -lt 0) { throw "Kon '## Releases' niet vinden in CHANGELOG.md." }
-    if ($relIdx -le $prIdx) { throw "'## Releases' staat niet na '## Pull Requests' -- onverwachte structuur." }
+    if ($prIdx -lt 0) { throw "Could not find '## Pull Requests' in CHANGELOG.md." }
+    if ($relIdx -lt 0) { throw "Could not find '## Releases' in CHANGELOG.md." }
+    if ($relIdx -le $prIdx) { throw "'## Releases' does not come after '## Pull Requests' -- unexpected structure." }
 
     $head = $lines[0..$prIdx]
 
     $prBody = @($lines[($prIdx + 1)..($relIdx - 1)])
     $prFirst = -1
     for ($i = 0; $i -lt $prBody.Count; $i++) { if ($prBody[$i] -match '^###\s') { $prFirst = $i; break } }
-    if ($prFirst -lt 0) { throw "Geen changelog-entries onder '## Pull Requests' -- niets te releasen." }
+    if ($prFirst -lt 0) { throw "No changelog entries under '## Pull Requests' -- nothing to release." }
 
     $prIntro = if ($prFirst -gt 0) { @($prBody[0..($prFirst - 1)]) } else { @() }
     $entryLines = @($prBody[$prFirst..($prBody.Count - 1)])
 
-    # Entryregels opdelen in blokken: een nieuw blok begint bij elke '### '-kop. '---'-scheiders
-    # tussen entries worden overgeslagen.
+    # Split entry lines into blocks: a new block starts at every '### ' heading. '---' separators
+    # between entries are skipped.
     $entries = @()
     $cur = $null
     foreach ($ln in $entryLines) {
@@ -189,16 +200,16 @@ function Split-Changelog {
 }
 
 function Get-PullRequestEntries {
-    <# Retourneert de te-releasen entry-blokken (### ... + body + PR-link) uit de Pull-Requests-sectie. #>
+    <# Returns the entry blocks to be released (### ... + body + PR link) from the Pull-Requests section. #>
     param([Parameter(Mandatory)][string]$Content)
     return @((Split-Changelog -Content $Content).Entries)
 }
 
 function Convert-ChangelogForRelease {
     <#
-        Leegt de '## Pull Requests'-sectie tot zijn intro en zet bovenaan '## Releases' een korte
-        VERWIJZING '### [v<Version>] - <Date> - <Type>' naar het release-notes-bestand ($NotesRelPath).
-        Pure string-in/uit.
+        Empties the '## Pull Requests' section down to its intro and puts a short REFERENCE
+        '### [v<Version>] - <Date> - <Type>' at the top of '## Releases' to the release-notes file
+        ($NotesRelPath). Pure string in/out.
     #>
     param(
         [Parameter(Mandatory)][string]$Content,
@@ -214,14 +225,14 @@ function Convert-ChangelogForRelease {
     $block = @(
         "### [v$Version] - $Date $emDash $Type",
         '',
-        "Zie [$NotesRelPath]($NotesRelPath) voor de volledige release-notes."
+        "See [$NotesRelPath]($NotesRelPath) for the full release notes."
     )
 
     $relIntroText = ($s.RelIntroLines -join "`n")
-    if ($relIntroText -match 'Nog geen releases') {
+    if ($relIntroText -match 'No releases recorded') {
         $relIntro = @(
-            "De vastgelegde versies van de marketplace $emDash nieuwste bovenaan. Elke release bumpt alle",
-            'plugin-versies in lockstep en verwijst naar de volledige notes in `releases/development/`.'
+            "The recorded versions of the marketplace $emDash newest at the top. Every release bumps all",
+            'plugin versions in lockstep and points to the full notes in `releases/development/`.'
         )
     } else {
         $relIntro = @($s.RelIntroLines | Where-Object { $_ -ne '' })
@@ -249,15 +260,15 @@ function Convert-ChangelogForRelease {
 
 function Get-TouchedPlugins {
     <#
-        Pure: leidt de geraakte plugin-namen af uit een lijst PR-bestandspaden (repo-root-relatief,
-        zoals gh pr list --json files levert -- $Files zijn hier al platte pad-strings, niet de
-        gh-objecten zelf). Alleen paden onder claude-code-plugins/claude-specialists/<plugin>/
-        tellen mee; de connectors-map is werkplaats-administratie en telt niet mee (zelfde regel als
-        voorheen inline in fold-changelog-entry.ps1). -cmatch (advies Sean): -match is
-        case-insensitief en zou de kleine-letters-tekenklasse stilzwijgend oprekken; plugin-mapnamen
-        zijn altijd lowercase slugs. Retourneert een gesorteerde, gededupliceerde array van
-        plugin-namen (leeg als niets een plugin raakt). Getrokken naar hier (#103, Victor #3) zodat
-        de detectie los testbaar is, i.p.v. inline logica in fold-changelog-entry.ps1.
+        Pure: derives the touched plugin names from a list of PR file paths (repo-root-relative,
+        as gh pr list --json files supplies -- $Files here are already flat path strings, not the
+        gh objects themselves). Only paths under claude-code-plugins/claude-specialists/<plugin>/
+        count; the connectors folder is workshop administration and does not count (same rule as
+        previously inline in fold-changelog-entry.ps1). -cmatch (Sean's advice): -match is
+        case-insensitive and would silently widen the lowercase character class; plugin folder
+        names are always lowercase slugs. Returns a sorted, deduplicated array of plugin names
+        (empty if nothing touches a plugin). Pulled out to here (#103, Victor #3) so the detection
+        is separately testable, instead of inline logic in fold-changelog-entry.ps1.
     #>
     param([string[]]$Files = @())
     $touched = @()
@@ -271,9 +282,9 @@ function Get-TouchedPlugins {
 
 function Get-EntryPlugins {
     <#
-        Leest de optionele 'Plugins: a, b'-regel uit een entry-blok (door fold-changelog-entry.ps1
-        afgeleid uit de PR-bestanden). Retourneert een array van plugin-namen; leeg = de entry raakt
-        geen plugin-content (werkplaats-intern).
+        Reads the optional 'Plugins: a, b' line from an entry block (derived by
+        fold-changelog-entry.ps1 from the PR files). Returns an array of plugin names; empty = the
+        entry does not touch plugin content (workshop-internal).
     #>
     param([Parameter(Mandatory)][string]$EntryText)
     $m = [regex]::Match($EntryText, '(?m)^Plugins:\s*(.+?)\s*$')
@@ -283,10 +294,10 @@ function Get-EntryPlugins {
 
 function Remove-EntryPluginsLine {
     <#
-        Verwijdert de 'Plugins: ...'-metadataregel (plus de lege regel die erdoor overblijft) uit
-        een entry-blok. Die regel stuurt de per-plugin-selectie in cut-release.ps1, maar is
-        werkplaats-administratie en hoort niet zichtbaar te zijn in de consument-gerichte
-        per-plugin CHANGELOG; de root-CHANGELOG en de release-notes tonen hem wel.
+        Removes the 'Plugins: ...' metadata line (plus the blank line left behind by it) from an
+        entry block. That line drives the per-plugin selection in cut-release.ps1, but is workshop
+        administration and should not be visible in the consumer-facing per-plugin CHANGELOG; the
+        root CHANGELOG and the release notes do show it.
     #>
     param([Parameter(Mandatory)][string]$EntryText)
     $t = [regex]::Replace($EntryText, '(?m)^Plugins:[^\r\n]*(\r?\n)?', '')
@@ -295,9 +306,9 @@ function Remove-EntryPluginsLine {
 
 function Convert-RootRelativeLinks {
     <#
-        Herschrijft repo-root-relatieve markdown-links met het gegeven prefix; externe (http/mailto),
-        anker- (#), absolute (/) en ../-links blijven ongemoeid. De gedeelde motor achter
-        Build-ReleaseNotes en Convert-EntryLinksForPluginChangelog.
+        Rewrites repo-root-relative markdown links with the given prefix; external (http/mailto),
+        anchor (#), absolute (/) and ../ links are left alone. The shared engine behind
+        Build-ReleaseNotes and Convert-EntryLinksForPluginChangelog.
     #>
     param(
         [Parameter(Mandatory)][string]$EntryText,
@@ -308,14 +319,13 @@ function Convert-RootRelativeLinks {
 
 function Convert-EntryLinksForPluginChangelog {
     <#
-        Herschrijft repo-root-relatieve markdown-links naar absolute GitHub-blob-URLs, zodat een
-        entry ook leesbaar is in de plugin-cache van een consument (waar de repo-bestanden niet
-        bestaan).
+        Rewrites repo-root-relative markdown links to absolute GitHub blob URLs, so an entry is
+        also readable in a consumer's plugin cache (where the repo files do not exist).
     #>
     param(
         [Parameter(Mandatory)][string]$EntryText,
-        # Live-waarde wordt door cut-release.ps1 geinjecteerd uit repo-config (Get-RepoBlobUrl); deze
-        # literal is enkel de fallback als de functie zonder -RepoBlobUrl wordt aangeroepen.
+        # Live value is injected by cut-release.ps1 from repo-config (Get-RepoBlobUrl); this
+        # literal is only the fallback if the function is called without -RepoBlobUrl.
         [string]$RepoBlobUrl = 'https://github.com/DaveKJohn/davekjohns-workshop/blob/main/'
     )
     return Convert-RootRelativeLinks -EntryText $EntryText -Prefix $RepoBlobUrl
@@ -323,15 +333,15 @@ function Convert-EntryLinksForPluginChangelog {
 
 function Build-PluginChangelogSection {
     <#
-        Bouwt het '## v<Version> <emDash> <Date>'-blok voor een plugin-CHANGELOG uit de entries die
-        die plugin raken. Pure string-uit -- BEWUST hard LF (i.p.v. het $nl-detectiepatroon dat
-        Split-Changelog/Convert-ChangelogForRelease gebruiken): dit blok wordt in een NIEUW,
-        zelfstandig plugin-CHANGELOG.md geschreven, dat geen eigen bestaande newline-stijl heeft om
-        naar te matchen -- anders dan de root CHANGELOG.md (die wel CRLF is en zijn eigen stijl via
-        $nl detecteert en aanhoudt). $Entries komen echter uit die CRLF-root-CHANGELOG (via
-        Get-PullRequestEntries) -- daarom hier expliciet naar LF genormaliseerd (#103, Victor #5),
-        anders zou de CRLF binnen een entry-body de beloofde pure-LF-output alsnog doorkruisen (het
-        gevonden mixed-EOL-effect in de bestaande plugin-CHANGELOGs/RELEASE.md's/release-notes).
+        Builds the '## v<Version> <emDash> <Date>' block for a plugin CHANGELOG from the entries
+        that touch that plugin. Pure string out -- DELIBERATELY hard LF (instead of the
+        $nl-detection pattern that Split-Changelog/Convert-ChangelogForRelease use): this block is
+        written into a NEW, standalone plugin-CHANGELOG.md, which has no existing newline style of
+        its own to match -- unlike the root CHANGELOG.md (which is CRLF and detects and keeps its
+        own style via $nl). $Entries, however, come from that CRLF root CHANGELOG (via
+        Get-PullRequestEntries) -- so here they are explicitly normalized to LF (#103, Victor #5),
+        otherwise the CRLF inside an entry body would still cross the promised pure-LF output
+        (the mixed-EOL effect found in the existing plugin CHANGELOGs/RELEASE.md's/release-notes).
     #>
     param(
         [Parameter(Mandatory)][string[]]$Entries,
@@ -345,9 +355,9 @@ function Build-PluginChangelogSection {
 
 function Add-PluginChangelogSection {
     <#
-        Voegt een release-sectie bovenaan een plugin-CHANGELOG toe (na de intro, voor de eerste
-        versie-kop, nieuwste eerst); bestaat er nog geen inhoud, dan wordt de volledige CHANGELOG
-        inclusief intro-header opgebouwd. Pure string-in/uit.
+        Adds a release section to the top of a plugin CHANGELOG (after the intro, before the first
+        version heading, newest first); if no content exists yet, the full CHANGELOG including
+        intro header is built. Pure string in/out.
     #>
     param(
         [string]$Existing = '',
@@ -357,16 +367,16 @@ function Add-PluginChangelogSection {
     $emDash = [char]0x2014
     if (-not $Existing) {
         $intro = "# Changelog $emDash $PluginName`n`n" +
-            "Consument-gerichte geschiedenis van deze plugin: per release de wijzigingen die deze plugin`n" +
-            "raakten. Automatisch bijgeschreven door ``cut-release.ps1`` van de marketplace-repo`n" +
-            "(davekjohns-workshop); de volledige werkplaats-geschiedenis staat daar in ``CHANGELOG.md`` en`n" +
+            "Consumer-facing history of this plugin: per release, the changes that touched this`n" +
+            "plugin. Automatically appended by ``cut-release.ps1`` of the marketplace repo`n" +
+            "(davekjohns-workshop); the full workshop history lives there in ``CHANGELOG.md`` and`n" +
             "``releases/``.`n`n"
         return ($intro + $Section.TrimEnd() + "`n")
     }
-    # Aangescherpt (#103, Victor #5): match specifiek een versie-kop ('## vX.Y.Z ...', exact het
-    # patroon dat Build-PluginChangelogSection zelf schrijft), niet elke willekeurige '## '-kop --
-    # anders zou een handmatig toegevoegde niet-versie-kop (bv. '## Notes') de invoegpositie laten
-    # verkeerd matchen en de nieuwe sectie er middenin proppen i.p.v. ervoor.
+    # Tightened (#103, Victor #5): specifically matches a version heading ('## vX.Y.Z ...', exactly
+    # the pattern Build-PluginChangelogSection itself writes), not just any arbitrary '## ' heading --
+    # otherwise a manually added non-version heading (e.g. '## Notes') would make the insertion
+    # position match incorrectly and cram the new section into the middle of it instead of before it.
     $m = [regex]::Match($Existing, '(?m)^## v\d+\.\d+\.\d+\b')
     if ($m.Success) {
         return $Existing.Substring(0, $m.Index) + $Section.TrimEnd() + "`n`n---`n`n" + $Existing.Substring($m.Index)
@@ -376,19 +386,19 @@ function Add-PluginChangelogSection {
 
 function Build-PluginReleaseCard {
     <#
-        Bouwt de volledige RELEASE.md-kaarttekst voor een plugin (Model A, plugin-gedragen): een
-        consument die alleen de plugin-cache heeft ziet meteen op welke release-versie hij zit, ook
-        als deze specifieke release die plugin niet raakte (de versie bumpt lockstep, dus elke
-        plugin krijgt bij elke release een vers kaartje). Hergebruikt Build-PluginChangelogSection /
-        Convert-EntryLinksForPluginChangelog voor de body zodat de vorm gelijk blijft aan de
-        per-plugin CHANGELOG. Pure string-uit (LF-newlines), dus los testbaar.
+        Builds the full RELEASE.md card text for a plugin (Model A, plugin-carried): a consumer
+        who only has the plugin cache sees immediately which release version they are on, even if
+        this particular release did not touch the plugin (the version bumps lockstep, so every
+        plugin gets a fresh card on every release). Reuses Build-PluginChangelogSection /
+        Convert-EntryLinksForPluginChangelog for the body so the form stays consistent with the
+        per-plugin CHANGELOG. Pure string out (LF newlines), so separately testable.
 
-        $Entries is de array met entry-blokken van DEZE plugin voor DEZE release (mag leeg zijn --
-        geen wijzigingen betekent gewoon het "no changes"-blok, geen error). $RepoBlobUrl is de basis
-        voor de link naar de volledige workshop-notes (repo-root-relatief, dus alleen als blob-URL
-        leesbaar vanuit de plugin-cache); de link naar de eigen CHANGELOG.md blijft bewust
-        map-relatief ("CHANGELOG.md") -- dat bestand reist met dit kaartje mee in dezelfde
-        plugin-map, dus die link werkt zowel in dit repo als in de plugin-cache van een consument.
+        $Entries is the array of entry blocks of THIS plugin for THIS release (may be empty --
+        no changes simply means the "no changes" block, no error). $RepoBlobUrl is the base for
+        the link to the full workshop notes (repo-root-relative, so only readable as a blob URL
+        from the plugin cache); the link to its own CHANGELOG.md is deliberately kept
+        folder-relative ("CHANGELOG.md") -- that file travels along with this card in the same
+        plugin folder, so that link works both in this repo and in a consumer's plugin cache.
     #>
     param(
         [Parameter(Mandatory)][string]$PluginName,
@@ -428,13 +438,12 @@ function Build-PluginReleaseCard {
 
 function Build-ReleaseNotes {
     <#
-        Bouwt de volledige release-notes (het releases/development/<X.Y>/<X.Y.Z>.md-bestand) uit de
-        entry-blokken, gegroepeerd per branch-type. Pure string-uit -- BEWUST hard LF (zie
-        Build-PluginChangelogSection hierboven voor dezelfde afweging: dit is een NIEUW,
-        zelfstandig bestand zonder eigen bestaande newline-stijl, anders dan de root CHANGELOG.md
-        die via $nl zijn CRLF-stijl detecteert en aanhoudt). $Entries komen uit die CRLF-root-
-        CHANGELOG -- daarom hier expliciet naar LF genormaliseerd (#103, Victor #5), naast de
-        link-herschrijving hieronder.
+        Builds the full release notes (the releases/development/<X.Y>/<X.Y.Z>.md file) from the
+        entry blocks, grouped by branch type. Pure string out -- DELIBERATELY hard LF (see
+        Build-PluginChangelogSection above for the same trade-off: this is a NEW, standalone file
+        with no existing newline style of its own, unlike the root CHANGELOG.md which detects and
+        keeps its CRLF style via $nl). $Entries come from that CRLF root CHANGELOG -- so here they
+        are explicitly normalized to LF (#103, Victor #5), alongside the link rewriting below.
     #>
     param(
         [Parameter(Mandatory)][string[]]$Entries,
@@ -442,37 +451,37 @@ function Build-ReleaseNotes {
         [Parameter(Mandatory)][string]$Date,
         [Parameter(Mandatory)][string]$Type,
         [string]$Title = '',
-        # Prefix om repo-root-relatieve links in entry-bodies te laten resolveren vanuit de diepere
-        # locatie van het notes-bestand (releases/development/<X.Y>/ = 3 mappen diep -> '../../../').
+        # Prefix to resolve repo-root-relative links in entry bodies from the deeper location of
+        # the notes file (releases/development/<X.Y>/ = 3 folders deep -> '../../../').
         [string]$LinkPrefix = '../../../'
     )
     $md = [char]0x00B7
 
-    # Entries zijn geschreven met repo-root-relatieve links; herschrijf ze zodat ze vanuit het
-    # notes-bestand kloppen. Externe (http/mailto), anker- (#) en absolute (/) links blijven ongemoeid,
-    # net als links die al met ../ beginnen. Ook naar LF genormaliseerd, zodat de CRLF van de bron-
-    # CHANGELOG de pure-LF-output hierbeneden niet doorkruist.
+    # Entries are written with repo-root-relative links; rewrite them so they resolve correctly
+    # from the notes file. External (http/mailto), anchor (#) and absolute (/) links are left
+    # alone, as are links that already start with ../. Also normalized to LF, so the CRLF of the
+    # source CHANGELOG does not cross the pure-LF output below.
     $Entries = @($Entries | ForEach-Object {
         (Convert-RootRelativeLinks -EntryText $_ -Prefix $LinkPrefix) -replace "`r`n", "`n"
     })
-    # Categorie-volgorde = de canonieke branch-typen (branch-info.ps1, enige bron) + 'Overig' als
-    # vangnet voor entries met een onbekend type. $catTitle levert de weergavenaam per type; een type
-    # zonder eigen titel valt terug op het type zelf (zodat een nieuw branch-type niet stilzwijgend
-    # buiten de notes valt).
-    $catOrder = @(Get-BranchTypes) + 'Overig'
+    # Category order = the canonical branch types (branch-info.ps1, single source) + 'Other' as a
+    # catch-all for entries with an unknown type. $catTitle supplies the display name per type; a
+    # type without its own title falls back to the type itself (so a new branch type does not
+    # silently fall outside the notes).
+    $catOrder = @(Get-BranchTypes) + 'Other'
     $catTitle = @{
-        Feat   = 'Nieuwe features & verbeteringen'
-        Fix    = 'Fixes'
-        Docs   = 'Documentatie'
-        Chore  = 'Onderhoud (scripts, tooling, config)'
-        Overig = 'Overig'
+        Feat  = 'New features & improvements'
+        Fix   = 'Fixes'
+        Docs  = 'Documentation'
+        Chore = 'Maintenance (scripts, tooling, config)'
+        Other = 'Other'
     }
 
     $grouped = @{}
     foreach ($e in $Entries) {
         $heading = ($e -split "`r?`n")[0]
-        $t = 'Overig'
-        # Kop: "### #NN <md> titel <md> type <md> datum" -- type = op een na laatste veld.
+        $t = 'Other'
+        # Heading: "### #NN <md> title <md> type <md> date" -- type = the second-to-last field.
         $parts = @(($heading -replace '^###\s+', '') -split "\s*$md\s*")
         if ($parts.Count -ge 2) {
             $cand = $parts[$parts.Count - 2].Trim()
@@ -485,8 +494,8 @@ function Build-ReleaseNotes {
     $sections = @()
     foreach ($cat in $catOrder) {
         if ($grouped.ContainsKey($cat)) {
-            # NB: niet '$title' -- PowerShell-variabelen zijn case-insensitief, dus dat zou de
-            # $Title-parameter overschrijven en de titelregel uit de kop wissen.
+            # NB: not '$title' -- PowerShell variables are case-insensitive, so that would
+            # overwrite the $Title parameter and wipe the title line from the heading.
             $catLabel = if ($catTitle.ContainsKey($cat)) { $catTitle[$cat] } else { $cat }
             $body = ($grouped[$cat].ToArray() -join "`n`n---`n`n")
             $sections += "## $catLabel`n`n$body"
@@ -494,6 +503,6 @@ function Build-ReleaseNotes {
     }
 
     $titleLine = if ($Title) { "$Title`n`n" } else { '' }
-    $header = "# Release notes v$Version`n`n**Datum:** $Date  `n**Type:** $Type`n`n$titleLine"
+    $header = "# Release notes v$Version`n`n**Date:** $Date  `n**Type:** $Type`n`n$titleLine"
     return ($header + ($sections -join "`n`n") + "`n")
 }

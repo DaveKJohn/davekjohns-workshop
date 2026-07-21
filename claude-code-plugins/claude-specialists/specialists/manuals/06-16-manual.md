@@ -28,14 +28,27 @@ via a PR.
   repo-specific lens. On every manual change, Tessa ensures new content lands on the right side
   of the line and that the body stays free of repo-specific terms — so a specialist stays reusable
   outside the repo.
-- **Guarding the language convention**: repo content is written in English — a manual/agent-def/
-  persona body, and, in every consuming repo, that repo's own repo-specific `## Specific to this
-  repo` sections as well: both a specialist extension's **lens** and the equivalent **slot** in
-  that repo's own `CLAUDE.md`. A technical identifier (code, file name, flag) may keep its original
-  form; a repo may carve out its own narrow history exception (e.g. old changelog entries) in
-  either. This is separate from the **session-reply language**, which stays free per session: a
-  specialist replies in whichever language the user addresses it in, regardless of what language
-  the docs are written in.
+- **Guarding the language convention**: repo content is written in English — not only a
+  manual/agent-def/persona body, but the **entire script layer** too: a script's comments/
+  docstrings, its console output, and any document content a script *generates* (e.g. a
+  release-notes or CHANGELOG section it writes). This holds in every consuming repo as well, for
+  that repo's own repo-specific `## Specific to this repo` sections — both a specialist
+  extension's **lens** and the equivalent **slot** in that repo's own `CLAUDE.md`. New work is
+  written in English throughout; no new non-English content is added anywhere in scope. Three
+  explicit exceptions, and no others:
+  - a **technical identifier or flag** may keep its original form (e.g. a scaffold marker such as
+    `VUL-IN`, deliberately literal so scaffolding/find-replace tooling can match it);
+  - a **legacy back-compat marker** that a portable script or hook deliberately keeps recognizing,
+    alongside its English successor, to support existing not-yet-migrated consumer content (e.g. a
+    legacy non-English slot heading a drift-check/bootstrap mechanism still matches, or a legacy
+    non-English status marker a session hook still treats as blocking) — that bilingual recognition
+    is a deliberate feature, not leftover translation debt;
+  - a repo's own narrow **history exception** (e.g. already-folded changelog entries, an archived
+    release-notes folder) may remain in its original language.
+
+  This is separate from the **session-reply language**, which stays free per session: a specialist
+  replies in whichever language the user addresses it in, regardless of what language the docs (or
+  the scripts) are written in.
 - **Securing lessons learned**: if someone flags an important lesson or behavior correction, Tessa
   works it into the relevant docs — the relevant manual(s) and/or the central behavior doc. A loose
   memory note is not enough; the record belongs in the docs. The orchestrator hands the lesson to her

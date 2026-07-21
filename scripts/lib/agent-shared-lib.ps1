@@ -1,21 +1,21 @@
 <#
 .SYNOPSIS
-    Gedeelde helper voor de verbatim-gedeelde blokken in de agent-defs (build + lint).
+    Shared helper for the verbatim-shared blocks in the agent defs (build + lint).
 .DESCRIPTION
-    Sommige bullets onder **Grenzen** zijn woord-voor-woord identiek over veel agent-defs (bv. de
-    inbound-regel: 19/19). Om ze op EEN plek te onderhouden i.p.v. in elke agent-def, staan ze als
-    canonieke bron in claude-code-plugins/claude-specialists/agent-shared/<naam>.md en verschijnen ze
-    in een agent-def tussen sentinel-commentaren:
+    Some bullets under **Boundaries** are word-for-word identical across many agent defs (e.g. the
+    inbound rule: 19/19). To maintain them in ONE place instead of in every agent def, they live as
+    the canonical source in claude-code-plugins/claude-specialists/agent-shared/<name>.md and appear
+    in an agent def between sentinel comments:
 
         <!-- BEGIN shared:inbound-behaviour -- GENERATED, edit agent-shared/inbound-behaviour.md -->
-        - **De gedeelde kern wijzig je niet lokaal.** ...(canonieke inhoud)...
+        - **You do not modify the shared core locally.** ...(canonical content)...
         <!-- END shared:inbound-behaviour -->
 
-    De inhoud staat echt in de agent-def (altijd-geladen, self-contained), maar wordt door
-    build-agent-defs.ps1 uit de bron gevuld en door check-plugin-integrity.ps1 tegen de bron
-    gecontroleerd. Hand-edit binnen de sentinels wordt zo als drift gevangen.
+    The content really lives in the agent def (always-loaded, self-contained), but is filled in
+    from the source by build-agent-defs.ps1 and checked against the source by
+    check-plugin-integrity.ps1. A hand-edit inside the sentinels is thus caught as drift.
 
-    Puur ASCII (repo-conventie voor .ps1). Deze lib wijzigt niets; hij levert alleen de expansie op.
+    Pure ASCII (repo convention for .ps1). This lib changes nothing; it only supplies the expansion.
 #>
 
 Set-StrictMode -Version Latest
@@ -26,7 +26,7 @@ function Get-AgentSharedDir {
 }
 
 function Get-SharedBlockText {
-    # Canonieke inhoud van een gedeeld blok (LF, zonder trailing newline), of $null als de bron mist.
+    # Canonical content of a shared block (LF, without trailing newline), or $null if the source is missing.
     param([string]$SharedDir, [string]$Name)
     $p = Join-Path $SharedDir "$Name.md"
     if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { return $null }
@@ -35,9 +35,9 @@ function Get-SharedBlockText {
 }
 
 function Expand-AgentDefShared {
-    # Vult elke <!-- BEGIN shared:NAME --> ... <!-- END shared:NAME -->-regio met de canonieke bron
-    # en geeft de verwachte (ge-expandeerde) inhoud terug als string (LF). Een BEGIN zonder END of een
-    # onbekend blok (ontbrekende bron) wordt als probleem gemeld en de regio blijft ongewijzigd.
+    # Fills in every <!-- BEGIN shared:NAME --> ... <!-- END shared:NAME --> region with the canonical
+    # source and returns the expected (expanded) content as a string (LF). A BEGIN without an END or
+    # an unknown block (missing source) is reported as a problem and the region is left unchanged.
     param(
         [string]$Content,
         [string]$SharedDir,
@@ -55,20 +55,20 @@ function Expand-AgentDefShared {
         $j = $i + 1
         while ($j -lt $lines.Count -and $lines[$j] -notmatch $endPat) { $j++ }
         if ($j -ge $lines.Count) {
-            if ($null -ne $Problems) { [void]$Problems.Add("BEGIN shared:$name zonder bijbehorende END-sentinel") }
+            if ($null -ne $Problems) { [void]$Problems.Add("BEGIN shared:$name without a matching END sentinel") }
             for ($k = $i; $k -lt $lines.Count; $k++) { $out.Add($lines[$k]) }
             return ($out -join "`n")
         }
         $block = Get-SharedBlockText -SharedDir $SharedDir -Name $name
         if ($null -eq $block) {
-            if ($null -ne $Problems) { [void]$Problems.Add("onbekend shared-blok '$name' (bron agent-shared/$name.md ontbreekt)") }
+            if ($null -ne $Problems) { [void]$Problems.Add("unknown shared block '$name' (source agent-shared/$name.md missing)") }
             for ($k = $i; $k -le $j; $k++) { $out.Add($lines[$k]) }
             $i = $j + 1
             continue
         }
-        $out.Add($lines[$i])                                  # BEGIN-sentinel ongewijzigd
+        $out.Add($lines[$i])                                  # BEGIN sentinel unchanged
         foreach ($bl in ($block -split "`n")) { $out.Add($bl) }
-        $out.Add($lines[$j])                                  # END-sentinel ongewijzigd
+        $out.Add($lines[$j])                                  # END sentinel unchanged
         $i = $j + 1
     }
     return ($out -join "`n")

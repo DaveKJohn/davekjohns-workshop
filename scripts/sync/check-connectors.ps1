@@ -1,51 +1,49 @@
 <#
 .SYNOPSIS
-    Connectors-check: verifieert of alle aangesloten repo's (connectors) nog in sync zijn met
-    deze repo -- de source of truth.
+    Connectors check: verifies whether all connected repos (connectors) are still in sync with
+    this repo -- the source of truth.
 
 .DESCRIPTION
-    Het register woont op familie-niveau, naast de plugin-mappen (bewust NIET erin, zodat het
-    niet meereist met de plugin-cache van consumenten): EEN manifest per aangesloten repo
-    (claude-code-plugins/claude-specialists/connectors/<repo>.json), met daarin per plugin de
-    extension-inventaris. Manifesten bevatten alleen METADATA -- nooit
-    lens-inhoud en nooit absolute machine-paden; localCheckout is relatief aan de root van deze
-    repo.
+    The register lives at family level, next to the plugin folders (deliberately NOT inside them,
+    so it does not travel along with a consumer's plugin cache): ONE manifest per connected repo
+    (claude-code-plugins/claude-specialists/connectors/<repo>.json), containing the extension
+    inventory per plugin. Manifests contain only METADATA -- never
+    lens content and never absolute machine paths; localCheckout is relative to this repo's root.
 
-    Per connector checkt dit script:
-      1. Checkout aanwezig op deze machine?          nee -> [SKIP] (geen fout)
-      2. Per plugin: enabled in .claude/settings.json?  nee -> [ERROR]
-      3. Per plugin: alle geregistreerde extensions aanwezig?  mist er een -> [ERROR]
-         Extensions van die plugin die in de consument bestaan maar NIET geregistreerd
-         zijn -> [INFO] (inbound-signaal: register bijwerken of wijziging terughalen).
-      4. Per plugin: machine-record (installed_plugins.json)  ouder dan bron -> [ERROR];
-         geen record/geen administratie -> [INFO] (machine-specifiek, geen poortbreuk)
-    Een syncedVersion-boekhouding kent het register niet (meer): de echte geinstalleerde versie
-    leest de check uit het machine-record, en registeradministratie die alleen cijfers
-    dupliceert leverde louter onderhouds-PR's op (besluit Dave, 20 juli 2026).
-    Daarna draait per unieke consument eenmalig scripts/lint/check-consumer-drift.ps1
-    (agent-def-drift = fout; persona-drift = informatief, zoals in dat script zelf).
+    Per connector this script checks:
+      1. Checkout present on this machine?          no -> [SKIP] (not an error)
+      2. Per plugin: enabled in .claude/settings.json?  no -> [ERROR]
+      3. Per plugin: all registered extensions present?  one missing -> [ERROR]
+         Extensions of that plugin that exist in the consumer but are NOT registered
+         -> [INFO] (inbound signal: update the register or bring the change back here).
+      4. Per plugin: machine record (installed_plugins.json) older than source -> [ERROR];
+         no record/no administration -> [INFO] (machine-specific, not a gate breach)
+    The register no longer keeps a syncedVersion bookkeeping: the check reads the actual installed
+    version from the machine record, and register administration that only duplicates numbers
+    produced nothing but maintenance PRs (Dave's decision, July 20, 2026).
+    After that, scripts/lint/check-consumer-drift.ps1 runs once per unique consumer
+    (agent-def drift = error; persona drift = informational, as in that script itself).
 
-    Guardrail (advies Sean): manifestvelden zijn data uit een publieke repo en worden nooit
-    blind vertrouwd -- absolute of buiten-scope localCheckout-paden en ongeldige plugin-ids
-    worden geweigerd.
+    Guardrail (Sean's advice): manifest fields are data from a public repo and are never blindly
+    trusted -- absolute or out-of-scope localCheckout paths and invalid plugin ids are rejected.
 
-    Exit-code: 0 = geen fouten (SKIP/INFO tellen niet mee), 1 = minstens een fout.
+    Exit code: 0 = no errors (SKIP/INFO do not count), 1 = at least one error.
 
 .PARAMETER Manifest
-    (Optioneel) Pad naar een enkel manifest i.p.v. alle connectors-manifesten.
+    (Optional) Path to a single manifest instead of all connectors manifests.
 
 .PARAMETER ConsumerPathOverride
-    (Optioneel, voor tests) Overschrijft localCheckout uit het manifest.
+    (Optional, for tests) Overrides localCheckout from the manifest.
 
 .PARAMETER OnlyConsumer
-    (Optioneel) Beperk de check tot het manifest waarvan de checkout op dit pad uitkomt
-    (scoping voor de SessionStart-hook: een sessie ziet alleen zijn eigen registerdata).
+    (Optional) Restrict the check to the manifest whose checkout resolves to this path
+    (scoping for the SessionStart hook: a session only sees its own register data).
 
 .PARAMETER SkipDrift
-    Sla de check-consumer-drift-stap over (sneller; alleen de registerchecks).
+    Skip the check-consumer-drift step (faster; register checks only).
 
 .PARAMETER SkipVersions
-    Sla de machine-record-check over (bv. op CI, waar geen plugin-administratie bestaat).
+    Skip the machine-record check (e.g. on CI, where no plugin administration exists).
 
 .EXAMPLE
     .\scripts\sync\check-connectors.ps1
@@ -75,8 +73,8 @@ function Write-Skip ([string]$Msg) { Write-Host "  [SKIP]  $Msg" -ForegroundColo
 function Write-Info ([string]$Msg) { $script:infos++;  Write-Host "  [INFO]  $Msg" -ForegroundColor Yellow }
 function Write-Fout ([string]$Msg) { $script:errors++; Write-Host "  [ERROR] $Msg" -ForegroundColor Red }
 
-# Plugin-id (voor de '@') -> plugin-map onder de familie-root, alleen als de naam een simpele
-# slug is EN de map echt onder de familie-root bestaat; anders $null.
+# Plugin id (before the '@') -> plugin folder under the family root, only if the name is a
+# simple slug AND the folder actually exists under the family root; otherwise $null.
 function Get-PluginDir([string]$PluginId) {
     $name = $PluginId.Split('@')[0]
     if ($name -notmatch '^[a-z0-9][a-z0-9-]*$') { return $null }
@@ -85,7 +83,7 @@ function Get-PluginDir([string]$PluginId) {
     return $dir
 }
 
-# Ids (<group>-<id>) die een plugin bezit: agents/ + personas/.
+# Ids (<group>-<id>) owned by a plugin: agents/ + personas/.
 function Get-PluginIds([string]$PluginDir) {
     $ids = @()
     foreach ($sub in @('agents', 'personas')) {
@@ -98,7 +96,7 @@ function Get-PluginIds([string]$PluginDir) {
     return $ids | Sort-Object -Unique
 }
 
-# Verzamel manifesten uit het register op familie-niveau.
+# Collect manifests from the register at family level.
 if ($Manifest) {
     $manifestFiles = @(Get-Item -LiteralPath $Manifest)
 } else {
@@ -128,9 +126,9 @@ $matched = 0
 foreach ($mf in $manifestFiles) {
     $m = Get-Content -LiteralPath $mf.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
 
-    # Checkout bepalen, met guardrails op het manifest-veld. Bij -OnlyConsumer worden manifesten
-    # van andere consumenten STIL overgeslagen -- ook hun guardrail-meldingen horen niet in de
-    # sessie van een ander te belanden (advies Sean, ronde 3).
+    # Determine the checkout, with guardrails on the manifest field. With -OnlyConsumer, manifests
+    # of other consumers are SILENTLY skipped -- their guardrail messages should not land in
+    # someone else's session either (Sean's advice, round 3).
     if ($ConsumerPathOverride) {
         $checkout = $ConsumerPathOverride
     } else {
@@ -150,7 +148,7 @@ foreach ($mf in $manifestFiles) {
     }
     $checkout = (Resolve-Path -LiteralPath $checkout).Path
 
-    # Scoping vroeg: alleen het manifest van de gevraagde consument komt hierdoorheen.
+    # Early scoping: only the manifest of the requested consumer gets through here.
     if ($onlyPath -and $checkout -ne $onlyPath) { continue }
 
     if (-not $ConsumerPathOverride) {
@@ -164,7 +162,7 @@ foreach ($mf in $manifestFiles) {
 
     Write-Host "`n== connector: $($m.repo)" -ForegroundColor Cyan
 
-    # settings.json van de consument een keer inlezen.
+    # Read the consumer's settings.json once.
     $settings = $null
     $settingsPath = Join-Path $checkout '.claude\settings.json'
     if (Test-Path -LiteralPath $settingsPath) {
@@ -182,7 +180,7 @@ foreach ($mf in $manifestFiles) {
             continue
         }
 
-        # 2. Plugin enabled in de consument?
+        # 2. Plugin enabled in the consumer?
         if ($null -ne $settings) {
             $enabled = $false
             if ($settings.PSObject.Properties.Name -contains 'enabledPlugins') {
@@ -193,10 +191,10 @@ foreach ($mf in $manifestFiles) {
             else          { Write-Fout "plugin '$($p.id)' is NOT (or no longer) enabled in $settingsPath" }
         }
 
-        # 3. Geregistreerde extensions aanwezig? + niet-geregistreerde extensions van deze plugin.
-        # Lenzen kunnen op twee plekken wonen: het plugin-pad (.claude/plugins/claude-specialists/
-        # <plugin>/, sinds de life-hub-pariteit) of het legacy-pad (.claude/extensions/). Beide
-        # tellen; het plugin-pad is afgeleid van het al gevalideerde plugin-id (zie Get-PluginDir).
+        # 3. Registered extensions present? + unregistered extensions of this plugin.
+        # Lenses can live in two places: the plugin path (.claude/plugins/claude-specialists/
+        # <plugin>/, since life-hub parity) or the legacy path (.claude/extensions/). Both
+        # count; the plugin path is derived from the already-validated plugin id (see Get-PluginDir).
         $extDirs = @(@(
             (Join-Path $checkout (Join-Path '.claude\plugins\claude-specialists' $p.id.Split('@')[0]))
             (Join-Path $checkout '.claude\extensions')
@@ -224,7 +222,7 @@ foreach ($mf in $manifestFiles) {
             Write-Info "extension '$id' exists in the consumer but is not in the register -- update the register or review the change."
         }
 
-        # 4. Machine-record vs. bron.
+        # 4. Machine record vs. source.
         if (-not $SkipVersions) {
             $pluginJsonPath = Join-Path $pluginDir '.claude-plugin\plugin.json'
             $sourceVersion = (Get-Content -LiteralPath $pluginJsonPath -Raw -Encoding UTF8 | ConvertFrom-Json).version
@@ -234,9 +232,9 @@ foreach ($mf in $manifestFiles) {
                 $prop = $admin.plugins.PSObject.Properties | Where-Object { $_.Name -eq $p.id }
                 $record = $null
                 if ($prop) {
-                    # Een record kan een projectPath dragen dat niet (meer) bestaat op deze
-                    # machine; Resolve-Path geeft dan $null en mag nooit blind op .Path worden
-                    # uitgelezen (StrictMode-crash, vondst Victor).
+                    # A record can carry a projectPath that no longer exists on this machine;
+                    # Resolve-Path then returns $null and must never be blindly read via .Path
+                    # (StrictMode crash, Victor's finding).
                     foreach ($rec in @($prop.Value)) {
                         if (-not ($rec.PSObject.Properties.Name -contains 'projectPath')) { continue }
                         $resolved = Resolve-Path -LiteralPath $rec.projectPath -ErrorAction SilentlyContinue
@@ -263,7 +261,7 @@ if ($OnlyConsumer -and $matched -eq 0) {
     Write-Info "not registered: no manifest for this consumer in the register."
 }
 
-# Content-drift per unieke consument (agent-defs = fout, persona's = informatief).
+# Content drift per unique consumer (agent defs = error, personas = informational).
 if (-not $SkipDrift) {
     foreach ($checkout in $checkedConsumers.Keys) {
         if ($checkout -eq $RepoRoot) { continue }

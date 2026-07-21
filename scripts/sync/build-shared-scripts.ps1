@@ -1,19 +1,19 @@
 <#
 .SYNOPSIS
-    Spiegelt de gedeelde workflow-scripts vanuit hun canonieke root-kopie naar de plugin-spiegel.
+    Mirrors the shared workflow scripts from their canonical root copy to the plugin mirror.
 
 .DESCRIPTION
-    De root-kopie is de geteste bron; de plugin-spiegel is wat een consument via een skill draait
-    (issue #81). Dit script houdt de spiegel in sync met de bron -- exact het patroon van
-    scripts/agents/build-agent-defs.ps1, maar dan voor hele scripts i.p.v. gedeelde blokken.
+    The root copy is the tested source; the plugin mirror is what a consumer runs via a skill
+    (issue #81). This script keeps the mirror in sync with the source -- exactly the pattern of
+    scripts/agents/build-agent-defs.ps1, but for whole scripts instead of shared blocks.
 
-    Het register staat in scripts/lib/shared-scripts-lib.ps1 (enige bron). Schrijft BOM-loos, LF,
-    alleen als er iets verandert.
+    The registry lives in scripts/lib/shared-scripts-lib.ps1 (single source). Writes BOM-less, LF,
+    only when something changes.
 
-    -Check: schrijft niets; meldt drift (een spiegel die afwijkt van zijn bron) en eindigt met
-    exit-code 1. Dit is de modus die check-plugin-integrity.ps1 en CI gebruiken als poort.
+    -Check: writes nothing; reports drift (a mirror that deviates from its source) and ends with
+    exit code 1. This is the mode check-plugin-integrity.ps1 and CI use as a gate.
 
-    Puur ASCII (repo-conventie voor .ps1).
+    Pure ASCII (repo convention for .ps1).
 .EXAMPLE
     ./scripts/sync/build-shared-scripts.ps1
 .EXAMPLE
@@ -36,7 +36,7 @@ $problemCount = 0
 foreach ($pair in $pairs) {
     $src = Get-NormalizedScriptContent -Path $pair.SourcePath
     if ($null -eq $src) {
-        Write-Host "  [probleem]   bron ontbreekt: $($pair.SourceRel)" -ForegroundColor Red
+        Write-Host "  [problem]    source missing: $($pair.SourceRel)" -ForegroundColor Red
         $problemCount++
         continue
     }
@@ -44,12 +44,12 @@ foreach ($pair in $pairs) {
     if ($src -ne $mirror) {
         $changed++
         if ($Check) {
-            Write-Host "  [drift]      $($pair.MirrorRel) -- wijkt af van $($pair.SourceRel) (draai build-shared-scripts.ps1)" -ForegroundColor Red
+            Write-Host "  [drift]      $($pair.MirrorRel) -- deviates from $($pair.SourceRel) (run build-shared-scripts.ps1)" -ForegroundColor Red
         } else {
             $dir = Split-Path -Path $pair.MirrorPath -Parent
             if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
             [System.IO.File]::WriteAllText($pair.MirrorPath, $src, $Utf8NoBom)
-            Write-Host "  [bijgewerkt] $($pair.MirrorRel)" -ForegroundColor Green
+            Write-Host "  [updated]    $($pair.MirrorRel)" -ForegroundColor Green
         }
     }
 }
@@ -57,15 +57,15 @@ foreach ($pair in $pairs) {
 Write-Host ""
 if ($Check) {
     if ($changed -gt 0 -or $problemCount -gt 0) {
-        Write-Host "Samenvatting: $changed drift, $problemCount probleem -- NIET in sync." -ForegroundColor Red
+        Write-Host "Summary: $changed drift, $problemCount problem -- NOT in sync." -ForegroundColor Red
         exit 1
     }
-    Write-Host "Samenvatting: alle gedeelde scripts in sync met hun bron." -ForegroundColor Green
+    Write-Host "Summary: all shared scripts in sync with their source." -ForegroundColor Green
     exit 0
 }
 if ($problemCount -gt 0) {
-    Write-Host "Samenvatting: $changed bijgewerkt, $problemCount probleem (los die eerst op)." -ForegroundColor Yellow
+    Write-Host "Summary: $changed updated, $problemCount problem (fix that first)." -ForegroundColor Yellow
     exit 1
 }
-Write-Host "Samenvatting: $changed spiegel(s) bijgewerkt, rest al in sync." -ForegroundColor Cyan
+Write-Host "Summary: $changed mirror(s) updated, the rest already in sync." -ForegroundColor Cyan
 exit 0

@@ -1,20 +1,20 @@
 <#
 .SYNOPSIS
-    Regressietests voor het bootstrap-adoptiepad: de skill-bootstrap (bootstrap.ps1) en de
-    persona-drift-detectie in check-consumer-drift.ps1.
+    Regression tests for the bootstrap adoption path: the skill bootstrap (bootstrap.ps1) and the
+    persona drift detection in check-consumer-drift.ps1.
 
 .DESCRIPTION
-    Dependency-vrij: geen Pester, alleen PowerShell. Integratie-stijl -- het draait de echte scripts
-    tegen een wegwerp-fixture-consument in de temp-map en assert op hun exit-code + output. De
-    scripts roepen zelf 'exit' aan, dus ze worden in een KINDPROCES (powershell -File) gedraaid,
-    anders zou 'exit' de testrunner zelf afbreken.
+    Dependency-free: no Pester, only PowerShell. Integration style -- it runs the real scripts
+    against a throwaway fixture consumer in the temp folder and asserts on their exit code + output.
+    The scripts themselves call 'exit', so they are run in a CHILD PROCESS (powershell -File),
+    otherwise 'exit' would abort the test runner itself.
 
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/bootstrap-drift.tests.ps1
 
-    De bootstrap seedt de lenzen op het PLUGIN-PAD (.claude/plugins/<familie>/<plugin>/) en de
-    persona-lenzen zijn LENS-ONLY (geen body-kopie; de body komt via @-import uit de plugin-install).
+    The bootstrap seeds the lenses on the PLUGIN PATH (.claude/plugins/<family>/<plugin>/) and the
+    persona lenses are LENS-ONLY (no body copy; the body comes via @-import from the plugin install).
 
-    Puur ASCII (repo-conventie voor .ps1).
+    Pure ASCII (repo convention for .ps1).
 #>
 $ErrorActionPreference = 'Stop'
 
@@ -23,7 +23,7 @@ $Bootstrap  = Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\specia
 $DriftLint  = Join-Path $RepoRoot 'scripts\lint\check-consumer-drift.ps1'
 $Integrity  = Join-Path $RepoRoot 'scripts\lint\check-plugin-integrity.ps1'
 $Fixture    = Join-Path ([System.IO.Path]::GetTempPath()) 'specialists-init-test-fixture'
-# Plugin-pad in een consument die vanuit de bron-repo wordt gebootstrapt (familie = claude-specialists).
+# Plugin path in a consumer bootstrapped from the source repo (family = claude-specialists).
 $Pp         = '.claude\plugins\claude-specialists\specialists'
 $PersonaSrc = Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\specialists\personas\01-01-persona.md'
 
@@ -35,7 +35,7 @@ function Assert-Equal {
     if ($Expected -eq $Actual) {
         $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green
     } else {
-        $script:fail++; Write-Host "  [FAIL] $Name`n         verwacht: '$Expected'`n         kreeg:    '$Actual'" -ForegroundColor Red
+        $script:fail++; Write-Host "  [FAIL] $Name`n         expected: '$Expected'`n         got:      '$Actual'" -ForegroundColor Red
     }
 }
 
@@ -48,7 +48,7 @@ function Assert-True {
     }
 }
 
-# Draait een .ps1 in een kindproces en geeft [pscustomobject]@{ Code; Out } terug.
+# Runs a .ps1 in a child process and returns [pscustomobject]@{ Code; Out }.
 function Invoke-Script {
     param([string]$Path, [string[]]$ScriptArgs)
     $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Path @ScriptArgs
@@ -63,43 +63,43 @@ function Reset-Fixture {
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
 try {
-    # --- 1. Bootstrap tegen een verse repo: lens-only persona's op het plugin-pad --------------------
-    Write-Host "bootstrap.ps1 -- verse repo (plugin-pad + lens-only)" -ForegroundColor Cyan
+    # --- 1. Bootstrap against a fresh repo: lens-only personas on the plugin path --------------------
+    Write-Host "bootstrap.ps1 -- fresh repo (plugin path + lens-only)" -ForegroundColor Cyan
     Reset-Fixture
     $r1 = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $Fixture)
-    Assert-Equal 0 $r1.Code 'bootstrap exit 0 op verse repo'
+    Assert-Equal 0 $r1.Code 'bootstrap exit 0 on a fresh repo'
     foreach ($f in '01-01-extension.md', '05-05-extension.md', '05-06-extension.md') {
-        Assert-True (Test-Path -LiteralPath (Join-Path $Fixture "$Pp\$f")) "persona-lens $f op het plugin-pad"
+        Assert-True (Test-Path -LiteralPath (Join-Path $Fixture "$Pp\$f")) "persona lens $f on the plugin path"
     }
     foreach ($f in '06-16-extension.md', '06-23-extension.md') {
-        Assert-True (Test-Path -LiteralPath (Join-Path $Fixture "$Pp\$f")) "lens-scaffold $f op het plugin-pad"
+        Assert-True (Test-Path -LiteralPath (Join-Path $Fixture "$Pp\$f")) "lens scaffold $f on the plugin path"
     }
     $lensText = [System.IO.File]::ReadAllText((Join-Path $Fixture "$Pp\06-16-extension.md"), [System.Text.Encoding]::UTF8)
-    Assert-True ($lensText -match 'VUL-IN') 'lens-scaffold draagt de VUL-IN-markering'
+    Assert-True ($lensText -match 'VUL-IN') 'lens scaffold carries the VUL-IN marker'
     $claudeMd = Join-Path $Fixture 'CLAUDE.md'
-    Assert-True (Test-Path -LiteralPath $claudeMd) 'CLAUDE.md-scaffold aangemaakt'
+    Assert-True (Test-Path -LiteralPath $claudeMd) 'CLAUDE.md scaffold created'
     $mdText = [System.IO.File]::ReadAllText($claudeMd, [System.Text.Encoding]::UTF8)
-    Assert-True ($mdText -match [regex]::Escape('@.claude/plugins/claude-specialists/specialists/01-01-extension.md')) 'CLAUDE.md draagt de lens-@-import (plugin-pad)'
-    Assert-True ($mdText -match '(?m)^@[^\r\n]*personas/01-01-persona\.md') 'CLAUDE.md draagt de body-@-import (uit de plugin-install)'
-    Assert-True (Test-Path -LiteralPath (Join-Path $Fixture '.claude\settings.suggested.jsonc')) 'settings.suggested.jsonc neergezet'
+    Assert-True ($mdText -match [regex]::Escape('@.claude/plugins/claude-specialists/specialists/01-01-extension.md')) 'CLAUDE.md carries the lens @-import (plugin path)'
+    Assert-True ($mdText -match '(?m)^@[^\r\n]*personas/01-01-persona\.md') 'CLAUDE.md carries the body @-import (from the plugin install)'
+    Assert-True (Test-Path -LiteralPath (Join-Path $Fixture '.claude\settings.suggested.jsonc')) 'settings.suggested.jsonc placed'
 
-    # --- 1c. scripts/-scaffolds voor de gedeelde workflow-skills (#86): repo-config + branch-info ----
-    Write-Host "bootstrap.ps1 -- script-config-scaffolds (#86)" -ForegroundColor Cyan
+    # --- 1c. scripts/ scaffolds for the shared workflow skills (#86): repo-config + branch-info ----
+    Write-Host "bootstrap.ps1 -- script-config scaffolds (#86)" -ForegroundColor Cyan
     $rcScaffold = Join-Path $Fixture 'scripts\repo-config.ps1'
     $biScaffold = Join-Path $Fixture 'scripts\lib\branch-info.ps1'
-    Assert-True (Test-Path -LiteralPath $rcScaffold) 'scripts/repo-config.ps1-scaffold neergezet'
-    Assert-True (Test-Path -LiteralPath $biScaffold) 'scripts/lib/branch-info.ps1-scaffold neergezet'
+    Assert-True (Test-Path -LiteralPath $rcScaffold) 'scripts/repo-config.ps1 scaffold placed'
+    Assert-True (Test-Path -LiteralPath $biScaffold) 'scripts/lib/branch-info.ps1 scaffold placed'
     $rcText = [System.IO.File]::ReadAllText($rcScaffold, [System.Text.Encoding]::UTF8)
-    Assert-True ($rcText -match 'VUL-IN') 'repo-config-scaffold draagt de VUL-IN-markering'
-    Assert-True ($rcText -match 'function Get-RepoName') 'repo-config-scaffold levert Get-RepoName'
+    Assert-True ($rcText -match 'VUL-IN') 'repo-config scaffold carries the VUL-IN marker'
+    Assert-True ($rcText -match 'function Get-RepoName') 'repo-config scaffold supplies Get-RepoName'
     $biText = [System.IO.File]::ReadAllText($biScaffold, [System.Text.Encoding]::UTF8)
-    Assert-True ($biText -match '\$script:BranchPrefixTable = @\{\s*\}') 'branch-info-scaffold heeft een LEGE prefix-tabel (geen repo-taxonomie meegebakken)'
+    Assert-True ($biText -match '\$script:BranchPrefixTable = @\{\s*\}') 'branch-info scaffold has an EMPTY prefix table (no repo taxonomy baked in)'
 
-    # --- 1d. RepoName afgeleid uit de git-remote (origin) van de consument (Gat B) -------------------
-    # Een consument die een git-repo is met een github.com-origin krijgt RepoName voor-ingevuld i.p.v.
-    # de VUL-IN-placeholder; niet-github of geen remote -> terugval op VUL-IN. De git-aanroep mag de
-    # bootstrap nooit laten crashen. Elke case draait in een eigen wegwerp-git-repo.
-    Write-Host "bootstrap.ps1 -- RepoName afgeleid uit de git-remote (origin)" -ForegroundColor Cyan
+    # --- 1d. RepoName derived from the consumer's git remote (origin) (Gap B) -------------------
+    # A consumer that is a git repo with a github.com origin gets RepoName pre-filled instead of
+    # the VUL-IN placeholder; non-github or no remote -> falls back to VUL-IN. The git call must
+    # never crash the bootstrap. Each case runs in its own throwaway git repo.
+    Write-Host "bootstrap.ps1 -- RepoName derived from the git remote (origin)" -ForegroundColor Cyan
     function Test-DerivedRepoName {
         param([string]$OriginUrl, [string]$Expected, [bool]$ShouldDerive, [string]$Label)
         $gitFix = Join-Path ([System.IO.Path]::GetTempPath()) ('specialists-init-git-' + $Label)
@@ -109,52 +109,52 @@ try {
             & git -C $gitFix init -q 2>$null | Out-Null
             if ($OriginUrl) { & git -C $gitFix remote add origin $OriginUrl 2>$null | Out-Null }
             $rg = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $gitFix)
-            Assert-Equal 0 $rg.Code "git-afleiding ($Label): bootstrap exit 0"
+            Assert-Equal 0 $rg.Code "git derivation ($Label): bootstrap exit 0"
             $txt = [System.IO.File]::ReadAllText((Join-Path $gitFix 'scripts\repo-config.ps1'), [System.Text.Encoding]::UTF8)
             if ($ShouldDerive) {
-                Assert-True ($txt -match [regex]::Escape("`$script:RepoName = '$Expected'")) "git-afleiding ($Label): RepoName = $Expected"
-                Assert-True (-not ($txt -match "RepoName = 'VUL-IN")) "git-afleiding ($Label): geen VUL-IN op de RepoName-regel"
+                Assert-True ($txt -match [regex]::Escape("`$script:RepoName = '$Expected'")) "git derivation ($Label): RepoName = $Expected"
+                Assert-True (-not ($txt -match "RepoName = 'VUL-IN")) "git derivation ($Label): no VUL-IN on the RepoName line"
             } else {
-                Assert-True ($txt -match "RepoName = 'VUL-IN/repo'") "git-afleiding ($Label): terugval op VUL-IN/repo"
+                Assert-True ($txt -match "RepoName = 'VUL-IN/repo'") "git derivation ($Label): falls back to VUL-IN/repo"
             }
         } finally {
             if (Test-Path -LiteralPath $gitFix) { Remove-Item -Recurse -Force -LiteralPath $gitFix -ErrorAction SilentlyContinue }
         }
     }
-    # De bootstrap leest de origin via `git config --get remote.origin.url`, dat de RAUWE opgeslagen
-    # URL geeft en `insteadOf` negeert -- dus wat we hier met `remote add` zetten, komt onveranderd bij
-    # de afleiding aan, ongeacht de git-config van de (CI-)machine. Geen isolatie meer nodig.
-    Test-DerivedRepoName -OriginUrl 'https://github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true  -Label 'https'
-    Test-DerivedRepoName -OriginUrl 'git@github.com:DaveKJohn/mijn-repo.git'    -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true  -Label 'ssh'
-    Test-DerivedRepoName -OriginUrl 'ssh://git@github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true -Label 'ssh-scheme'
-    # Credential-embedded https (bv. een token in de URL): owner/repo wordt afgeleid, de userinfo weggegooid.
-    Test-DerivedRepoName -OriginUrl 'https://x-access-token:SECRET@github.com/DaveKJohn/mijn-repo.git' -Expected 'DaveKJohn/mijn-repo' -ShouldDerive $true -Label 'https-cred'
-    Test-DerivedRepoName -OriginUrl 'https://gitlab.com/DaveKJohn/mijn-repo.git' -Expected '' -ShouldDerive $false -Label 'niet-github'
-    Test-DerivedRepoName -OriginUrl ''                                          -Expected '' -ShouldDerive $false -Label 'geen-remote'
+    # The bootstrap reads the origin via `git config --get remote.origin.url`, which gives the RAW
+    # stored URL and ignores `insteadOf` -- so what we set here with `remote add` arrives unchanged
+    # at the derivation, regardless of the (CI) machine's git config. No isolation needed anymore.
+    Test-DerivedRepoName -OriginUrl 'https://github.com/DaveKJohn/my-repo.git' -Expected 'DaveKJohn/my-repo' -ShouldDerive $true  -Label 'https'
+    Test-DerivedRepoName -OriginUrl 'git@github.com:DaveKJohn/my-repo.git'    -Expected 'DaveKJohn/my-repo' -ShouldDerive $true  -Label 'ssh'
+    Test-DerivedRepoName -OriginUrl 'ssh://git@github.com/DaveKJohn/my-repo.git' -Expected 'DaveKJohn/my-repo' -ShouldDerive $true -Label 'ssh-scheme'
+    # Credential-embedded https (e.g. a token in the URL): owner/repo is derived, the userinfo discarded.
+    Test-DerivedRepoName -OriginUrl 'https://x-access-token:SECRET@github.com/DaveKJohn/my-repo.git' -Expected 'DaveKJohn/my-repo' -ShouldDerive $true -Label 'https-cred'
+    Test-DerivedRepoName -OriginUrl 'https://gitlab.com/DaveKJohn/my-repo.git' -Expected '' -ShouldDerive $false -Label 'non-github'
+    Test-DerivedRepoName -OriginUrl ''                                          -Expected '' -ShouldDerive $false -Label 'no-remote'
 
-    # --- 1b. Persona-lens is LENS-ONLY: geen body-kopie, wel het VUL-IN-slot -------------------------
-    Write-Host "persona-lens -- lens-only (geen body-kopie)" -ForegroundColor Cyan
+    # --- 1b. Persona lens is LENS-ONLY: no body copy, but the VUL-IN slot -------------------------
+    Write-Host "persona lens -- lens-only (no body copy)" -ForegroundColor Cyan
     $srcPersona = [System.IO.File]::ReadAllText($PersonaSrc, [System.Text.Encoding]::UTF8)
-    Assert-True (-not ($srcPersona -match '(?m)^## (Eigen aan deze repo|Specific to this repo)')) 'persona-sjabloon draagt geen slot-marker meer (geen van beide talen)'
+    Assert-True (-not ($srcPersona -match '(?m)^## (Eigen aan deze repo|Specific to this repo)')) 'persona template no longer carries a slot marker (neither language)'
     $lens = [System.IO.File]::ReadAllText((Join-Path $Fixture "$Pp\01-01-extension.md"), [System.Text.Encoding]::UTF8)
-    Assert-True ($lens -match 'Repo-lens \(lens-only persona\)') 'persona-lens opent met de lens-only-blockquote'
-    Assert-True ($lens -match '(?m)^## Specific to this repo \(VUL-IN\)') 'persona-lens draagt een vers VUL-IN-slot (Engelse kop)'
-    Assert-True (-not ($lens -match 'vaste ritueel')) 'persona-lens bevat GEEN body-kopie'
+    Assert-True ($lens -match 'Repo-lens \(lens-only persona\)') 'persona lens opens with the lens-only blockquote'
+    Assert-True ($lens -match '(?m)^## Specific to this repo \(VUL-IN\)') 'persona lens carries a fresh VUL-IN slot (English heading)'
+    Assert-True (-not ($lens -match 'fixed ritual')) 'persona lens contains NO body copy'
 
-    # --- 2. Idempotentie: tweede run overschrijft niets ----------------------------------------------
-    Write-Host "bootstrap.ps1 -- idempotent (tweede run)" -ForegroundColor Cyan
+    # --- 2. Idempotence: second run overwrites nothing ----------------------------------------------
+    Write-Host "bootstrap.ps1 -- idempotent (second run)" -ForegroundColor Cyan
     $r2 = Invoke-Script -Path $Bootstrap -ScriptArgs @('-ConsumerRoot', $Fixture)
-    Assert-Equal 0 $r2.Code 'tweede bootstrap exit 0'
-    Assert-True ($r2.Out -match '0 persona-lens') 'tweede run zet 0 persona-lenzen (alles al aanwezig)'
-    Assert-True ($r2.Out -match '0 lens-scaffold') 'tweede run zet 0 lens-scaffolds (alles al aanwezig)'
-    Assert-True ($r2.Out -match '0 script-scaffold') 'tweede run zet 0 script-scaffolds (#86, alles al aanwezig)'
-    Assert-True ($r2.Out -match 'bestaat al') 'tweede run laat bestaande lens met rust'
+    Assert-Equal 0 $r2.Code 'second bootstrap exit 0'
+    Assert-True ($r2.Out -match '0 persona-lens') 'second run creates 0 persona lenses (everything already present)'
+    Assert-True ($r2.Out -match '0 lens-scaffold') 'second run creates 0 lens scaffolds (everything already present)'
+    Assert-True ($r2.Out -match '0 script-scaffold') 'second run creates 0 script scaffolds (#86, everything already present)'
+    Assert-True ($r2.Out -match 'already exists') 'second run leaves the existing lens alone'
 
-    # --- 2b. Versie-cache-layout: de semantisch hoogste versie wint (vondst Victor) ------------------
-    # Nagebootste versie-cache: de specialists-plugin als 1.4.0, plus een sibling-domein-plugin met
-    # 1.9.0 EN 1.10.0 naast elkaar -- een string-sort zou 1.9.0 kiezen, [version]-sort 1.10.0. In deze
-    # layout (geen claude-code-plugins-segment) valt de familie-afleiding terug op 'davekjohns-workshop'.
-    Write-Host "bootstrap.ps1 -- versie-cache kiest semantisch de hoogste versie" -ForegroundColor Cyan
+    # --- 2b. Version-cache layout: the semantically highest version wins (Victor's finding) ------------
+    # Mimicked version cache: the specialists plugin as 1.4.0, plus a sibling domain plugin with
+    # 1.9.0 AND 1.10.0 side by side -- a string sort would pick 1.9.0, a [version] sort 1.10.0. In this
+    # layout (no claude-code-plugins segment) the family derivation falls back to 'davekjohns-workshop'.
+    Write-Host "bootstrap.ps1 -- version cache picks the semantically highest version" -ForegroundColor Cyan
     $cacheRoot = Join-Path $Fixture 'cache\davekjohns-workshop'
     $ownCache  = Join-Path $cacheRoot 'specialists\1.4.0'
     New-Item -ItemType Directory -Path $ownCache -Force | Out-Null
@@ -162,78 +162,78 @@ try {
     foreach ($v in '1.9.0', '1.10.0') {
         New-Item -ItemType Directory -Path (Join-Path $cacheRoot "specialists-lifehub\$v\agents") -Force | Out-Null
     }
-    [System.IO.File]::WriteAllText((Join-Path $cacheRoot 'specialists-lifehub\1.9.0\agents\04-88-agent.md'), "---`nname: oudje`nid: 88`ngroup: 04`n---`nfixture")
-    [System.IO.File]::WriteAllText((Join-Path $cacheRoot 'specialists-lifehub\1.10.0\agents\04-99-agent.md'), "---`nname: nieuwste`nid: 99`ngroup: 04`n---`nfixture")
+    [System.IO.File]::WriteAllText((Join-Path $cacheRoot 'specialists-lifehub\1.9.0\agents\04-88-agent.md'), "---`nname: oldie`nid: 88`ngroup: 04`n---`nfixture")
+    [System.IO.File]::WriteAllText((Join-Path $cacheRoot 'specialists-lifehub\1.10.0\agents\04-99-agent.md'), "---`nname: newest`nid: 99`ngroup: 04`n---`nfixture")
     $cacheConsumer = Join-Path $Fixture 'cache-consumer'
     New-Item -ItemType Directory -Path (Join-Path $cacheConsumer '.claude') -Force | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $cacheConsumer '.claude\settings.json'), '{ "enabledPlugins": { "specialists@davekjohns-workshop": true, "specialists-lifehub@davekjohns-workshop": true } }')
     $cachedBootstrap = Join-Path $ownCache 'skills\specialists-init\bootstrap.ps1'
     $rc = Invoke-Script -Path $cachedBootstrap -ScriptArgs @('-ConsumerRoot', $cacheConsumer)
-    Assert-Equal 0 $rc.Code 'versie-cache: bootstrap exit 0'
+    Assert-Equal 0 $rc.Code 'version cache: bootstrap exit 0'
     $ppCache = '.claude\plugins\davekjohns-workshop\specialists-lifehub'
-    Assert-True (Test-Path -LiteralPath (Join-Path $cacheConsumer "$ppCache\04-99-extension.md")) 'versie-cache: scaffold uit de hoogste versie (1.10.0)'
-    Assert-True (-not (Test-Path -LiteralPath (Join-Path $cacheConsumer "$ppCache\04-88-extension.md"))) 'versie-cache: oudere versie (1.9.0) niet gebruikt'
+    Assert-True (Test-Path -LiteralPath (Join-Path $cacheConsumer "$ppCache\04-99-extension.md")) 'version cache: scaffold from the highest version (1.10.0)'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $cacheConsumer "$ppCache\04-88-extension.md"))) 'version cache: older version (1.9.0) not used'
 
-    # --- 2c. Durabel body-pad: cache-install -> @-import wijst naar de marketplaces-clone (Gat C) -----
-    # Bootst de echte user-scope layout na: .../plugins/cache/<mp>/<plugin>/<versie>/ naast een
-    # versie-loze .../plugins/marketplaces/<mp>/-clone. De geschreven @-import in CLAUDE.md moet naar de
-    # clone wijzen (durabel, overleeft een update), NIET naar de versie-gepinde cache (die na een update
-    # wordt opgeruimd -> Chris' body zou niet meer laden).
-    Write-Host "bootstrap.ps1 -- durabel body-pad (cache -> marketplaces-clone)" -ForegroundColor Cyan
+    # --- 2c. Durable body path: cache install -> @-import points to the marketplaces clone (Gap C) -----
+    # Mimics the real user-scope layout: .../plugins/cache/<mp>/<plugin>/<version>/ next to a
+    # versionless .../plugins/marketplaces/<mp>/ clone. The @-import written into CLAUDE.md must point
+    # to the clone (durable, survives an update), NOT to the version-pinned cache (which gets cleaned
+    # up after an update -> Chris' body would no longer load).
+    Write-Host "bootstrap.ps1 -- durable body path (cache -> marketplaces clone)" -ForegroundColor Cyan
     $pluginsRoot = Join-Path $Fixture 'plugins'
     $mp = 'mp-fixture'
     $cacheInit = Join-Path $pluginsRoot "cache\$mp\specialists\9.9.9"
     New-Item -ItemType Directory -Path $cacheInit -Force | Out-Null
     Copy-Item -Path (Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\specialists\*') -Destination $cacheInit -Recurse
-    # Versie-loze marketplaces-clone met (minimaal) de personas onder claude-code-plugins/<familie>/<plugin>/.
+    # Versionless marketplaces clone with (at minimum) the personas under claude-code-plugins/<family>/<plugin>/.
     $cloneP = Join-Path $pluginsRoot "marketplaces\$mp\claude-code-plugins\claude-specialists\specialists\personas"
     New-Item -ItemType Directory -Path $cloneP -Force | Out-Null
     Copy-Item -Path (Join-Path $RepoRoot 'claude-code-plugins\claude-specialists\specialists\personas\*') -Destination $cloneP -Recurse
     $durConsumer = Join-Path $Fixture 'durable-consumer'
     New-Item -ItemType Directory -Path $durConsumer -Force | Out-Null
     $rd = Invoke-Script -Path (Join-Path $cacheInit 'skills\specialists-init\bootstrap.ps1') -ScriptArgs @('-ConsumerRoot', $durConsumer)
-    Assert-Equal 0 $rd.Code 'durabel body-pad: bootstrap exit 0'
+    Assert-Equal 0 $rd.Code 'durable body path: bootstrap exit 0'
     $durMd = [System.IO.File]::ReadAllText((Join-Path $durConsumer 'CLAUDE.md'), [System.Text.Encoding]::UTF8)
-    Assert-True ($durMd -match [regex]::Escape("marketplaces/$mp/claude-code-plugins/claude-specialists/specialists/personas/01-01-persona.md")) 'durabel body-pad: @-import wijst naar de marketplaces-clone'
-    Assert-True (-not ($durMd -match '/cache/')) 'durabel body-pad: @-import wijst NIET naar de versie-gepinde cache'
+    Assert-True ($durMd -match [regex]::Escape("marketplaces/$mp/claude-code-plugins/claude-specialists/specialists/personas/01-01-persona.md")) 'durable body path: @-import points to the marketplaces clone'
+    Assert-True (-not ($durMd -match '/cache/')) 'durable body path: @-import does NOT point to the version-pinned cache'
 
-    # --- 3. Drift op een verse bootstrap: LENS-ONLY (geen body om te vergelijken) --------------------
-    Write-Host "check-consumer-drift.ps1 -- verse lens-only bootstrap = LENS-ONLY" -ForegroundColor Cyan
+    # --- 3. Drift on a fresh bootstrap: LENS-ONLY (no body to compare) --------------------
+    Write-Host "check-consumer-drift.ps1 -- fresh lens-only bootstrap = LENS-ONLY" -ForegroundColor Cyan
     $d1 = Invoke-Script -Path $DriftLint -ScriptArgs @('-ConsumerPath', $Fixture, '-Quiet')
-    Assert-Equal 0 $d1.Code 'drift exit 0 (geen agent-def-drift)'
-    Assert-True ($d1.Out -match 'LENS-ONLY\] 01-01-persona') 'persona 01-01 gemeld als LENS-ONLY'
-    Assert-True (-not ($d1.Out -match 'DRIFTED\]')) 'geen enkele DRIFTED op een verse bootstrap'
+    Assert-Equal 0 $d1.Code 'drift exit 0 (no agent-def drift)'
+    Assert-True ($d1.Out -match 'LENS-ONLY\] 01-01-persona') 'persona 01-01 reported as LENS-ONLY'
+    Assert-True (-not ($d1.Out -match 'DRIFTED\]')) 'no DRIFTED at all on a fresh bootstrap'
 
-    # --- 3b. Root-fix #64: de indexregel is locatie-onafhankelijk (geen pad-diepte-link) ------------
-    Write-Host "persona-indexregel -- locatie-onafhankelijk (inbound #64)" -ForegroundColor Cyan
-    Assert-True (-not ($srcPersona -match '\]\((?:\.\./)+CLAUDE\.md\)')) 'persona-indexregel draagt geen pad-diepte-afhankelijke CLAUDE.md-link meer'
+    # --- 3b. Root fix #64: the index line is location-independent (no path-depth link) ------------
+    Write-Host "persona index line -- location-independent (inbound #64)" -ForegroundColor Cyan
+    Assert-True (-not ($srcPersona -match '\]\((?:\.\./)+CLAUDE\.md\)')) 'persona index line no longer carries a path-depth-dependent CLAUDE.md link'
 
-    # --- 4. Drift-vergelijking op een LEGACY body-kopie: IDENTICAL -> DRIFTED ------------------------
-    # De drift-check ondersteunt nog steeds een consument met een volledige body-kopie (niet lens-only).
-    # We zetten er zelf een neer (sjabloon-body + repo-lens-marker) om die vergelijking te testen.
-    Write-Host "check-consumer-drift.ps1 -- legacy body-kopie: IDENTICAL, dan DRIFTED" -ForegroundColor Cyan
+    # --- 4. Drift comparison on a LEGACY body copy: IDENTICAL -> DRIFTED ------------------------
+    # The drift check still supports a consumer with a full body copy (not lens-only).
+    # We place one ourselves (template body + repo-lens marker) to test that comparison.
+    Write-Host "check-consumer-drift.ps1 -- legacy body copy: IDENTICAL, then DRIFTED" -ForegroundColor Cyan
     $ext = Join-Path $Fixture "$Pp\01-01-extension.md"
-    # Legacy Nederlandse slot-marker: bewijst dat een oude Nederlandse consument nog steeds correct
-    # op de marker splitst (back-compat) -> de portable body is IDENTICAL aan de bron.
+    # Legacy Dutch slot marker: proves that an old Dutch consumer still splits correctly on the
+    # marker (back-compat) -> the portable body is IDENTICAL to the source.
     $fullBody = $srcPersona.TrimEnd() + "`n`n## Eigen aan deze repo (test-fixture)`n`nrepo-eigen.`n"
     [System.IO.File]::WriteAllText($ext, $fullBody, $Utf8NoBom)
     $d2 = Invoke-Script -Path $DriftLint -ScriptArgs @('-ConsumerPath', $Fixture, '-Quiet')
-    Assert-True ($d2.Out -match 'IDENTICAL\] 01-01-persona') 'legacy NL slot-marker: body-kopie is IDENTICAL aan de bron'
-    # Parallel: de nieuwe Engelse slot-marker splitst identiek -> ook IDENTICAL.
+    Assert-True ($d2.Out -match 'IDENTICAL\] 01-01-persona') 'legacy NL slot marker: body copy is IDENTICAL to the source'
+    # Parallel: the new English slot marker splits identically -> also IDENTICAL.
     $fullBodyEn = $srcPersona.TrimEnd() + "`n`n## Specific to this repo (test-fixture)`n`nrepo-specific.`n"
     [System.IO.File]::WriteAllText($ext, $fullBodyEn, $Utf8NoBom)
     $d2en = Invoke-Script -Path $DriftLint -ScriptArgs @('-ConsumerPath', $Fixture, '-Quiet')
-    Assert-True ($d2en.Out -match 'IDENTICAL\] 01-01-persona') 'nieuwe EN slot-marker: splitst identiek (IDENTICAL)'
-    $extText = [System.IO.File]::ReadAllText($ext, [System.Text.Encoding]::UTF8).Replace('Chief of Staff', 'OPPERBAAS-TESTWIJZIGING')
+    Assert-True ($d2en.Out -match 'IDENTICAL\] 01-01-persona') 'new EN slot marker: splits identically (IDENTICAL)'
+    $extText = [System.IO.File]::ReadAllText($ext, [System.Text.Encoding]::UTF8).Replace('Chief of Staff', 'CHIEF-OF-STAFF-TEST-CHANGE')
     [System.IO.File]::WriteAllText($ext, $extText, $Utf8NoBom)
     $d3 = Invoke-Script -Path $DriftLint -ScriptArgs @('-ConsumerPath', $Fixture, '-Quiet')
-    Assert-Equal 0 $d3.Code 'drift exit blijft 0 (persona-drift is informatief)'
-    Assert-True ($d3.Out -match 'DRIFTED\]   01-01-persona') 'persona 01-01 DRIFTED na body-wijziging'
+    Assert-Equal 0 $d3.Code 'drift exit stays 0 (persona drift is informational)'
+    Assert-True ($d3.Out -match 'DRIFTED\]   01-01-persona') 'persona 01-01 DRIFTED after a body change'
 
-    # --- 5. Lint-smoke: de repo zelf blijft groen ----------------------------------------------------
+    # --- 5. Lint smoke: the repo itself stays green ----------------------------------------------------
     Write-Host "check-plugin-integrity.ps1 -- smoke" -ForegroundColor Cyan
     $li = Invoke-Script -Path $Integrity -ScriptArgs @()
-    Assert-Equal 0 $li.Code 'lint-poort groen op de repo'
+    Assert-Equal 0 $li.Code 'lint gate green on the repo'
 }
 finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
@@ -241,8 +241,8 @@ finally {
 
 Write-Host ""
 if ($script:fail -gt 0) {
-    Write-Host "FAALT: $($script:fail) fout, $($script:pass) goed." -ForegroundColor Red
+    Write-Host "FAILS: $($script:fail) failed, $($script:pass) passed." -ForegroundColor Red
     exit 1
 }
-Write-Host "OK: alle $($script:pass) asserts geslaagd." -ForegroundColor Green
+Write-Host "OK: all $($script:pass) asserts passed." -ForegroundColor Green
 exit 0

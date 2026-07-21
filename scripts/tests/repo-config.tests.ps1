@@ -1,15 +1,15 @@
 <#
 .SYNOPSIS
-    Regressietests voor scripts/repo-config.ps1 (de lokale repo-data-SSOT).
+    Regression tests for scripts/repo-config.ps1 (the local repo-data SSOT).
 
 .DESCRIPTION
-    Dependency-vrij: geen Pester nodig, alleen PowerShell. Bewaakt dat de repo-naam op een plek
-    staat en dat de blob-URL daarvan wordt afgeleid (issue #81 -- de repo-naam stond eerder
-    hardcoded in open-pr.ps1, fold-changelog-entry.ps1 en release-lib.ps1).
+    Dependency-free: no Pester needed, only PowerShell. Guards that the repo name lives in one
+    place and that its blob URL is derived from it (issue #81 -- the repo name used to be
+    hardcoded in open-pr.ps1, fold-changelog-entry.ps1 and release-lib.ps1).
 
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/repo-config.tests.ps1
 
-    Puur ASCII (repo-conventie voor .ps1).
+    Pure ASCII (repo convention for .ps1).
 #>
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\repo-config.ps1')
@@ -22,7 +22,7 @@ function Assert-Equal {
     if ($Expected -eq $Actual) {
         $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green
     } else {
-        $script:fail++; Write-Host "  [FAIL] $Name`n         verwacht: '$Expected'`n         kreeg:    '$Actual'" -ForegroundColor Red
+        $script:fail++; Write-Host "  [FAIL] $Name`n         expected: '$Expected'`n         got:      '$Actual'" -ForegroundColor Red
     }
 }
 
@@ -31,33 +31,33 @@ function Assert-Match {
     if ($Text -match $Pattern) {
         $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green
     } else {
-        $script:fail++; Write-Host "  [FAIL] $Name (patroon '$Pattern' niet gevonden)" -ForegroundColor Red
+        $script:fail++; Write-Host "  [FAIL] $Name (pattern '$Pattern' not found)" -ForegroundColor Red
     }
 }
 
 Write-Host "repo-config" -ForegroundColor Cyan
 $name = Get-RepoName
-Assert-Match $name '^[\w.-]+/[\w.-]+$' 'Get-RepoName heeft de vorm owner/naam'
+Assert-Match $name '^[\w.-]+/[\w.-]+$' 'Get-RepoName has the form owner/name'
 
-# De blob-URL wordt afgeleid van de repo-naam (enige bron) -- niet los gehardcodeerd.
+# The blob URL is derived from the repo name (single source) -- not separately hardcoded.
 $blob = Get-RepoBlobUrl
-Assert-Equal "https://github.com/$name/blob/main/" $blob 'Get-RepoBlobUrl is afgeleid van Get-RepoName'
+Assert-Equal "https://github.com/$name/blob/main/" $blob 'Get-RepoBlobUrl is derived from Get-RepoName'
 
-# De lint-poort die open-pr.ps1 draait (repo-specifiek, geinjecteerd i.p.v. hardcoded in open-pr).
+# The lint gate that open-pr.ps1 runs (repo-specific, injected instead of hardcoded in open-pr).
 $lint = Get-LintScript
-Assert-Match $lint '\.ps1$' 'Get-LintScript wijst naar een .ps1'
-Assert-Match $lint '^scripts[\\/]' 'Get-LintScript is repo-root-relatief onder scripts/'
+Assert-Match $lint '\.ps1$' 'Get-LintScript points to a .ps1'
+Assert-Match $lint '^scripts[\\/]' 'Get-LintScript is repo-root-relative under scripts/'
 
-# Roster-config voor check-roster-sync.ps1 (het roster-bestand + de bewust-genegeerde agent-ids).
+# Roster config for check-roster-sync.ps1 (the roster file + the deliberately ignored agent ids).
 $roster = Get-RosterPath
-Assert-Match $roster '\.md$' 'Get-RosterPath wijst naar een .md'
+Assert-Match $roster '\.md$' 'Get-RosterPath points to a .md'
 $ignored = @(Get-RosterIgnoredIds)
-foreach ($id in $ignored) { Assert-Match $id '^\d{2}-\d{2}$' "Get-RosterIgnoredIds: '$id' is een geldig <group>-<id>" }
+foreach ($id in $ignored) { Assert-Match $id '^\d{2}-\d{2}$' "Get-RosterIgnoredIds: '$id' is a valid <group>-<id>" }
 
 Write-Host ""
 if ($script:fail -gt 0) {
-    Write-Host "FAALT: $($script:fail) fout, $($script:pass) goed." -ForegroundColor Red
+    Write-Host "FAILS: $($script:fail) failed, $($script:pass) passed." -ForegroundColor Red
     exit 1
 }
-Write-Host "OK: alle $($script:pass) asserts geslaagd." -ForegroundColor Green
+Write-Host "OK: all $($script:pass) asserts passed." -ForegroundColor Green
 exit 0

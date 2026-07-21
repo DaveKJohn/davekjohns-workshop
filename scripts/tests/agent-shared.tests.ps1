@@ -1,16 +1,16 @@
 <#
 .SYNOPSIS
-    Regressietests voor de gedeelde agent-def-blokken: de lib (agent-shared-lib.ps1), de generator
-    (build-agent-defs.ps1) en de drift-poort in check-plugin-integrity.ps1.
+    Regression tests for the shared agent-def blocks: the lib (agent-shared-lib.ps1), the generator
+    (build-agent-defs.ps1) and the drift gate in check-plugin-integrity.ps1.
 
 .DESCRIPTION
-    Dependency-vrij: geen Pester, alleen PowerShell. De unit-tests dot-sourcen de lib en draaien
-    Expand-AgentDefShared tegen in-geheugen-fixtures; de smoke-tests draaien de echte scripts als
-    KINDPROCES (powershell -File) omdat ze zelf 'exit' aanroepen.
+    Dependency-free: no Pester, only PowerShell. The unit tests dot-source the lib and run
+    Expand-AgentDefShared against in-memory fixtures; the smoke tests run the real scripts as a
+    CHILD PROCESS (powershell -File) because they call 'exit' themselves.
 
         powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/agent-shared.tests.ps1
 
-    Puur ASCII (repo-conventie voor .ps1).
+    Pure ASCII (repo convention for .ps1).
 #>
 $ErrorActionPreference = 'Stop'
 
@@ -26,7 +26,7 @@ $script:pass = 0
 $script:fail = 0
 function Assert-Equal { param($Expected, $Actual, [string]$Name)
     if ($Expected -eq $Actual) { $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green }
-    else { $script:fail++; Write-Host "  [FAIL] $Name`n         verwacht: '$Expected'`n         kreeg:    '$Actual'" -ForegroundColor Red }
+    else { $script:fail++; Write-Host "  [FAIL] $Name`n         expected: '$Expected'`n         got:      '$Actual'" -ForegroundColor Red }
 }
 function Assert-True { param([bool]$Condition, [string]$Name)
     if ($Condition) { $script:pass++; Write-Host "  [PASS] $Name" -ForegroundColor Green }
@@ -39,61 +39,61 @@ function Invoke-Script { param([string]$Path, [string[]]$ScriptArgs)
 function New-Problems { New-Object System.Collections.Generic.List[string] }
 
 try {
-    # --- Fixture-bron: een gedeeld blok 'greeting' ---------------------------------------------------
+    # --- Fixture source: a shared block 'greeting' ---------------------------------------------------
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
     New-Item -ItemType Directory -Path $Fixture -Force | Out-Null
-    $blockText = "- hallo wereld`n- tweede regel"
+    $blockText = "- hello world`n- second line"
     [System.IO.File]::WriteAllText((Join-Path $Fixture 'greeting.md'), "$blockText`n", (New-Object System.Text.UTF8Encoding($false)))
 
     $begin = '<!-- BEGIN shared:greeting -- GENERATED, edit agent-shared/greeting.md -->'
     $end   = '<!-- END shared:greeting -->'
-    $inSync = "voor`n$begin`n$blockText`n$end`nna"
+    $inSync = "before`n$begin`n$blockText`n$end`nafter"
 
-    # --- 1. In-sync inhoud blijft gelijk; geen problemen ---------------------------------------------
+    # --- 1. In-sync content stays the same; no problems ---------------------------------------------
     Write-Host "Expand-AgentDefShared -- in sync" -ForegroundColor Cyan
     $p1 = New-Problems
     $o1 = Expand-AgentDefShared -Content $inSync -SharedDir $Fixture -Problems $p1
-    Assert-Equal $inSync $o1 'in-sync inhoud blijft byte-gelijk'
-    Assert-Equal 0 $p1.Count 'geen problemen op in-sync inhoud'
+    Assert-Equal $inSync $o1 'in-sync content stays byte-equal'
+    Assert-Equal 0 $p1.Count 'no problems on in-sync content'
 
-    # --- 2. Drift wordt gedetecteerd en hersteld naar de bron ----------------------------------------
+    # --- 2. Drift is detected and restored from the source ----------------------------------------
     Write-Host "Expand-AgentDefShared -- drift" -ForegroundColor Cyan
-    $stale = "voor`n$begin`n- HANDMATIG GEWIJZIGD`n$end`nna"
+    $stale = "before`n$begin`n- MANUALLY CHANGED`n$end`nafter"
     $p2 = New-Problems
     $o2 = Expand-AgentDefShared -Content $stale -SharedDir $Fixture -Problems $p2
-    Assert-True ($o2 -ne $stale) 'drift gedetecteerd (expand wijkt af van de input)'
-    Assert-Equal $inSync $o2 'expand herstelt de regio naar de canonieke bron'
+    Assert-True ($o2 -ne $stale) 'drift detected (expand deviates from the input)'
+    Assert-Equal $inSync $o2 'expand restores the region from the canonical source'
 
-    # --- 3. BEGIN zonder END wordt gemeld ------------------------------------------------------------
-    Write-Host "Expand-AgentDefShared -- BEGIN zonder END" -ForegroundColor Cyan
-    $noEnd = "voor`n$begin`n- iets"
+    # --- 3. BEGIN without END is reported ------------------------------------------------------------
+    Write-Host "Expand-AgentDefShared -- BEGIN without END" -ForegroundColor Cyan
+    $noEnd = "before`n$begin`n- something"
     $p3 = New-Problems
     $null = Expand-AgentDefShared -Content $noEnd -SharedDir $Fixture -Problems $p3
-    Assert-True ($p3.Count -ge 1) 'BEGIN zonder END wordt als probleem gemeld'
+    Assert-True ($p3.Count -ge 1) 'BEGIN without END is reported as a problem'
 
-    # --- 4. Onbekend blok (bron ontbreekt) wordt gemeld ----------------------------------------------
-    Write-Host "Expand-AgentDefShared -- onbekend blok" -ForegroundColor Cyan
-    $unknown = "voor`n<!-- BEGIN shared:bestaatniet -->`n- x`n<!-- END shared:bestaatniet -->`nna"
+    # --- 4. Unknown block (missing source) is reported ----------------------------------------------
+    Write-Host "Expand-AgentDefShared -- unknown block" -ForegroundColor Cyan
+    $unknown = "before`n<!-- BEGIN shared:doesnotexist -->`n- x`n<!-- END shared:doesnotexist -->`nafter"
     $p4 = New-Problems
     $null = Expand-AgentDefShared -Content $unknown -SharedDir $Fixture -Problems $p4
-    Assert-True ($p4.Count -ge 1) 'onbekend blok (ontbrekende bron) wordt gemeld'
+    Assert-True ($p4.Count -ge 1) 'unknown block (missing source) is reported'
 
-    # --- 5. Meerdere blokken in EEN agent-def worden alle gevuld -------------------------------------
-    Write-Host "Expand-AgentDefShared -- meerdere blokken" -ForegroundColor Cyan
-    [System.IO.File]::WriteAllText((Join-Path $Fixture 'tweede.md'), "- blok twee`n", (New-Object System.Text.UTF8Encoding($false)))
-    $b2 = '<!-- BEGIN shared:tweede -->'; $e2 = '<!-- END shared:tweede -->'
-    $multiStale = "kop`n$begin`n- oud`n$end`nmidden`n$b2`n- oud2`n$e2`nslot"
+    # --- 5. Multiple blocks in ONE agent-def all get filled -------------------------------------
+    Write-Host "Expand-AgentDefShared -- multiple blocks" -ForegroundColor Cyan
+    [System.IO.File]::WriteAllText((Join-Path $Fixture 'second.md'), "- block two`n", (New-Object System.Text.UTF8Encoding($false)))
+    $b2 = '<!-- BEGIN shared:second -->'; $e2 = '<!-- END shared:second -->'
+    $multiStale = "top`n$begin`n- old`n$end`nmiddle`n$b2`n- old2`n$e2`nbottom"
     $p5 = New-Problems
     $o5 = Expand-AgentDefShared -Content $multiStale -SharedDir $Fixture -Problems $p5
-    Assert-True ($o5 -match 'hallo wereld' -and $o5 -match 'blok twee') 'beide blokken uit hun bron gevuld'
-    Assert-True (-not ($o5 -match 'oud2')) 'stale inhoud van het tweede blok vervangen'
+    Assert-True ($o5 -match 'hello world' -and $o5 -match 'block two') 'both blocks filled from their source'
+    Assert-True (-not ($o5 -match 'old2')) 'stale content of the second block replaced'
 
-    # --- 6. Smoke: de echte repo is in sync ----------------------------------------------------------
+    # --- 6. Smoke: the real repo is in sync ----------------------------------------------------------
     Write-Host "build-agent-defs.ps1 -Check + check-plugin-integrity.ps1 -- repo in sync" -ForegroundColor Cyan
     $rb = Invoke-Script -Path $Build -ScriptArgs @('-Check')
-    Assert-Equal 0 $rb.Code 'build -Check: alle gedeelde blokken in sync op de repo'
+    Assert-Equal 0 $rb.Code 'build -Check: all shared blocks in sync on the repo'
     $ri = Invoke-Script -Path $Integrity -ScriptArgs @()
-    Assert-Equal 0 $ri.Code 'lint-poort groen op de repo (incl. shared-check)'
+    Assert-Equal 0 $ri.Code 'lint gate green on the repo (incl. shared check)'
 }
 finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture -ErrorAction SilentlyContinue }
@@ -101,8 +101,8 @@ finally {
 
 Write-Host ""
 if ($script:fail -gt 0) {
-    Write-Host "FAALT: $($script:fail) fout, $($script:pass) goed." -ForegroundColor Red
+    Write-Host "FAILS: $($script:fail) failed, $($script:pass) passed." -ForegroundColor Red
     exit 1
 }
-Write-Host "OK: alle $($script:pass) asserts geslaagd." -ForegroundColor Green
+Write-Host "OK: all $($script:pass) asserts passed." -ForegroundColor Green
 exit 0

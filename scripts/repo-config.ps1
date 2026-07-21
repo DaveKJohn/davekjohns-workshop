@@ -1,49 +1,49 @@
 <#
 .SYNOPSIS
-    Repo-eigen configuratie voor de workflow-scripts (single source of truth voor repo-data).
+    Repo-owned configuration for the workflow scripts (single source of truth for repo data).
 
 .DESCRIPTION
-    Dot-source dit bestand vanuit een script:
+    Dot-source this file from a script:
 
-        . (Join-Path $PSScriptRoot '..\repo-config.ps1')   # vanuit scripts/<map>/
-        . (Join-Path $PSScriptRoot 'repo-config.ps1')       # vanuit scripts/ zelf
+        . (Join-Path $PSScriptRoot '..\repo-config.ps1')   # from scripts/<folder>/
+        . (Join-Path $PSScriptRoot 'repo-config.ps1')       # from scripts/ itself
 
-    Dit is het kleine, lokale blokje repo-data dat de (steeds generiekere) workflow-scripts inlezen.
-    De scripts zelf zijn repo-agnostisch; alles wat per repo verschilt woont hier. Zo hoeft een
-    wijziging aan de gedeelde flow niet in elke consument te worden nagelopen -- alleen dit bestand
-    verschilt tussen life-hub, smartwatchbanden en de workshop.
+    This is the small, local block of repo data that the (increasingly generic) workflow scripts
+    read in. The scripts themselves are repo-agnostic; everything that differs per repo lives
+    here. This way a change to the shared flow does not need to be checked in every consumer --
+    only this file differs between life-hub, smartwatchbanden and the workshop.
 
-    Levert Get-RepoName en Get-RepoBlobUrl. Vervangt de repo-naam die eerder hardcoded stond in
-    open-pr.ps1, fold-changelog-entry.ps1 (2x) en cut-release.ps1 (via release-lib).
+    Supplies Get-RepoName and Get-RepoBlobUrl. Replaces the repo name that used to be hardcoded in
+    open-pr.ps1, fold-changelog-entry.ps1 (2x) and cut-release.ps1 (via release-lib).
 
-    Geen Set-StrictMode hier: dot-sourcen zou de strict-mode van het aanroepende script veranderen
-    en daar losse code kunnen breken (zelfde reden als branch-info.ps1 / release-lib.ps1).
+    No Set-StrictMode here: dot-sourcing would change the strict mode of the calling script and
+    could break loose code there (same reason as branch-info.ps1 / release-lib.ps1).
 
-    Bewust puur ASCII (repo-conventie voor .ps1): Windows PowerShell 5.1 leest een BOM-loos script
-    als ANSI en zou een accent-literal verhaspelen.
+    Deliberately pure ASCII (repo convention for .ps1): Windows PowerShell 5.1 reads a BOM-less
+    script as ANSI and would mangle an accented literal.
 #>
 
-# De GitHub-repo waar deze werkplaats woont (owner/naam). Enige plek waar dit staat.
+# The GitHub repo where this workshop lives (owner/name). Single place this is stated.
 $script:RepoName = 'DaveKJohn/davekjohns-workshop'
 
 function Get-RepoName {
-    <# owner/naam van deze repo, bv. voor `gh ... --repo`. #>
+    <# owner/name of this repo, e.g. for `gh ... --repo`. #>
     return $script:RepoName
 }
 
 function Get-RepoBlobUrl {
-    <# Basis-URL voor blob-links naar main, bv. om root-relatieve links absoluut te maken. #>
+    <# Base URL for blob links to main, e.g. to make root-relative links absolute. #>
     return "https://github.com/$($script:RepoName)/blob/main/"
 }
 
-# De lint-poort van deze repo, repo-root-relatief. open-pr.ps1 draait dit voor de PR. Dit is het
-# enige repo-specifieke deel van open-pr: elke consument heeft zijn eigen lint (de workshop
-# check-plugin-integrity, een Brains-repo bv. lint-brain). De test-poort is puur conventie
-# (scripts/tests/*.tests.ps1) en heeft geen config nodig.
+# This repo's lint gate, repo-root-relative. open-pr.ps1 runs this before the PR. This is the
+# only repo-specific part of open-pr: every consumer has its own lint (the workshop
+# check-plugin-integrity, a Brains repo e.g. lint-brain). The test gate is pure convention
+# (scripts/tests/*.tests.ps1) and needs no config.
 $script:LintScript = 'scripts\lint\check-plugin-integrity.ps1'
 
 function Get-LintScript {
-    <# Repo-root-relatief pad naar de lint-poort die open-pr.ps1 voor de PR draait. #>
+    <# Repo-root-relative path to the lint gate that open-pr.ps1 runs before the PR. #>
     return $script:LintScript
 }
 

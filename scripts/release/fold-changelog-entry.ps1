@@ -1,20 +1,20 @@
 <#
-Vouwt een of meer changelog entry-bestanden (<branch-naam>.md in de repo-root) in de
-## Pull Requests-sectie van CHANGELOG.md, en verwijdert de entry-bestanden daarna.
+Folds one or more changelog entry files (<branch-name>.md in the repo root) into the
+## Pull Requests section of CHANGELOG.md, and then removes the entry files.
 
-Het entry-bestand is al compact (kop `### titel - type - datum` met middot-scheiding, daaronder de
-beschrijving) -- gelijk aan het CHANGELOG-format. Fold voegt bij het invouwen alleen '#NN - ' vooraan
-in de titel toe en als laatste regel de link `[PR #NN](url)`. Het PR-nummer + url worden opgehaald via
-`gh pr list` (op -Branch, of in fold-all-modus afgeleid uit de bestandsnaam) -- dat kan pas na het
-openen van de PR. Wordt er geen PR gevonden (bv. een handmatige merge zonder PR), dan komt er geen
-nummer/url in en blijft de kop zonder #NN.
+The entry file is already compact (heading `### title - type - date` with middot separation,
+followed by the description) -- matching the CHANGELOG format. When folding, fold only adds
+'#NN - ' at the front of the title and, as the last line, the link `[PR #NN](url)`. The PR number +
+url are fetched via `gh pr list` (on -Branch, or in fold-all mode derived from the file name) --
+that can only happen after opening the PR. If no PR is found (e.g. a manual merge without a PR),
+no number/url is added and the heading stays without #NN.
 
-Gebruik:
-  .\scripts\release\fold-changelog-entry.ps1 -Branch feat/nieuwe-plugin
-  .\scripts\release\fold-changelog-entry.ps1              # vouwt alle aanwezige entry-bestanden
+Usage:
+  .\scripts\release\fold-changelog-entry.ps1 -Branch feat/new-plugin
+  .\scripts\release\fold-changelog-entry.ps1              # folds all present entry files
 
-Draai dit op main, direct na het mergen van een branch (nadat Dave de merge heeft goedgekeurd).
-Commit het resultaat (CHANGELOG.md + verwijderde entry-bestanden) daarna rechtstreeks op main.
+Run this on main, right after merging a branch (after Dave has approved the merge).
+Commit the result (CHANGELOG.md + removed entry files) directly to main afterward.
 #>
 
 param(
@@ -23,47 +23,47 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# Repo-root -- dual-context: draait een consument de gedeelde plugin-spiegel, dan levert
-# CLAUDE_PROJECT_DIR diens repo-root; in de workshop-root (of buiten een sessie) valt het terug op de
-# git-root. Zo werkt DEZELFDE file in beide locaties, en blijven de root-kopie en de plugin-spiegel
-# byte-identiek (bewaakt door de shared-scripts-drift-lint).
+# Repo root -- dual context: if a consumer runs the shared plugin mirror, CLAUDE_PROJECT_DIR
+# supplies its repo root; in the workshop root (or outside a session) it falls back to the git
+# root. This way the SAME file works in both locations, and the root copy and the plugin mirror
+# stay byte-identical (guarded by the shared-scripts drift lint).
 $repoRoot = if ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR } else { (git rev-parse --show-toplevel).Trim() }
 Set-Location $repoRoot
 
-# Pre-flight (#86): fold leunt op scripts\repo-config.ps1 in de repo-root van de consument. Ontbreekt
-# die -- typisch op een schone consument -- stop met een duidelijke wegwijzer i.p.v. een rauwe
-# dot-source-fout op de . (dot-source)-regel hieronder.
+# Pre-flight (#86): fold relies on scripts\repo-config.ps1 in the consumer's repo root. If that is
+# missing -- typically on a clean consumer -- stop with a clear pointer instead of a raw
+# dot-source error on the . (dot-source) line below.
 $configPath = Join-Path $repoRoot 'scripts\repo-config.ps1'
 if (-not (Test-Path -LiteralPath $configPath)) {
-    Write-Error "fold-changelog kan niet draaien -- ontbrekend repo-eigen bestand: $configPath (Get-RepoName / Get-RepoBlobUrl / Get-LintScript). Dit bestand is repo-specifiek en hoort in de repo-root van de consument. Maak het aan (de specialists-init-bootstrap zet een VUL-IN-scaffold neer, of neem een bestaande consument / de werkplaats-repo als model) en draai daarna opnieuw."
+    Write-Error "fold-changelog cannot run -- missing repo-owned file: $configPath (Get-RepoName / Get-RepoBlobUrl / Get-LintScript). This file is repo-specific and belongs in the consumer's repo root. Create it (the specialists-init bootstrap lays down a VUL-IN scaffold, or take an existing consumer / the workshop repo as a model) and run again afterward."
     exit 1
 }
 
-# Repo-naam uit de lokale repo-config van de repo-root (enige bron), niet langer hardcoded. Bewust
-# vanuit $repoRoot en niet $PSScriptRoot: vanuit de plugin-spiegel wijst $PSScriptRoot naar de
-# plugin-cache, terwijl repo-config altijd in de repo-root van de consument woont.
+# Repo name from the repo root's local repo-config (single source), no longer hardcoded.
+# Deliberately from $repoRoot and not $PSScriptRoot: from the plugin mirror, $PSScriptRoot points
+# to the plugin cache, while repo-config always lives in the consumer's repo root.
 . (Join-Path $repoRoot 'scripts\repo-config.ps1')
 $repo = Get-RepoName
 
-# Pre-flight (#86): een niet-ingevulde scaffold (repo-config nog op VUL-IN) faalt anders pas verderop
-# met een onduidelijke gh-fout. Stop hier met een duidelijke wegwijzer.
+# Pre-flight (#86): an unfilled scaffold (repo-config still at VUL-IN) would otherwise only fail
+# further down with an unclear gh error. Stop here with a clear pointer.
 if ($repo -match 'VUL-IN') {
-    Write-Error "fold-changelog kan niet draaien -- scripts\repo-config.ps1 bevat nog VUL-IN-placeholders. Vul Get-RepoName in met de waarde van deze repo en draai opnieuw."
+    Write-Error "fold-changelog cannot run -- scripts\repo-config.ps1 still contains VUL-IN placeholders. Fill in Get-RepoName with this repo's value and run again."
     exit 1
 }
 
-# De 'Plugins:'-detectie leunt op Get-TouchedPlugins uit scripts\lib\release-lib.ps1 (#103, Victor
-# #3) -- maar release-lib.ps1 is bewust NIET gemirrord naar de plugin (workshop-specifieke tooling,
-# zie scripts\lib\shared-scripts-lib.ps1), anders dan dit fold-script zelf. In de workshop-root
-# bestaat het gewoon; in een consumer-repo die de plugin-mirror draait ontbreekt het, en blijft de
-# Plugins-regel achterwege -- functioneel gelijk aan voorheen, want
-# claude-code-plugins/claude-specialists/<plugin>/-paden bestaan daar toch niet.
+# The 'Plugins:' detection relies on Get-TouchedPlugins from scripts\lib\release-lib.ps1 (#103,
+# Victor #3) -- but release-lib.ps1 is deliberately NOT mirrored to the plugin (workshop-specific
+# tooling, see scripts\lib\shared-scripts-lib.ps1), unlike this fold script itself. In the
+# workshop root it simply exists; in a consumer repo running the plugin mirror it is missing, and
+# the Plugins line is omitted -- functionally the same as before, since
+# claude-code-plugins/claude-specialists/<plugin>/ paths do not exist there anyway.
 $releaseLibPath = Join-Path $repoRoot 'scripts\lib\release-lib.ps1'
 $canDetectPlugins = Test-Path -LiteralPath $releaseLibPath
 if ($canDetectPlugins) { . $releaseLibPath }
 
-# BOM-loze UTF8 -- Set-Content -Encoding UTF8 voegt in Windows PowerShell 5.1 altijd een BOM
-# toe, en de rest van de repo (CHANGELOG.md etc.) heeft geen BOM.
+# BOM-less UTF8 -- Set-Content -Encoding UTF8 always adds a BOM in Windows PowerShell 5.1,
+# and the rest of the repo (CHANGELOG.md etc.) has no BOM.
 $Utf8NoBom = New-Object System.Text.UTF8Encoding $false
 
 function Write-Utf8NoBom([string]$Path, [string]$Content) {
@@ -81,7 +81,7 @@ else {
 }
 
 if ($entryFiles.Count -eq 0) {
-    Write-Host "Geen entry-bestanden gevonden om te vouwen." -ForegroundColor Yellow
+    Write-Host "No entry files found to fold." -ForegroundColor Yellow
     exit 0
 }
 
@@ -91,7 +91,7 @@ $headingPattern = '(?m)^## Pull Requests\s*?$'
 foreach ($file in $entryFiles) {
     $filePath = Join-Path $repoRoot $file
     if (-not (Test-Path $filePath)) {
-        Write-Host "Entry-bestand '$file' niet gevonden - overgeslagen." -ForegroundColor Yellow
+        Write-Host "Entry file '$file' not found - skipped." -ForegroundColor Yellow
         continue
     }
 
@@ -102,37 +102,39 @@ foreach ($file in $entryFiles) {
     $nl = if ($usesCRLF) { "`r`n" } else { "`n" }
     $entryContent = ($entryContent -replace "`r`n", "`n") -replace "`n", $nl
 
-    # Het entry-bestand is al compact ("### <titel> <midDot> <type> <midDot> <datum>" + beschrijving),
-    # gelijk aan het CHANGELOG-format. Fold voegt alleen '#NN <midDot> ' vooraan in de titel toe en de
-    # PR-link onderaan. Het PR-nummer bestaat pas na de merge; we halen het op via de branch -- uit
-    # -Branch, of in fold-all-modus afgeleid uit de bestandsnaam (<prefix>-<rest>.md -> <prefix>/<rest>).
+    # The entry file is already compact ("### <title> <midDot> <type> <midDot> <date>" +
+    # description), matching the CHANGELOG format. Fold only adds '#NN <midDot> ' at the front of
+    # the title and the PR link at the end. The PR number only exists after the merge; we fetch it
+    # via the branch -- from -Branch, or in fold-all mode derived from the file name
+    # (<prefix>-<rest>.md -> <prefix>/<rest>).
     $midDot = [char]0x00B7
     $branchForPr = $Branch
     if (-not $branchForPr) {
         $base = [System.IO.Path]::GetFileNameWithoutExtension($file)
         $branchForPr = $base -replace '^([^-]+)-', '$1/'
     }
-    # gh kan meldingen naar stderr schrijven; onder ErrorActionPreference=Stop zou PS 5.1 dat tot een
-    # terminating error promoveren nog voor de graceful $LASTEXITCODE-afhandeling hieronder (de #107-
-    # valkuil). Draai onder Continue en gooi stderr weg (2>$null), zodat het ook de gevangen JSON niet
-    # kan vervuilen. 'files' zit gewoon in --json mee (Victor #4, #103) -- gh pr list levert het
-    # veld net zo goed als gh pr view, dus de tweede gh-call (voorheen gh pr view --json files) is
-    # vervallen: een PR-lookup volstaat voor zowel het nummer/url als de geraakte bestanden.
+    # gh can write messages to stderr; under ErrorActionPreference=Stop, PS 5.1 would promote that
+    # to a terminating error before the graceful $LASTEXITCODE handling below (the #107 pitfall).
+    # Run under Continue and discard stderr (2>$null), so it cannot pollute the captured JSON
+    # either. 'files' is simply included in --json (Victor #4, #103) -- gh pr list supplies that
+    # field just as well as gh pr view, so the second gh call (previously gh pr view --json files)
+    # has been dropped: one PR lookup suffices for both the number/url and the touched files.
     $prevEap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
     $prJson = gh pr list --head $branchForPr --state all --json number,url,files --limit 1 --repo $repo 2>$null
     $ghCode = $LASTEXITCODE
     $ErrorActionPreference = $prevEap
-    if ($ghCode -ne 0) { Write-Host "  (gh pr list gaf exitcode $ghCode -- PR-nummer-verrijking overgeslagen; draai gh handmatig voor de reden.)" -ForegroundColor DarkYellow }
+    if ($ghCode -ne 0) { Write-Host "  (gh pr list returned exit code $ghCode -- PR-number enrichment skipped; run gh manually for the reason.)" -ForegroundColor DarkYellow }
     $prs = if ($ghCode -eq 0 -and $prJson) { @($prJson | ConvertFrom-Json) } else { @() }
     if ($prs.Count -ge 1) {
         $num = $prs[0].number
         $entryContent = ([regex]'(?m)^### ').Replace($entryContent, "### #$num $midDot ", 1)
 
-        # Geraakte plugins afleiden uit de PR-bestanden (automation-first): paden onder
-        # claude-code-plugins/claude-specialists/<plugin>/ worden een 'Plugins:'-regel, waarmee
-        # cut-release.ps1 later de per-plugin CHANGELOGs bijschrijft. De detectie zelf zit in de
-        # pure Get-TouchedPlugins (release-lib.ps1, #103) -- hier alleen de guard; 'files' kwam al
-        # mee met de gh pr list-call hierboven, dus geen aparte gh-roundtrip meer nodig.
+        # Deriving touched plugins from the PR files (automation-first): paths under
+        # claude-code-plugins/claude-specialists/<plugin>/ become a 'Plugins:' line, which
+        # cut-release.ps1 later uses to update the per-plugin CHANGELOGs. The detection itself
+        # lives in the pure Get-TouchedPlugins (release-lib.ps1, #103) -- only the guard is here;
+        # 'files' already came along with the gh pr list call above, so no separate gh roundtrip
+        # is needed anymore.
         if ($canDetectPlugins) {
             $paths = @($prs[0].files | ForEach-Object { $_.path })
             $touched = @(Get-TouchedPlugins -Files $paths)
@@ -144,18 +146,19 @@ foreach ($file in $entryFiles) {
         $entryContent = $entryContent.TrimEnd() + "$nl$nl[PR #$num]($($prs[0].url))"
     }
     else {
-        Write-Host "  Geen PR gevonden voor '$branchForPr' - entry zonder PR-nummer/url." -ForegroundColor Yellow
+        Write-Host "  No PR found for '$branchForPr' - entry without PR number/url." -ForegroundColor Yellow
     }
 
     $headingMatch = [regex]::Match($changelogContent, $headingPattern)
     if (-not $headingMatch.Success) {
-        Write-Host "Kon de '## Pull Requests' heading niet vinden in CHANGELOG.md - stoppen." -ForegroundColor Red
+        Write-Host "Could not find the '## Pull Requests' heading in CHANGELOG.md - stopping." -ForegroundColor Red
         exit 1
     }
     $afterHeader = $headingMatch.Index + $headingMatch.Length
 
-    # Invoegen na een eventuele intro-alinea: voor de eerste ###-entry in de Pull Requests-sectie,
-    # of - als de sectie nog leeg is - voor het ## Releases-kopje. Zo blijft de intro-regel bovenaan.
+    # Insert after any intro paragraph: before the first ###-entry in the Pull Requests section,
+    # or - if the section is still empty - before the ## Releases heading. This keeps the intro
+    # line at the top.
     $relMatch = [regex]::Match($changelogContent, '(?m)^## Releases\s*?$')
     $relPos = if ($relMatch.Success) { $relMatch.Index } else { $changelogContent.Length }
     $firstEntry = ([regex]'(?m)^### ').Match($changelogContent, $afterHeader)
@@ -166,7 +169,7 @@ foreach ($file in $entryFiles) {
 
     Write-Utf8NoBom -Path $changelogPath -Content $changelogContent
     Remove-Item -Path $filePath -Force
-    Write-Host "Gevouwen en verwijderd: $file" -ForegroundColor Green
+    Write-Host "Folded and removed: $file" -ForegroundColor Green
 }
 
-Write-Host "CHANGELOG.md bijgewerkt." -ForegroundColor Green
+Write-Host "CHANGELOG.md updated." -ForegroundColor Green
