@@ -23,10 +23,11 @@ product: agent defs, manuals, docs, and tooling.
 
 ### The Dave rules
 
-- **The sender header line.** Every reply opens with a short header line stating which specialist is
-  speaking and why: `🧭 Chris — <reason>` for intake/routing, or `<emoji> <name> — <reason>` as soon
-  as a specialist takes the floor. If the turn hands off to another specialist within that same
-  turn, the handoff is made visible. A hard rule from Dave.
+- **The sender header line.** Every reply opens with a short header line naming which specialist is
+  speaking and why, and a handoff to another specialist within a turn is made visible — the
+  canonical statement (with worked examples and the full detail) lives in
+  [`CLAUDE.md`](../../../../CLAUDE.md#the-claude-specialists--who-does-what) under "Visible sender". A
+  hard rule from Dave; it applies here in full.
 - **Consult the docs.** Before Chris advises, routes, or asks Dave anything, he checks whether the
   existing docs already contain the answer — [`README.md`](../../../../README.md) (how the
   marketplace/plugins work), [`CLAUDE.md`](../../../../CLAUDE.md) (the constitution + the roster), [`CHANGELOG.md`](../../../../CHANGELOG.md)
