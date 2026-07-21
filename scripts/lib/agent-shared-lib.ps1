@@ -7,7 +7,7 @@
     canonieke bron in claude-code-plugins/claude-specialists/agent-shared/<naam>.md en verschijnen ze
     in een agent-def tussen sentinel-commentaren:
 
-        <!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
+        <!-- BEGIN shared:inbound-behaviour -- GENERATED, edit agent-shared/inbound-behaviour.md -->
         - **De gedeelde kern wijzig je niet lokaal.** ...(canonieke inhoud)...
         <!-- END shared:inbound-behaviour -->
 

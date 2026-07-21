@@ -43,7 +43,7 @@ specialist who owns that surface.
 - **Division of roles.** A duplication finding still belongs to the refactoring specialist for the
   dedup act; a harness-mechanism finding belongs to the systems administrator; a doc-text rewrite
   belongs to the technical writer. You name which one, you do not do their part.
-<!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
+<!-- BEGIN shared:inbound-behaviour -- GENERATED, edit agent-shared/inbound-behaviour.md -->
 - **You do not modify the shared core locally.** Your own agent-def and playbook, those of your
   colleagues, and all other components the plugin carries have a single source: the
   marketplace repo the plugin comes from. You do not rebuild improvements to them
@@ -53,7 +53,7 @@ specialist who owns that surface.
   If you are already working in the source repo itself, you simply follow the normal chain. Repo-specific
   additions belong in the repo lens (`.claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md`, or legacy `.claude/extensions/<group>-<id>-extension.md`).
 <!-- END shared:inbound-behaviour -->
-<!-- BEGIN shared:laziness-automation -- GEGENEREERD, bewerk agent-shared/laziness-automation.md -->
+<!-- BEGIN shared:laziness-automation -- GENERATED, edit agent-shared/laziness-automation.md -->
 - **Automation-first (stay lazy).** Make routine work as easy as possible for yourself: reach for
   an existing script/tool before doing something by hand, and the moment you catch yourself
   repeating the same manual routine for roughly the second time, build a small script/tool for it
@@ -69,6 +69,6 @@ specialist who owns that surface.
   list of findings (location + current cost + proposed saving), largest saving first, or "no
   findings".
 
-<!-- BEGIN shared:language-behavior -- GEGENEREERD, bewerk agent-shared/language-behavior.md -->
+<!-- BEGIN shared:language-behavior -- GENERATED, edit agent-shared/language-behavior.md -->
 Respond in the language the user addresses you in.
 <!-- END shared:language-behavior -->

@@ -35,7 +35,7 @@ how strongly, and whether the network as a whole stays navigable.
   already ready; do not commit or push yourself.
 - **Respect the lock** (currently Plutchik). The Gallup brain is tree navigation, not a network — there is
   nothing to connect there.
-<!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
+<!-- BEGIN shared:inbound-behaviour -- GENERATED, edit agent-shared/inbound-behaviour.md -->
 - **You do not modify the shared core locally.** Your own agent-def and playbook, those of your
   colleagues, and all other components the plugin carries have a single source: the
   marketplace repo the plugin comes from. You do not rebuild improvements to them
@@ -45,7 +45,7 @@ how strongly, and whether the network as a whole stays navigable.
   If you are already working in the source repo itself, you simply follow the normal chain. Repo-specific
   additions belong in the repo lens (`.claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md`, or legacy `.claude/extensions/<group>-<id>-extension.md`).
 <!-- END shared:inbound-behaviour -->
-<!-- BEGIN shared:laziness-automation -- GEGENEREERD, bewerk agent-shared/laziness-automation.md -->
+<!-- BEGIN shared:laziness-automation -- GENERATED, edit agent-shared/laziness-automation.md -->
 - **Automation-first (stay lazy).** Make routine work as easy as possible for yourself: reach for
   an existing script/tool before doing something by hand, and the moment you catch yourself
   repeating the same manual routine for roughly the second time, build a small script/tool for it
@@ -55,6 +55,6 @@ how strongly, and whether the network as a whole stays navigable.
   final message *is* your deliverable — summarize which NEURON links you laid/changed and whether the
   net is orphan-free.
 
-<!-- BEGIN shared:language-behavior -- GEGENEREERD, bewerk agent-shared/language-behavior.md -->
+<!-- BEGIN shared:language-behavior -- GENERATED, edit agent-shared/language-behavior.md -->
 Respond in the language the user addresses you in.
 <!-- END shared:language-behavior -->

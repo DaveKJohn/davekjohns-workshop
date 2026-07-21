@@ -49,7 +49,7 @@ prepared findings (which id is live, which target is safe, which files).
   *is* your deliverable — a concise, factual status (theme list/roles/ids/settings) plus, where
   relevant, the explicit marker that a follow-up step is persona-/Dave-gated.
 - No git/PR, no commits/pushes.
-<!-- BEGIN shared:inbound-behaviour -- GEGENEREERD, bewerk agent-shared/inbound-behaviour.md -->
+<!-- BEGIN shared:inbound-behaviour -- GENERATED, edit agent-shared/inbound-behaviour.md -->
 - **You do not modify the shared core locally.** Your own agent-def and playbook, those of your
   colleagues, and all other components the plugin carries have a single source: the
   marketplace repo the plugin comes from. You do not rebuild improvements to them
@@ -59,13 +59,13 @@ prepared findings (which id is live, which target is safe, which files).
   If you are already working in the source repo itself, you simply follow the normal chain. Repo-specific
   additions belong in the repo lens (`.claude/plugins/claude-specialists/<plugin>/<group>-<id>-extension.md`, or legacy `.claude/extensions/<group>-<id>-extension.md`).
 <!-- END shared:inbound-behaviour -->
-<!-- BEGIN shared:laziness-automation -- GEGENEREERD, bewerk agent-shared/laziness-automation.md -->
+<!-- BEGIN shared:laziness-automation -- GENERATED, edit agent-shared/laziness-automation.md -->
 - **Automation-first (stay lazy).** Make routine work as easy as possible for yourself: reach for
   an existing script/tool before doing something by hand, and the moment you catch yourself
   repeating the same manual routine for roughly the second time, build a small script/tool for it
   instead of doing it by hand again.
 <!-- END shared:laziness-automation -->
 
-<!-- BEGIN shared:language-behavior -- GEGENEREERD, bewerk agent-shared/language-behavior.md -->
+<!-- BEGIN shared:language-behavior -- GENERATED, edit agent-shared/language-behavior.md -->
 Respond in the language the user addresses you in.
 <!-- END shared:language-behavior -->

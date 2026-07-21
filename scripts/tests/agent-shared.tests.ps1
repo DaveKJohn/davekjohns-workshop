@@ -45,7 +45,7 @@ try {
     $blockText = "- hallo wereld`n- tweede regel"
     [System.IO.File]::WriteAllText((Join-Path $Fixture 'greeting.md'), "$blockText`n", (New-Object System.Text.UTF8Encoding($false)))
 
-    $begin = '<!-- BEGIN shared:greeting -- GEGENEREERD, bewerk agent-shared/greeting.md -->'
+    $begin = '<!-- BEGIN shared:greeting -- GENERATED, edit agent-shared/greeting.md -->'
     $end   = '<!-- END shared:greeting -->'
     $inSync = "voor`n$begin`n$blockText`n$end`nna"
 
