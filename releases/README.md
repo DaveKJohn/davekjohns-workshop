@@ -13,6 +13,7 @@ along with the plugin cache via `claude plugin update`).
 
 | Version | Date | Type | Title |
 |---|---|---|---|
+| [1.16.0](development/1.16/1.16.0.md) | 2026-07-22 | Minor | ship-pr one-command flow, category-grouped release output, and the post-review doc consistency pass |
 | [1.15.1](development/1.15/1.15.1.md) | 2026-07-22 | Patch | Shared Invoke-NativeCapture helper across the release scripts, and a fully-English CHANGELOG and script layer |
 | [1.15.0](development/1.15/1.15.0.md) | 2026-07-21 | Minor | English script layer, Shopify dev-first, consumer-fit open-pr/fold, and shared release/check helpers |
 | [1.14.0](development/1.14/1.14.0.md) | 2026-07-21 | Minor | Cross-browser and automation-first shared rules, and a leaner, plugin-independent CLAUDE.md |
