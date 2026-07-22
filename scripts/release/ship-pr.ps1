@@ -90,9 +90,26 @@ $pr = $prs[0].number
 Write-Host "ship-pr: PR #$pr opened for '$branch'." -ForegroundColor Green
 
 # --- Step 3: wait for the required CI check ------------------------------------------------------
-# gh pr checks --watch blocks until the checks finish; exit 0 = all passed, non-zero = a failure.
-# Branch protection blocks the merge until green, so a failure here means we must NOT merge.
+# The CI checks can lag a few seconds behind the push: `gh pr checks` prints "no checks reported"
+# and exits 0 while none are registered yet -- indistinguishable by exit code from "all passed", so
+# a bare --watch could return immediately and let the merge below run straight into a BLOCKED wall.
+# First poll (on the TEXT, not the exit code) until at least one check is registered, then --watch it.
 Write-Host "ship-pr: waiting for CI (lint-en-tests) on PR #$pr..." -ForegroundColor Cyan
+$maxWaitSec = 180
+$waited = 0
+while ($true) {
+    $probe = Invoke-NativeCapture -FilePath 'gh' -Arguments @('pr', 'checks', "$pr", '--repo', $repo)
+    if (($probe.Output | Out-String) -notmatch 'no checks reported') { break }
+    if ($waited -ge $maxWaitSec) {
+        Write-Error "No CI check registered for PR #$pr after ${maxWaitSec}s -- NOT merged. Check the workflow, or merge manually once it is green."
+        exit 1
+    }
+    Write-Host "  (no check registered yet -- waited ${waited}s/${maxWaitSec}s)" -ForegroundColor DarkYellow
+    Start-Sleep -Seconds $PollSeconds
+    $waited += $PollSeconds
+}
+# --watch now blocks until the registered check finishes; exit 0 = all passed, non-zero = a failure.
+# Branch protection blocks the merge until green, so a non-zero here means we must NOT merge.
 $checks = Invoke-NativeCapture -FilePath 'gh' -Arguments @('pr', 'checks', "$pr", '--watch', '--interval', "$PollSeconds", '--repo', $repo)
 $checks.Output | ForEach-Object { Write-Host $_ }
 if ($checks.ExitCode -ne 0) {
