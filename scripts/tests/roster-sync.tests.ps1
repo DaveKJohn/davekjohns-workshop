@@ -368,6 +368,26 @@ try {
     Assert-Match "\[INFO\].*lens '06-16'.*header still names 'Sean'.*is now 'Sebastian'" $r.Out 'stale header: 06-16 drift reported'
     Assert-NotMatch "lens '06-17'.*header still names" $r.Out 'stale header: 06-17 (name matches) not flagged'
     Assert-NotMatch "lens '06-19'.*header still names" $r.Out 'stale header: 06-19 (hand-customized header) not flagged'
+
+    # --- 14. Strict-mode crash guard: consumer's repo-config.ps1 defines Get-RosterPath /
+    #     Get-RosterIgnoredIds fine but ALSO carries harmless pre-strict-mode loose top-level code
+    #     (a bare `if ($LegacyDebugFlag) {...}` referencing an unset variable). Under the OLD
+    #     dot-source-in-the-strict-scope behavior this threw under Set-StrictMode + EAP=Stop and
+    #     TERMINATED the whole check (the roster-sessioncheck hook then reported "could not
+    #     complete" every session start). Sibling of the check-script-contract.ps1 fix (PR #148).
+    #     DO NOT DELETE -- this is the regression guard for that strict-mode dot-source crash.
+    #     Proves: (1) the check completes normally (exit 0, no unhandled-throw crash), and
+    #     (2) Get-RosterPath is still honored (roster read from ROSTER.md, not the empty default).
+    $cache = New-FixtureCache -VersionAgents @{ '1.11.0' = @('06-16') }
+    $repoConfig = "if (`$LegacyDebugFlag) { Write-Host 'legacy' }`nfunction Get-RosterPath { return 'ROSTER.md' }`nfunction Get-RosterIgnoredIds { return @() }"
+    $c = New-FixtureConsumer -RosterIds @('06-16') -LensIds @('06-16') -RosterFile 'ROSTER.md' -RepoConfig $repoConfig
+    # Empty default-path CLAUDE.md, same trick as scenario 8: proves ROSTER.md (not the default) was read.
+    [System.IO.File]::WriteAllText((Join-Path $c 'CLAUDE.md'), "# empty`n")
+    $r = Invoke-Ps @('-ConsumerPathOverride', $c, '-CacheRootOverride', $cache)
+    Assert-Equal 0 $r.Code 'strict-mode crash guard: exit-code 0 (no crash from loose top-level code)'
+    Assert-Match "\[OK\]\s+agent '06-16' present in roster" $r.Out 'strict-mode crash guard: Get-RosterPath honored (ROSTER.md read)'
+    Assert-NotMatch '\[ERROR\]' $r.Out 'strict-mode crash guard: no false ERROR'
+    Assert-NotMatch 'cannot be retrieved|has not been set|Exception' $r.Out 'strict-mode crash guard: no raw strict-mode exception surfaced'
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
 }

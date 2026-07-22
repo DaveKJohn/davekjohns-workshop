@@ -192,11 +192,37 @@ $rosterRel = 'CLAUDE.md'
 $ignoredIds = @()
 $configPath = Join-Path $repoRoot 'scripts\repo-config.ps1'
 if (Test-Path -LiteralPath $configPath -PathType Leaf) {
-    . $configPath
-    if (Get-Command Get-RosterPath -ErrorAction SilentlyContinue) { $rosterRel = Get-RosterPath }
-    # Ids that are enabled but deliberately kept out of the roster/lenses (a documented repo choice);
-    # they are skipped rather than flagged as drift. Empty on a fresh consumer.
-    if (Get-Command Get-RosterIgnoredIds -ErrorAction SilentlyContinue) { $ignoredIds = @(Get-RosterIgnoredIds) }
+    # Dot-source + call the consumer's repo-config in a CHILD scope with StrictMode explicitly OFF --
+    # sibling of the check-script-contract.ps1 fix: the real runtime callers of repo-config.ps1
+    # (open-pr.ps1, fold-changelog-entry.ps1, ...) never enable StrictMode, and repo-config.ps1 is
+    # explicitly documented as written on that no-strict-mode assumption (harmless loose top-level
+    # code is expected there). Probing inside the same block keeps the dot-sourced functions visible
+    # to Get-Command while nothing leaks into this script's own strict scope. A genuine failure (a
+    # real syntax error, not just strict-mode noise) falls back to the sane defaults below rather than
+    # crashing this whole check -- this check does not hard-require repo-config.
+    $probe = & {
+        Set-StrictMode -Off
+        $result = [pscustomobject]@{ Loaded = $true; Error = $null; RosterPath = $null; IgnoredIds = $null }
+        try {
+            . $args[0]
+        } catch {
+            $result.Loaded = $false
+            $result.Error = $_.Exception.Message
+            return $result
+        }
+        if (Get-Command Get-RosterPath -ErrorAction SilentlyContinue) { $result.RosterPath = Get-RosterPath }
+        if (Get-Command Get-RosterIgnoredIds -ErrorAction SilentlyContinue) { $result.IgnoredIds = @(Get-RosterIgnoredIds) }
+        return $result
+    } $configPath
+
+    if ($probe.Loaded) {
+        if ($null -ne $probe.RosterPath) { $rosterRel = $probe.RosterPath }
+        # Ids that are enabled but deliberately kept out of the roster/lenses (a documented repo choice);
+        # they are skipped rather than flagged as drift. Empty on a fresh consumer.
+        if ($null -ne $probe.IgnoredIds) { $ignoredIds = @($probe.IgnoredIds) }
+    } else {
+        Write-Info "scripts\repo-config.ps1 failed to load ($($probe.Error)) -- falling back to defaults (roster '$rosterRel', no ignored ids)."
+    }
 }
 $rosterPath = Join-Path $repoRoot $rosterRel
 if (Test-Path -LiteralPath $rosterPath -PathType Leaf) {
