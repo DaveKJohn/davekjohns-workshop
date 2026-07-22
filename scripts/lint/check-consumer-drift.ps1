@@ -12,9 +12,9 @@
     agent def that has meanwhile also been shared here (e.g. life-hub .claude/agents/<group>-<id>-agent.md,
     or swb .claude-plugins/specialists/agents/<group>-<id>-agent.md). This script:
 
-      1. Reads the ids + groups from all three plugins (specialists, specialists-lifehub,
-         specialists-shopify) in this repo (source of truth) -- the shared core plus the two
-         domain groups.
+      1. Reads the ids + groups from all plugins (specialists, specialists-lifehub,
+         specialists-shopify, specialists-ecomm) in this repo (source of truth) -- the shared core
+         plus the domain groups.
       2. Looks in the given consuming repo, at the known legacy paths, for a local file with that
          same id.
       3. Reports one of three outcomes per found id:
@@ -65,13 +65,14 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $PluginRoot = Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')
-# All three plugins carry canonical agent defs: the shared core (specialists) plus the two domain
-# groups (specialists-lifehub, specialists-shopify). We scan all three, so the drift check also
-# covers a consuming repo's domain specialists.
+# All plugins carry canonical agent defs: the shared core (specialists) plus the domain groups
+# (specialists-lifehub, specialists-shopify, specialists-ecomm). We scan all of them, so the drift
+# check also covers a consuming repo's domain specialists.
 $SourceDirs = @(
     (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists\agents')
     (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists-lifehub\agents')
     (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists-shopify\agents')
+    (Join-Path $PluginRoot 'claude-code-plugins\claude-specialists\specialists-ecomm\agents')
 ) | Where-Object { Test-Path -LiteralPath $_ }
 if ($SourceDirs.Count -eq 0) {
     Write-Host "Cannot find any canonical agent-defs under $PluginRoot -- stopping." -ForegroundColor Red

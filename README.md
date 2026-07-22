@@ -3,8 +3,8 @@
 The **workshop of Dave (DaveKJohn)**: the marketplace repo where all of his Claude Code plugins are
 built and maintained — designed by a human, executed with his team of specialists. The first
 product family is the **Claude Specialists system** in
-[`claude-code-plugins/claude-specialists/`](claude-code-plugins/claude-specialists/), split into **three plugins**: the shared,
-portable core plus two domain groups. This repo is the **single source of truth** for all shareable
+[`claude-code-plugins/claude-specialists/`](claude-code-plugins/claude-specialists/), split into **four plugins**: the shared,
+portable core plus three domain groups. This repo is the **single source of truth** for all shareable
 subagent definitions — every consuming repo points to it instead of maintaining its own copies, and
 enables or disables **per plugin** which groups it needs.
 
@@ -15,9 +15,10 @@ that explains what the family does and how its sub-plugins differ. For now there
 
 - **[`claude-specialists/`](claude-code-plugins/claude-specialists/README.md)** — the
   Claude Specialists system: the shared, repo-neutral core `specialists` (group 1, for every
-  repo) plus the two deliberately domain-flavored groups `specialists-lifehub` (group 2) and
-  `specialists-shopify` (group 3). Which specialists sit in which sub-plugin, who they are
-  meant for, and how to invoke them is in that README — this file doesn't repeat it.
+  repo) plus the three deliberately domain-flavored groups `specialists-lifehub` (group 2),
+  `specialists-shopify` (group 3), and `specialists-ecomm` (group 4). Which specialists sit in
+  which sub-plugin, who they are meant for, and how to invoke them is in that README — this file
+  doesn't repeat it.
 
 ## What lives here and what doesn't
 
@@ -74,13 +75,14 @@ content/context of that repo the specialist serves). The portable part lives in
 `<plugin>/manuals/<group>-<id>-manual.md` in this marketplace; the consuming repo keeps only the
 lens in `.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.md`. The agent def points to both.
 
-**All three groups have now been migrated** — every handbook lives here in the `manuals/` folder of
+**All four groups have now been migrated** — every handbook lives here in the `manuals/` folder of
 its plugin, and every consuming repo keeps only its repo lens in `.claude/plugins/claude-specialists/specialists/`:
 
 - **`specialists` (group 1)** → `claude-code-plugins/claude-specialists/specialists/manuals/` (Paula, Rebecca, Vera, Gwen, Cody, Tycho,
-  Sylvester, Tessa, Edith, Victor, Sean, Ravi).
+  Sylvester, Tessa, Edith, Victor, Sebastian, Ravi).
 - **`specialists-lifehub` (group 2)** → `claude-code-plugins/claude-specialists/specialists-lifehub/manuals/` (Astrid, Fiona, Hugo, Ian, Onyx).
 - **`specialists-shopify` (group 3)** → `claude-code-plugins/claude-specialists/specialists-shopify/manuals/` (Liam, Sandra, Steven).
+- **`specialists-ecomm` (group 4)** → `claude-code-plugins/claude-specialists/specialists-ecomm/manuals/` (Sergio, Craig, Sean).
 
 **Persona templates — a third artifact alongside agent def and manual.** The orchestrator and the
 main-loop specialists (Chris #01, Bianca #02, Derek #05, Rendall #06) run in the **main loop**, not as
@@ -185,7 +187,7 @@ two-stage:
 
 ## Versioning
 
-Every plugin (`claude-code-plugins/claude-specialists/specialists/…`, `claude-code-plugins/claude-specialists/specialists-lifehub/…`, `claude-code-plugins/claude-specialists/specialists-shopify/…`) carries its own
+Every plugin (one folder per group under `claude-code-plugins/claude-specialists/`) carries its own
 `version` in its `plugin.json`. On a release those versions move **in lockstep** — they all get the
 same number and one repo-wide tag `vX.Y.Z` (see [Cutting a release](#cutting-a-release)).
 **That version number is also the update gate**: `claude plugin update` compares nothing but
@@ -200,6 +202,31 @@ check 9) guards that the card is present and its version matches `plugin.json`.
 Changes to a shared agent def land here first, are committed here, and only then picked up by the
 consuming repos — never the other way around (no repo may overwrite a shared agent def locally
 without contributing it back here).
+
+## Adding a new plugin group
+
+A domain group is its own plugin folder — but adding one touches more than that folder. The drift
+lint and the family docs enumerate the plugins and go stale silently if you forget them. The full
+checklist (learned from adding `specialists-ecomm`):
+
+1. **The plugin folder** `claude-code-plugins/claude-specialists/<plugin>/` with
+   `.claude-plugin/plugin.json` (the lockstep `version`, matching the other plugins), a
+   `CHANGELOG.md` intro, and a `RELEASE.md` card whose `# Release vX.Y.Z` heading matches
+   `plugin.json` (lint check 9).
+2. **The marketplace entry** — register the plugin in
+   [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) with a repo-relative `source`.
+3. **The specialists** — `agents/<group>-<id>-agent.md` + `manuals/<group>-<id>-manual.md` per
+   member, following the `<group>-<id>` convention (a globally unique `id`).
+4. **The drift lint** — add the plugin's `agents` folder to `$SourceDirs` in
+   [`scripts/lint/check-consumer-drift.ps1`](scripts/lint/check-consumer-drift.ps1), or a consumer's
+   drift check never covers the new ids.
+5. **The family docs** that enumerate the plugins — the root `README.md` (the plugin count + the
+   family bullet + the migration list), the family
+   [`README.md`](claude-code-plugins/claude-specialists/README.md) (count, the sub-plugins table,
+   the invocation list, and whether the group is mutually exclusive with the others or complementary),
+   and [`QUICKSTART.md`](claude-code-plugins/claude-specialists/QUICKSTART.md).
+6. **The gates** — `scripts/agents/build-agent-defs.ps1 -Check`,
+   `scripts/lint/check-plugin-integrity.ps1`, and the `scripts/tests/*.tests.ps1` suites, all green.
 
 ## Maintenance: drift lint
 
@@ -260,7 +287,7 @@ changelog entry — the same workflow as the consuming repos. The steps:
 
 ### Cutting a release
 
-A release is a **captured moment**: all three plugins get the same version number
+A release is a **captured moment**: all plugins get the same version number
 (**lockstep, repo-wide**) and the state is tagged as `vX.Y.Z`. Nothing is published to GitHub Releases
 — only a git tag, the full notes in [`releases/`](releases/README.md), and a reference to them in
 [`CHANGELOG.md`](CHANGELOG.md). A release is cut **only on Dave's explicit

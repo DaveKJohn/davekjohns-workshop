@@ -13,8 +13,8 @@ and code/security reviewers for the independent final pass before a PR or merge.
 charge: the governance (your `CLAUDE.md`, your safety rules) remains yours; the plugins only supply
 the team and its playbooks.
 
-The system consists of **three plugins**: the repo-neutral core `specialists` (group 1 — always
-enable it) and two optional domain groups. Which specialists live in which plugin and who they are
+The system consists of **four plugins**: the repo-neutral core `specialists` (group 1 — always
+enable it) and three optional domain groups. Which specialists live in which plugin and who they are
 meant for is covered in the [family README](README.md).
 
 ## Connecting in three steps

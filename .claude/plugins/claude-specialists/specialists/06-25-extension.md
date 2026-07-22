@@ -21,7 +21,7 @@ him levers to pull.**
   **on demand**, at the moment Chris assigns work to them — "deliberate, to save context/tokens".
   Nolan checks whether that boundary still holds as the roster grows: does a new persona/subagent
   stay on-demand, or has something crept onto the automatic path that doesn't need to be there?
-- **The size of agent-defs, manuals, and personas** across the three plugins
+- **The size of agent-defs, manuals, and personas** across the plugins
   (`claude-code-plugins/claude-specialists/*/agents/*-agent.md`, `*/manuals/*-manual.md`,
   `specialists/personas/*-persona.md`): a manual/agent-def that has grown well past what its craft
   needs is a cost on every load, not a one-time read.

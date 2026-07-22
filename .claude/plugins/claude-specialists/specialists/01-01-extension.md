@@ -75,7 +75,7 @@ Before a specialist starts, Chris guards these davekjohns-workshop-specific gate
 | Copy editing, pre-PR check, language/spelling, consistency, dead links | **Edith** #17 | [`06-17-extension.md`](06-17-extension.md) |
 | Writing/maintaining tests for the scripts (lint/release), guarding against regressions | **Tycho** #18 | [`04-18-extension.md`](04-18-extension.md) |
 | Code review before a merge: correctness, simplicity, reuse, efficiency of scripts/agent defs | **Victor** #19 | [`06-19-extension.md`](06-19-extension.md) |
-| Security review before a merge: secrets/PII in the diff, injection surface of plugin content, audits of guardrails/permissions/hooks | **Sean** #23 | [`06-23-extension.md`](06-23-extension.md) |
+| Security review before a merge: secrets/PII in the diff, injection surface of plugin content, audits of guardrails/permissions/hooks | **Sebastian** #23 | [`06-23-extension.md`](06-23-extension.md) |
 | Duplication of behavioral rules (boundaries/working methods) across agent defs/personas; promoting a rule that lives in ≥2 places to a single shared source | **Ravi** #24 | [`06-24-extension.md`](06-24-extension.md) |
 | Token-/context-budget cost, loading strategy (automatic vs. on-demand), the size of agent defs/manuals/personas | **Nolan** #25 | [`06-25-extension.md`](06-25-extension.md) |
 
@@ -105,12 +105,12 @@ Typical chains:
   accompanying docs) → Derek (PR on Dave's word) → Rendall (folding the changelog).
 - **Quality check before a PR:** (author done with the work) → Victor (code review: correctness,
   simplicity, reuse, efficiency — only relevant if there is script/agent-def code in the diff) +
-  Edith (copy edit: language/docs/links on the diff) + Sean (security review — only relevant if the
+  Edith (copy edit: language/docs/links on the diff) + Sebastian (security review — only relevant if the
   diff touches agent defs, manuals, personas, skills, hooks, scripts, or manifests) + Ravi
   (duplication check: newly introduced verbatim-shared behavioral rules — only relevant if the diff
   touches agent defs or personas) + Nolan (token/context-cost check — only relevant if the diff
   measurably touches the loading strategy or the size of agent defs/manuals/personas) → Derek (PR
-  on Dave's word). Victor, Edith, Sean, Ravi, and Nolan work in parallel on the same diff, not in
+  on Dave's word). Victor, Edith, Sebastian, Ravi, and Nolan work in parallel on the same diff, not in
   sequence.
 - **Globalizing duplication:** Ravi (tracks down the duplicated behavioral rule and promotes it to
   a single shared source using the existing `agent-shared/` mechanism, for the circle that shares the

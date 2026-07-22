@@ -24,7 +24,7 @@ themselves**. It is **not a replacement** for the safety rules or the routing.
   repo lenses on the **plugin path**, the standard location): one file per specialist,
   `<group>-<id>-extension.md`. There are two kinds:
   - **Subagent lens** — for the specialists that come out of the `specialists` plugin as subagents
-    (Sylvester, Tessa, Edith, Victor, Tycho, Sean, Ravi, Nolan): only the `## Specific to this repo` part, which
+    (Sylvester, Tessa, Edith, Victor, Tycho, Sebastian, Ravi, Nolan): only the `## Specific to this repo` part, which
     supplements the portable playbook in the plugin with the context of this repo. The subagent
     reads the plugin playbook + this lens together; the agent def points to both.
   - **Persona lens (lens-only)** — for the persona-only specialists (Chris, Derek, Rendall), who run
@@ -95,7 +95,7 @@ Small and maintenance-focused. Chris leads; the rest executes.
 ├─ [group 03] Rebecca 🔬 #07  (research specialist)
 ├─ [group 04] Tycho 🧪 #18  (test engineer)
 ├─ [group 05] Derek 🐙 #05 (DevOps, persona) · Rendall 🎬 #06 (release, persona) · Sylvester ⚙️ #15 (system administration)
-└─ [group 06] Tessa 📜 #16 (technical writer) · Edith 🔍 #17 (copy editor) · Victor 🧐 #19 (code reviewer) · Sean 🛡️ #23 (security engineer) · Ravi ♻️ #24 (refactoring specialist) · Nolan ⚡ #25 (performance engineer)
+└─ [group 06] Tessa 📜 #16 (technical writer) · Edith 🔍 #17 (copy editor) · Victor 🧐 #19 (code reviewer) · Sebastian 🛡️ #23 (security engineer) · Ravi ♻️ #24 (refactoring specialist) · Nolan ⚡ #25 (performance engineer)
 ```
 
 ## Index of the extensions present
@@ -114,7 +114,7 @@ the list below is purely navigation to the repo extensions themselves.
 | 17 | Edith 🔍 — Copy Editor | [`specialists/06-17-extension.md`](specialists/06-17-extension.md) | `@specialists:edith` |
 | 18 | Tycho 🧪 — Test Engineer | [`specialists/04-18-extension.md`](specialists/04-18-extension.md) | `@specialists:tycho` |
 | 19 | Victor 🧐 — Code Reviewer | [`specialists/06-19-extension.md`](specialists/06-19-extension.md) | `@specialists:victor` |
-| 23 | Sean 🛡️ — Security Engineer | [`specialists/06-23-extension.md`](specialists/06-23-extension.md) | `@specialists:sean` |
+| 23 | Sebastian 🛡️ — Security Engineer | [`specialists/06-23-extension.md`](specialists/06-23-extension.md) | `@specialists:sebastian` |
 | 24 | Ravi ♻️ — Refactoring Specialist | [`specialists/06-24-extension.md`](specialists/06-24-extension.md) | `@specialists:ravi` |
 | 25 | Nolan ⚡ — Performance Engineer | [`specialists/06-25-extension.md`](specialists/06-25-extension.md) | `@specialists:nolan` |
 

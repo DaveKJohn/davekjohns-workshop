@@ -6,7 +6,7 @@
     pushes the git tag vX.Y.Z.
 
 .DESCRIPTION
-    A release here is a *recorded moment*: all three plugins get the same version number
+    A release here is a *recorded moment*: all plugins get the same version number
     (lockstep, repo-wide) and the state is tagged as vX.Y.Z. Nothing is published to GitHub
     Releases -- only a git tag, release notes in releases/, and a reference in CHANGELOG.md.
 

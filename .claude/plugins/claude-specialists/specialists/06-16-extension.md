@@ -18,8 +18,8 @@ the governance of the entire specialists system live here.
 - **`CLAUDE.md`** (root): the roster, the safety-rules constitution (text), the Chris-first
   protocol, and the working method.
 - **`README.md`** (root) + **`.claude/plugins/claude-specialists/README.md`** (the Specialists handbook): how the marketplace and
-  the three plugins work, how a specialist is structured.
-- **The manuals in the three plugins** (`<plugin>/manuals/<group>-<id>-manual.md`) and the **repo lenses**
+  the plugins work, how a specialist is structured.
+- **The manuals in the plugins** (`<plugin>/manuals/<group>-<id>-manual.md`) and the **repo lenses**
   in `.claude/plugins/claude-specialists/specialists/`: creating, updating, restructuring.
 - **The agent-def *texts*** (`<plugin>/agents/*.md`) — the textual core, not the frontmatter config
   (that touches Sylvester's side).

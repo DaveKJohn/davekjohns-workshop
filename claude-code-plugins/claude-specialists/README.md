@@ -6,21 +6,26 @@ Claudes** under one Chief of Staff: every assignment is classified and delivered
 (subagent) with the right playbook — a DevOps engineer for branches and PRs, a technical writer
 for docs, a copy editor for the final pass, and so on.
 
-This directory contains **three plugins** that together make up that system. A consuming repo
+This directory contains **four plugins** that together make up that system. A consuming repo
 enables or disables them **individually** via the marketplace.
 
-## The three sub-plugins — what's the difference?
+## The four sub-plugins — what's the difference?
 
 | Plugin | What it is | Who it's for |
 |---|---|---|
 | [`specialists/`](specialists/) | **The shared core (group 1).** Eleven repo-neutral specialists who work the same way in *every* repo (research, systems administration, technical writing, copy editing, code review, security review, and testing, among others). Also carries the persona templates of the main loop (Chris/Derek/Rendall) and the bootstrap skill `specialists-init`. | **Every** consuming repo — this is the foundation, always enable it. |
 | [`specialists-lifehub/`](specialists-lifehub/) | **Domain group 2.** Five specialists for a personal information hub / brain-based knowledge repo (Astrid, Fiona, Hugo, Ian, Onyx). Deliberately domain-flavored: they know their repo and teammates by name. | Only a life-hub-style repo. |
 | [`specialists-shopify/`](specialists-shopify/) | **Domain group 3.** Three specialists for a Shopify store repo (Liam · Liquid, Sandra · store management, Steven · configuration) plus the domain skill `start-task`. Also deliberately domain-flavored. | Only a Shopify repo (e.g. smartwatchbanden). |
+| [`specialists-ecomm/`](specialists-ecomm/) | **Domain group 4.** E-commerce specialists for a commercial webshop repo of any platform (Sergio · SEO, Craig · CRO, Sean · performance/SEA). Platform-agnostic, and complementary to a platform group rather than exclusive. | Any commercial webshop repo — including a Shopify repo alongside `specialists-shopify`. |
 
-In short: **`specialists` is the foundation; the other two are optional domain extensions**, of
-which a repo needs at most one. The core is written repo-neutrally (no repo names, paths, or script
-names — that context comes from the consumer's repo lens); the domain groups name their domain
-explicitly, because only a matching repo enables them.
+In short: **`specialists` is the foundation; the other three are optional domain extensions.**
+`specialists-lifehub` and `specialists-shopify` describe what *kind* of repo it is, so a repo
+enables at most one of those; `specialists-ecomm` is orthogonal — it applies to any commercial
+webshop regardless of platform, so a webshop repo can enable it *on top of* a platform group (a
+Shopify store repo, for instance, enables both `specialists-shopify` and `specialists-ecomm`). The
+core is written repo-neutrally (no repo names, paths, or script names — that context comes from the
+consumer's repo lens); the domain groups name their domain explicitly, because only a matching repo
+enables them.
 
 ## Agent def vs. manual — two files, one specialist
 
@@ -49,7 +54,7 @@ agent def, but do have a full playbook as a template in `personas/`.
 ## Invocation
 
 Once enabled, the specialists can be invoked with the **plugin name as namespace**:
-`@specialists:<name>`, `@specialists-lifehub:<name>`, or `@specialists-shopify:<name>`.
+`@specialists:<name>`, `@specialists-lifehub:<name>`, `@specialists-shopify:<name>`, or `@specialists-ecomm:<name>`.
 
 ## Which release am I on?
 

@@ -1,22 +1,27 @@
 {
   "name": "davekjohns-workshop",
-  "description": "De werkplaats van Dave (DaveKJohn): de marketplace waar al zijn Claude-Code-plugins worden gebouwd. Huisvest o.a. het Claude-Specialists-systeem (claude-code-plugins/claude-specialists/) in drie plugins — de gedeelde kern plus twee domein-groepen — consumeerbaar door meerdere repo's, die per plugin aan/uit schakelen.",
+  "description": "Dave (DaveKJohn)'s workshop: the marketplace where all his Claude Code plugins are built. Houses, among other things, the Claude Specialists system (claude-code-plugins/claude-specialists/) across four plugins — the shared core plus three domain groups — consumable by multiple repos that toggle each plugin on or off.",
   "owner": { "name": "Dave (DaveKJohn)" },
   "plugins": [
     {
       "name": "specialists",
       "source": "./claude-code-plugins/claude-specialists/specialists",
-      "description": "Groep 1 — de gedeelde, repo-neutrale kern: de subagents die feitelijk identiek zijn in elke repo. Elke consumerende repo schakelt deze in. Governance (CLAUDE.md + .claude/manuals/*) blijft op repo-niveau."
+      "description": "Group 1 — the shared, repo-neutral core: the subagents that are effectively identical in every repo. Every consuming repo enables this. Governance (CLAUDE.md + .claude/manuals/*) stays at repo level."
     },
     {
       "name": "specialists-lifehub",
       "source": "./claude-code-plugins/claude-specialists/specialists-lifehub",
-      "description": "Groep 2 — domein-plugin voor life-hub-achtige repo's (persoonlijke informatie-hub / brain-gebaseerde kennisrepo): Astrid, Fiona, Hugo, Ian, Onyx. Alleen een life-hub-achtige repo schakelt deze in."
+      "description": "Group 2 — domain plugin for life-hub-style repos (a personal information hub / brain-based knowledge repo): Astrid, Fiona, Hugo, Ian, Onyx. Only a life-hub-style repo enables this."
     },
     {
       "name": "specialists-shopify",
       "source": "./claude-code-plugins/claude-specialists/specialists-shopify",
-      "description": "Groep 3 — domein-plugin voor Shopify-store-repo's (bv. smartwatchbanden): Liam, Sandra, Steven, plus de domein-skill start-task. Alleen een Shopify-repo schakelt deze in."
+      "description": "Group 3 — domain plugin for Shopify store repos (e.g. smartwatchbanden): Liam, Sandra, Steven, plus the domain skill start-task. Only a Shopify repo enables this."
+    },
+    {
+      "name": "specialists-ecomm",
+      "source": "./claude-code-plugins/claude-specialists/specialists-ecomm",
+      "description": "Group 4 — domain plugin for commercial webshop repos (any platform): Sergio (SEO), Craig (CRO), Sean (performance/SEA), with room to grow into the wider e-commerce craft (lifecycle/email, analytics). Complementary to a platform group like specialists-shopify — a commercial webshop repo can enable both."
     }
   ]
 }

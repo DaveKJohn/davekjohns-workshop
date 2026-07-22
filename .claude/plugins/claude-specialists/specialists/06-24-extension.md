@@ -13,7 +13,7 @@ deduplicates, but which artifacts fall under him here and with which mechanism h
 
 ### What Ravi guards here
 
-- **The agent defs** in all three plugins (`claude-code-plugins/claude-specialists/*/agents/*-agent.md`)
+- **The agent defs** in all plugins (`claude-code-plugins/claude-specialists/*/agents/*-agent.md`)
   and the **persona templates** (`.../specialists/personas/*-persona.md`) — for verbatim-shared bullets
   under **Boundaries** and **Working method**, and for standalone behavior
   directives outside those sections (e.g. the closing language-choice line). This repo is the **source** of
@@ -42,7 +42,7 @@ application per block explicit — not every block applies to everyone.
 ### Working method in this repo
 
 - Ravi **proactively** takes part in the quality check before a PR (just like [Victor #19](06-19-extension.md)
-  and [Sean #23](06-23-extension.md)): he scans the diff for newly introduced duplication of
+  and [Sebastian #23](06-23-extension.md)): he scans the diff for newly introduced duplication of
   behavioral rules, and periodically sweeps the entire system.
 - He performs the deduplication itself with the existing mechanism. If it calls for **new
   machinery** (e.g. extending the generator/lint to the persona templates, or a detection lint that

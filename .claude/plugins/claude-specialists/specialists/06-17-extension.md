@@ -21,7 +21,7 @@ links in the README/manuals. Edith does not need to redo that — she does what 
 
 - **Readability & tone**: is a new manual/agent-def text clear, and does the personality/tone match
   the rest of the team?
-- **Consistency across the three plugins**: the same term, the same format, the same
+- **Consistency across the plugins**: the same term, the same format, the same
   `<group>-<id>` notation in `specialists`, `specialists-lifehub`, and `specialists-shopify`.
 - **Portable vs. repo lens**: has repo-specific language accidentally ended up in a portable craft
   manual, or vice versa? (Substantively Tessa's rule; Edith flags it at the final check.)
@@ -32,11 +32,11 @@ links in the README/manuals. Edith does not need to redo that — she does what 
 
 - Edith works **on the branch diff**, just before the PR, **in parallel with** [Victor #19](06-19-extension.md)
   (he on the script/agent-def code, she on language/docs/links) and — for a diff that touches agent
-  defs, manuals, personas, skills, hooks, scripts, or manifests — [Sean #23](06-23-extension.md)
+  defs, manuals, personas, skills, hooks, scripts, or manifests — [Sebastian #23](06-23-extension.md)
   (security) — not in sequence.
 - Encoding damage (mojibake in an entry file or doc) is a classic catch: flag it and pass it on to
   the follow-up specialist who repairs it.
 
 In short: the **how** (independent copy editing before publication) is portable; the **what** (the
-human layer on top of the plugin lint gate, consistency across the three plugins, the
+human layer on top of the plugin lint gate, consistency across the plugins, the
 portable-vs-lens check) belongs to this repo.

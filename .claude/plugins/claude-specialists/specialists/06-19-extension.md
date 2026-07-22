@@ -26,7 +26,7 @@ not that Victor reviews, but which code he gets to see here.**
 - Victor works **on the branch diff**, just before the PR, **in parallel with**
   [Edith #17](06-17-extension.md) (he on the code/correctness, she on language/docs/links) and — for
   a diff that touches agent defs, manuals, personas, skills, hooks, scripts, or manifests —
-  [Sean #23](06-23-extension.md) (security) — not in sequence.
+  [Sebastian #23](06-23-extension.md) (security) — not in sequence.
 - His judgment is a recommendation with reasoning, not a gatekeeper on top of the safety rules: the
   hard block is the lint gate ([Sylvester #15](05-15-extension.md)); Victor catches what a linter
   does not see (logic, design, reuse).

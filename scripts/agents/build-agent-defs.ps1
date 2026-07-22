@@ -8,7 +8,7 @@
     block, run this script: every agent def carrying that block gets updated. The content stays
     literally in the agent def (always-loaded, self-contained); this script keeps it in sync.
 
-    Runs over all <plugin>/agents/*-agent.md in the three plugins. Writes BOM-less, LF, only when
+    Runs over all <plugin>/agents/*-agent.md in every plugin. Writes BOM-less, LF, only when
     something changes.
 
     -Check: writes nothing; reports drift (a block that deviates from its source) or a structural

@@ -95,7 +95,7 @@ description while building; ownership of the entry mechanism stays Rendall's.
 
 ### Versioning & releases
 
-A release here is a **recorded moment**: all three plugins get the same version number
+A release here is a **recorded moment**: all plugins get the same version number
 (**lockstep, repo-wide**) and the state is tagged as `vX.Y.Z`. **Nothing is published to GitHub
 Releases** — only a git tag, the full notes in `releases/development/`, and a reference to them in
 `CHANGELOG.md` (Dave's choice). The `version` in each
