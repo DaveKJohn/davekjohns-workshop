@@ -90,6 +90,12 @@ if ($absent.Count -gt 0) {
 . (Join-Path $repoRoot 'scripts\lib\branch-info.ps1')
 $repo = Get-RepoName
 
+# Shared native-capture helper (#114 item 1). $PSScriptRoot-relative, not $repoRoot: like
+# check-report-lib.ps1 this lib is not repo-owned -- it travels with the SAME plugin/mirror payload
+# as this script (registered in scripts\lib\shared-scripts-lib.ps1), so it resolves from the
+# workshop root, a consumer's plugin cache, or the plugin mirror tree alike.
+. (Join-Path $PSScriptRoot '..\lib\native-capture-lib.ps1')
+
 # Pre-flight (#86): an unfilled scaffold (repo-config still at VUL-IN) would otherwise only fail
 # further down with an unclear gh error. Stop here with a clear pointer.
 if ($repo -match 'VUL-IN' -or (Get-LintScript) -match 'VUL-IN') {
@@ -142,22 +148,12 @@ if (-not $SkipTests) {
     }
 }
 
-# git push writes its 'remote:' progress to stderr. Under ErrorActionPreference=Stop, PowerShell
-# 5.1 promotes those stderr lines to a TERMINATING NativeCommandError -- the script would then die
-# on the push before the exit-code check below runs, even though git itself gave exit 0 (the same
-# class of pitfall as #96/#97: never rely on stderr-as-error, always on $LASTEXITCODE).
-# So the push runs with EAP=Continue, capturing the full output, immediately recording the exit
-# code, and only then judging.
-$prevEap = $ErrorActionPreference
-try {
-    $ErrorActionPreference = 'Continue'
-    $pushOutput = & git push -u origin $branch 2>&1
-    $pushCode = $LASTEXITCODE
-} finally {
-    $ErrorActionPreference = $prevEap
-}
-$pushOutput | ForEach-Object { Write-Host $_ }
-if ($pushCode -ne 0) { Write-Error "git push failed."; exit 1 }
+# git push writes its 'remote:' progress to stderr, which under EAP=Stop would die as a terminating
+# NativeCommandError before the exit-code check even though git gave exit 0 (the #96/#97/#107
+# pitfall). Invoke-NativeCapture runs it under EAP=Continue and hands back output + $LASTEXITCODE.
+$push = Invoke-NativeCapture -FilePath 'git' -Arguments @('push', '-u', 'origin', $branch)
+$push.Output | ForEach-Object { Write-Host $_ }
+if ($push.ExitCode -ne 0) { Write-Error "git push failed."; exit 1 }
 
 $info = Get-BranchInfo -Branch $branch
 if ($info.IsKnown) {
@@ -248,18 +244,15 @@ $extraGhArgs = @()
 if ($assignee) { $extraGhArgs += @('--assignee', $assignee) }
 if ($milestone) { $extraGhArgs += @('--milestone', $milestone) }
 
-$prevEap = $ErrorActionPreference
 try {
-    # gh writes some of its progress/URL to stderr; under EAP=Stop, PS 5.1 would promote that to a
-    # terminating error before the $LASTEXITCODE check (the same pitfall as the push above, #107).
-    # Run under Continue, capture the output, and only then judge on the exit code.
-    $ErrorActionPreference = 'Continue'
-    $createOut = & gh pr create --base main --head $branch --title $Title --body-file $bodyFile --label $label --repo $repo @extraGhArgs 2>&1
-    $createCode = $LASTEXITCODE
-    $createOut | ForEach-Object { Write-Host $_ }
-    if ($createCode -ne 0) { Write-Error "Creating the PR failed (is gh logged in?)."; exit 1 }
+    # gh writes some of its progress/URL to stderr; Invoke-NativeCapture runs it under EAP=Continue
+    # so a stderr line cannot become a terminating error before the exit-code check (#107, the same
+    # pitfall as the push above). The optional assignee/milestone args are appended to the fixed
+    # argument list. The temp body file is cleaned up in finally, whether or not gh succeeds.
+    $create = Invoke-NativeCapture -FilePath 'gh' -Arguments (@('pr', 'create', '--base', 'main', '--head', $branch, '--title', $Title, '--body-file', $bodyFile, '--label', $label, '--repo', $repo) + $extraGhArgs)
+    $create.Output | ForEach-Object { Write-Host $_ }
+    if ($create.ExitCode -ne 0) { Write-Error "Creating the PR failed (is gh logged in?)."; exit 1 }
 } finally {
-    $ErrorActionPreference = $prevEap
     Remove-Item -Path $bodyFile -Force -ErrorAction SilentlyContinue
 }
 Write-Host "PR created for '$branch'." -ForegroundColor Green

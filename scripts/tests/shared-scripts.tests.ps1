@@ -64,7 +64,7 @@ Write-Host "Dual-context resolution guarded in every source" -ForegroundColor Cy
 # that. Exception: a dot-sourced LIB (issue #114's check-report-lib) is not itself a standalone
 # entry point -- it never resolves a repo root; it is reached via a $PSScriptRoot-relative
 # dot-source from a caller that already resolved one, so this invariant does not apply to it.
-$libOnlyPairs = @('check-report-lib')
+$libOnlyPairs = @('check-report-lib', 'native-capture-lib')
 foreach ($pair in ($pairs | Where-Object { $libOnlyPairs -notcontains $_.Name })) {
     $src = Get-NormalizedScriptContent -Path $pair.SourcePath
     Assert-True ($src -match 'CLAUDE_PROJECT_DIR') "$($pair.Name): source resolves the repo root via CLAUDE_PROJECT_DIR"
@@ -171,9 +171,10 @@ function Get-BranchInfo { param([string]$Branch) [pscustomobject]@{ Branch = $Br
     if ($vfDir) { Remove-Item -Path $vfDir -Recurse -Force -ErrorAction SilentlyContinue }
 }
 
-Write-Host "git-push-stderr pitfall (open-pr.ps1)" -ForegroundColor Cyan
-# The push in open-pr.ps1 used to die on git's 'remote:' stderr: under ErrorActionPreference=Stop,
+Write-Host "native-command stderr pitfall -- centralized in Invoke-NativeCapture (#107, #114 item 1)" -ForegroundColor Cyan
+# The push/gh calls used to die on 'remote:'/status stderr: under ErrorActionPreference=Stop,
 # PS 5.1 promotes native stderr to a terminating NativeCommandError, before the exit-code check.
+# That guard now lives in exactly one place -- the shared Invoke-NativeCapture helper.
 # (a) Mechanism proof: the bare pattern breaks, the capture pattern does not -- on a real native
 # command (cmd.exe echoes to stderr and gives exit 0). NB: .ps1 is pure ASCII, so no diacritics.
 $naiveThrew = $false
@@ -197,15 +198,45 @@ try {
 Assert-True (-not $fixThrew) 'capture pattern (EAP=Continue around the call) is NOT terminating'
 Assert-Equal 0 $fixCode 'capture pattern reads the real exit code (0) of the command'
 
-# (b) Regression guard: open-pr.ps1's source must not fall back to the bare 'git push' + direct
-# exit-code check under EAP=Stop; it should run the push with EAP=Continue and capture the output.
-# (The live push against a real remote is deliberately NOT testable here -- an honest test gap.)
+# (b) The helper behaves: run it FROM a caller scope that is EAP=Stop (exactly like the real
+# scripts) against a native command that writes stderr AND returns exit 0. It must not throw, must
+# capture the merged output, read the real exit code, and restore the caller's EAP afterwards. This
+# also proves the FilePath/Arguments design (over a scriptblock): the EAP override only takes effect
+# because the command runs inside the helper's own scope.
+. (Join-Path $RepoRoot 'scripts\lib\native-capture-lib.ps1')
+$prevEapNc = $ErrorActionPreference
+$ErrorActionPreference = 'Stop'
+$ncThrew = $false; $ncResult = $null
+try { $ncResult = Invoke-NativeCapture -FilePath 'cmd' -Arguments @('/c', 'echo remote: hi 1>&2 & exit 0') } catch { $ncThrew = $true }
+Assert-True (-not $ncThrew) 'Invoke-NativeCapture does not throw on native stderr under caller EAP=Stop'
+Assert-Equal 0 $ncResult.ExitCode 'Invoke-NativeCapture reads the real exit code (0)'
+Assert-True ((($ncResult.Output | Out-String)) -match 'remote: hi') 'Invoke-NativeCapture captures merged stderr by default'
+Assert-Equal 'Stop' $ErrorActionPreference 'Invoke-NativeCapture restores the caller EAP after running'
+$ncNonZero = Invoke-NativeCapture -FilePath 'cmd' -Arguments @('/c', 'exit 3')
+Assert-Equal 3 $ncNonZero.ExitCode 'Invoke-NativeCapture surfaces a non-zero exit code'
+$ncDiscard = Invoke-NativeCapture -FilePath 'cmd' -Arguments @('/c', 'echo keep-stdout& echo drop-stderr 1>&2& exit 0') -DiscardStderr
+$ncDiscardText = ($ncDiscard.Output | Out-String)
+Assert-True ($ncDiscardText -match 'keep-stdout') '-DiscardStderr keeps stdout'
+Assert-True (-not ($ncDiscardText -match 'drop-stderr')) '-DiscardStderr drops stderr (so it cannot pollute JSON)'
+$ErrorActionPreference = $prevEapNc
+
+# (c) Regression guard: the #107 protection must stay CENTRALIZED. The helper itself carries the
+# EAP=Continue -> capture $LASTEXITCODE -> restore dance, and every native-command call site reaches
+# for the helper rather than re-deriving a bare 'git push'/'gh' under EAP=Stop.
+# (The live push against a real remote is exercised by the offline fixture below, not here.)
+$ncLibSrc = ($pairs | Where-Object { $_.Name -eq 'native-capture-lib' }).SourcePath
+$ncLibText = [System.IO.File]::ReadAllText($ncLibSrc)
+Assert-True ($ncLibText -match "ErrorActionPreference = 'Continue'") 'native-capture-lib runs the command under EAP=Continue'
+Assert-True ($ncLibText -match '\$code = \$LASTEXITCODE') 'native-capture-lib records $LASTEXITCODE right after the command'
+Assert-True ($ncLibText -match '2>&1') 'native-capture-lib merges stderr by default (2>&1)'
+Assert-True ($ncLibText -match '2>\$null') 'native-capture-lib discards stderr on -DiscardStderr (2>$null)'
+Assert-True ($ncLibText -match '\$ErrorActionPreference = \$prevEap') 'native-capture-lib restores EAP (finally)'
+
 $openPrSrc = ($pairs | Where-Object { $_.Name -eq 'open-pr' }).SourcePath
 $openPrText = [System.IO.File]::ReadAllText($openPrSrc)
-Assert-True ($openPrText -match "git push -u origin \`$branch 2>&1") 'open-pr captures the push output (2>&1)'
-Assert-True ($openPrText -match "ErrorActionPreference = 'Continue'") 'open-pr runs the push under EAP=Continue'
-# open-pr's gh pr create must also fall under the guard (gh can write to stderr).
-Assert-True ($openPrText -match "gh pr create.*2>&1") 'open-pr captures the gh-pr-create output (2>&1)'
+Assert-True ($openPrText -match "Invoke-NativeCapture -FilePath 'git' -Arguments @\('push'") 'open-pr runs the push via Invoke-NativeCapture'
+Assert-True ($openPrText -match "Invoke-NativeCapture -FilePath 'gh' -Arguments \(@\('pr', 'create'") 'open-pr runs gh pr create via Invoke-NativeCapture'
+Assert-True (-not ($openPrText -match "ErrorActionPreference = 'Continue'")) 'open-pr no longer re-derives the EAP dance inline (centralized in the helper)'
 
 # Sweep guard (after the v1.12.0 breakage): the other release scripts that mutate native git/gh must
 # not carry the #107 pitfall -- the mutation/gh calls should run under EAP=Continue.
@@ -216,12 +247,14 @@ Assert-True ($cutText -match "(?s)ErrorActionPreference = 'Continue'.*git add -A
 
 $foldSrc = ($pairs | Where-Object { $_.Name -eq 'fold-changelog-entry' }).SourcePath
 $foldText = [System.IO.File]::ReadAllText($foldSrc)
-Assert-True ($foldText -match "gh pr list.*2>\`$null") 'fold runs gh pr list with stderr discard'
+Assert-True ($foldText -match "Invoke-NativeCapture -FilePath 'gh' -Arguments @\('pr', 'list'") 'fold runs gh pr list via Invoke-NativeCapture'
+Assert-True ($foldText -match '-DiscardStderr') 'fold discards gh pr list stderr (-DiscardStderr) so it cannot pollute the JSON'
+Assert-True (-not ($foldText -match "gh pr list.*2>\`$null")) 'fold no longer re-derives the inline 2>$null discard (centralized in the helper)'
 # #103 (Victor #4): gh pr list supplies 'files' just as well as gh pr view -- the second gh
-# roundtrip has been dropped. Regression guard: the --json list carries 'files' along, and a real
-# 'gh pr view' call (as opposed to an explanatory code comment naming the old approach) has not
-# returned.
-Assert-True ($foldText -match "gh pr list.*--json number,url,files") 'fold already requests files in the gh pr list call'
+# roundtrip has been dropped. Regression guard: the --json list carries 'files' along (now as an
+# argument-array element), and a real 'gh pr view' call (as opposed to an explanatory code comment
+# naming the old approach) has not returned.
+Assert-True ($foldText -match "'--json', 'number,url,files'") 'fold already requests files in the gh pr list call'
 Assert-True (-not ($foldText -match '(?m)^\s*\$\w+\s*=\s*gh pr view')) 'fold no longer runs a separate gh pr view call (merged, #103)'
 
 Write-Host "open-pr + fold-changelog-entry: repo-config-driven overrides (#101)" -ForegroundColor Cyan

@@ -59,6 +59,11 @@ function Get-SharedScriptPairs {
             Name   = 'check-report-lib'
             Source = 'scripts\lib\check-report-lib.ps1'
             Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\lib\check-report-lib.ps1'
+        },
+        @{
+            Name   = 'native-capture-lib'
+            Source = 'scripts\lib\native-capture-lib.ps1'
+            Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\lib\native-capture-lib.ps1'
         }
     )
 

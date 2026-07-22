@@ -73,6 +73,12 @@ $releaseLibPath = Join-Path $repoRoot 'scripts\lib\release-lib.ps1'
 $canDetectPlugins = Test-Path -LiteralPath $releaseLibPath
 if ($canDetectPlugins) { . $releaseLibPath }
 
+# Shared native-capture helper (#114 item 1). $PSScriptRoot-relative, not $repoRoot: like
+# check-report-lib.ps1 this lib is not repo-owned -- it travels with the SAME plugin/mirror payload
+# as this script (registered in scripts\lib\shared-scripts-lib.ps1), so it resolves from the
+# workshop root, a consumer's plugin cache, or the plugin mirror tree alike.
+. (Join-Path $PSScriptRoot '..\lib\native-capture-lib.ps1')
+
 # BOM-less UTF8 -- Set-Content -Encoding UTF8 always adds a BOM in Windows PowerShell 5.1,
 # and the rest of the repo (CHANGELOG.md etc.) has no BOM.
 $Utf8NoBom = New-Object System.Text.UTF8Encoding $false
@@ -124,16 +130,15 @@ foreach ($file in $entryFiles) {
         $base = [System.IO.Path]::GetFileNameWithoutExtension($file)
         $branchForPr = $base -replace '^([^-]+)-', '$1/'
     }
-    # gh can write messages to stderr; under ErrorActionPreference=Stop, PS 5.1 would promote that
-    # to a terminating error before the graceful $LASTEXITCODE handling below (the #107 pitfall).
-    # Run under Continue and discard stderr (2>$null), so it cannot pollute the captured JSON
-    # either. 'files' is simply included in --json (Victor #4, #103) -- gh pr list supplies that
-    # field just as well as gh pr view, so the second gh call (previously gh pr view --json files)
-    # has been dropped: one PR lookup suffices for both the number/url and the touched files.
-    $prevEap = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
-    $prJson = gh pr list --head $branchForPr --state all --json number,url,files --limit 1 --repo $repo 2>$null
-    $ghCode = $LASTEXITCODE
-    $ErrorActionPreference = $prevEap
+    # gh can write messages to stderr; Invoke-NativeCapture runs it under EAP=Continue so that
+    # cannot become a terminating error before the graceful exit-code handling below (#107).
+    # -DiscardStderr (2>$null) keeps stderr out of the captured JSON. 'files' is simply included in
+    # --json (Victor #4, #103) -- gh pr list supplies that field just as well as gh pr view, so the
+    # second gh call (previously gh pr view --json files) has been dropped: one PR lookup suffices
+    # for both the number/url and the touched files.
+    $prList = Invoke-NativeCapture -FilePath 'gh' -Arguments @('pr', 'list', '--head', $branchForPr, '--state', 'all', '--json', 'number,url,files', '--limit', '1', '--repo', $repo) -DiscardStderr
+    $ghCode = $prList.ExitCode
+    $prJson = $prList.Output
     if ($ghCode -ne 0) { Write-Host "  (gh pr list returned exit code $ghCode -- PR-number enrichment skipped; run gh manually for the reason.)" -ForegroundColor DarkYellow }
     $prs = if ($ghCode -eq 0 -and $prJson) { @($prJson | ConvertFrom-Json) } else { @() }
     if ($prs.Count -ge 1) {
