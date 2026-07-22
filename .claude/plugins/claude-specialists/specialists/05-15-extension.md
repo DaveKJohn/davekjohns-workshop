@@ -86,6 +86,20 @@ infrastructure.
   broke `cut-release.ps1` while cutting v1.12.0)**, `gh` (auth/update notices), … Query commands
   (`git rev-parse`, `git status`) write results to stdout and only real errors to stderr, so `Stop`
   is correct there — don't wrap those. Swept across all release scripts after the v1.12.0 break.
+- **Never dot-source a consumer's repo-owned lib under `Set-StrictMode`.** A check or hook that
+  dot-sources `scripts/lib/branch-info.ps1` or `scripts/repo-config.ps1` to probe it (e.g.
+  `check-script-contract.ps1`, `check-roster-sync.ps1`) must load it in a child scope with
+  `Set-StrictMode -Off` (`& { Set-StrictMode -Off; . $lib; ... }`), because the real workflow scripts
+  that consume those libs (`open-pr.ps1`, `new-branch.ps1`, `fold-changelog-entry.ps1`, …) never
+  enable StrictMode, and both libs are explicitly written on that no-strict-mode assumption. Probe the
+  functions (`Get-Command`) inside that same block so the dot-sourced definitions stay visible while
+  nothing leaks into the check's own strict scope. Load under strict mode instead, and a consumer copy
+  carrying harmless pre-strict-mode loose top-level code (an `if` on an unset variable, say) throws on
+  the dot-source — a false `[ERROR]`, or under `$ErrorActionPreference = 'Stop'` a full crash — at
+  every session start, for exactly the older consumer repos these checks exist to serve. A genuine
+  load failure (a real syntax error) should degrade to a sane default or a reported `[ERROR]`, not
+  abort the check. Recognized while building the script-contract check for inbound #147 (#148) and
+  immediately found in its sibling `check-roster-sync.ps1` (#149).
 - This repo is **public**: config never contains secrets.
 
 In short: the **how** (managing the harness, scripts, config, safety guards) is portable; the **what**
