@@ -277,7 +277,9 @@ In one motion, on a clean `main`:
    the fold derives from the PR's files; as internal bookkeeping, the line itself doesn't travel along)
    to the **per-plugin `CHANGELOG.md`**, and regenerates that plugin's **`RELEASE.md`** card (version,
    one-line summary, and the entries for that version) — both consumer-facing artifacts that travel
-   along with the plugin cache;
+   along with the plugin cache. In all three outputs (the full notes, the per-plugin CHANGELOG, and
+   the RELEASE.md card) the entries are grouped by category — Features, Fixes, Documentation,
+   Maintenance, Other — with features and fixes at the top;
 4. commits that directly on `main` (`release: vX.Y.Z`) and sets an annotated tag `vX.Y.Z`;
 5. pushes `main` + the tag (unless `-NoPush` for inspection first).
 
