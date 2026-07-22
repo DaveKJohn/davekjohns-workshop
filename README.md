@@ -97,7 +97,7 @@ coupling deliberately leaves personas alone (they have no agent def).
 
 ### Shared agent-def blocks — one source for the verbatim boundaries
 
-A number of bullets under **Grenzen** (the boundaries section) are word-for-word identical across
+A number of bullets in the **Boundaries** section are word-for-word identical across
 many agent defs — the **inbound rule** even across all 19. Such governance belongs *in* the
 agent-def body (always loaded, also for a directly invoked worker subagent), but Claude Code has no
 native transclusion in an agent def — what's written there is there, literally. To still maintain
