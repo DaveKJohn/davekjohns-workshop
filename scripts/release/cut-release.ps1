@@ -73,6 +73,9 @@ Set-Location $repoRoot
 . (Join-Path $PSScriptRoot '..\lib\release-lib.ps1')
 # Repo name/blob URL from the local repo-config (single source) instead of release-lib's literal default.
 . (Join-Path $PSScriptRoot '..\repo-config.ps1')
+# Shared native-capture helper (#114): the #107 EAP=Continue -> capture -> $LASTEXITCODE dance for
+# the git mutations in the final block lives here in one tested place.
+. (Join-Path $PSScriptRoot '..\lib\native-capture-lib.ps1')
 
 # BOM-less UTF8 -- the rest of the repo has no BOM.
 $Utf8NoBom = New-Object System.Text.UTF8Encoding $false
@@ -237,18 +240,22 @@ foreach ($m in $manifests) {
 
 # --- Commit + tag directly on main ---------------------------------------------------------
 # Native git writes chatter to stderr (the LF->CRLF warning from `git add`, `remote:` on push).
-# Under ErrorActionPreference=Stop, PowerShell 5.1 promotes that to a terminating
-# NativeCommandError, before the $LASTEXITCODE checks -- the same pitfall as #107 (open-pr), and
-# that broke cutting v1.12.0 on `git add`. From here on we run under Continue and rely purely on
-# $LASTEXITCODE. This is the last block of the script, so the preference does not need restoring.
-$ErrorActionPreference = 'Continue'
-git add -A
-if ($LASTEXITCODE -ne 0) { Write-Error "git add failed."; exit 1 }
-git commit -m "release: v$new"
-if ($LASTEXITCODE -ne 0) { Write-Error "git commit failed."; exit 1 }
+# Under ErrorActionPreference=Stop, PowerShell 5.1 would promote that to a terminating
+# NativeCommandError before the $LASTEXITCODE checks -- the pitfall that broke cutting v1.12.0 on
+# `git add` (#107). Invoke-NativeCapture (#114) runs each git call under EAP=Continue and hands back
+# output + exit code, so we rely purely on $LASTEXITCODE; the captured chatter is echoed so the
+# release run stays as verbose as before.
+$add = Invoke-NativeCapture -FilePath 'git' -Arguments @('add', '-A')
+$add.Output | ForEach-Object { Write-Host $_ }
+if ($add.ExitCode -ne 0) { Write-Error "git add failed."; exit 1 }
 
-git tag -a $tagName -m "Release $tagName"
-if ($LASTEXITCODE -ne 0) { Write-Error "git tag failed."; exit 1 }
+$commit = Invoke-NativeCapture -FilePath 'git' -Arguments @('commit', '-m', "release: v$new")
+$commit.Output | ForEach-Object { Write-Host $_ }
+if ($commit.ExitCode -ne 0) { Write-Error "git commit failed."; exit 1 }
+
+$tag = Invoke-NativeCapture -FilePath 'git' -Arguments @('tag', '-a', $tagName, '-m', "Release $tagName")
+$tag.Output | ForEach-Object { Write-Host $_ }
+if ($tag.ExitCode -ne 0) { Write-Error "git tag failed."; exit 1 }
 
 if ($NoPush) {
     Write-Host ""
@@ -258,10 +265,13 @@ if ($NoPush) {
     exit 0
 }
 
-git push origin main
-if ($LASTEXITCODE -ne 0) { Write-Error "git push of main failed."; exit 1 }
-git push origin $tagName
-if ($LASTEXITCODE -ne 0) { Write-Error "git push of the tag failed."; exit 1 }
+$pushMain = Invoke-NativeCapture -FilePath 'git' -Arguments @('push', 'origin', 'main')
+$pushMain.Output | ForEach-Object { Write-Host $_ }
+if ($pushMain.ExitCode -ne 0) { Write-Error "git push of main failed."; exit 1 }
+
+$pushTag = Invoke-NativeCapture -FilePath 'git' -Arguments @('push', 'origin', $tagName)
+$pushTag.Output | ForEach-Object { Write-Host $_ }
+if ($pushTag.ExitCode -ne 0) { Write-Error "git push of the tag failed."; exit 1 }
 
 Write-Host ""
 Write-Host "Done: v$new has been cut ($current -> $new, $typeLabel), committed on main and tagged as $tagName. Recorded." -ForegroundColor Green

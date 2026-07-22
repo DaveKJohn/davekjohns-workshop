@@ -239,11 +239,16 @@ Assert-True ($openPrText -match "Invoke-NativeCapture -FilePath 'gh' -Arguments 
 Assert-True (-not ($openPrText -match "ErrorActionPreference = 'Continue'")) 'open-pr no longer re-derives the EAP dance inline (centralized in the helper)'
 
 # Sweep guard (after the v1.12.0 breakage): the other release scripts that mutate native git/gh must
-# not carry the #107 pitfall -- the mutation/gh calls should run under EAP=Continue.
+# not carry the #107 pitfall. cut-release.ps1 now routes its git mutations through the same shared
+# Invoke-NativeCapture helper (#114 follow-up) instead of a bare 'git add' under a hand-rolled
+# EAP=Continue block -- so the guard asserts it reaches for the helper and no longer re-derives the
+# inline dance.
 $cutSrc = Join-Path $RepoRoot 'scripts\release\cut-release.ps1'
 $cutText = [System.IO.File]::ReadAllText($cutSrc)
-Assert-True ($cutText -match "ErrorActionPreference = 'Continue'") 'cut-release runs the git mutation block under EAP=Continue'
-Assert-True ($cutText -match "(?s)ErrorActionPreference = 'Continue'.*git add -A") 'cut-release: EAP=Continue comes before git add'
+Assert-True ($cutText -match "Invoke-NativeCapture -FilePath 'git' -Arguments @\('add', '-A'\)") 'cut-release runs git add via Invoke-NativeCapture'
+Assert-True ($cutText -match "Invoke-NativeCapture -FilePath 'git' -Arguments @\('push', 'origin', 'main'\)") 'cut-release runs git push via Invoke-NativeCapture'
+Assert-True (-not ($cutText -match "(?m)^\s*git add -A\s*$")) 'cut-release no longer runs a bare inline git add'
+Assert-True (-not ($cutText -match "ErrorActionPreference = 'Continue'")) 'cut-release no longer re-derives the EAP dance inline (centralized in the helper)'
 
 $foldSrc = ($pairs | Where-Object { $_.Name -eq 'fold-changelog-entry' }).SourcePath
 $foldText = [System.IO.File]::ReadAllText($foldSrc)
