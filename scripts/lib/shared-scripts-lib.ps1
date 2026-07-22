@@ -46,6 +46,11 @@ function Get-SharedScriptPairs {
             Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\sync\check-roster-sync.ps1'
         },
         @{
+            Name   = 'check-script-contract'
+            Source = 'scripts\sync\check-script-contract.ps1'
+            Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\sync\check-script-contract.ps1'
+        },
+        @{
             Name   = 'new-changelog-entry'
             Source = 'scripts\release\new-changelog-entry.ps1'
             Mirror = 'claude-code-plugins\claude-specialists\specialists\scripts\release\new-changelog-entry.ps1'
