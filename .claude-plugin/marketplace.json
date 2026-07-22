@@ -17,6 +17,11 @@
       "name": "specialists-shopify",
       "source": "./claude-code-plugins/claude-specialists/specialists-shopify",
       "description": "Groep 3 — domein-plugin voor Shopify-store-repo's (bv. smartwatchbanden): Liam, Sandra, Steven, plus de domein-skill start-task. Alleen een Shopify-repo schakelt deze in."
+    },
+    {
+      "name": "specialists-ecomm",
+      "source": "./claude-code-plugins/claude-specialists/specialists-ecomm",
+      "description": "Group 4 — domain plugin for commercial webshop repos (any platform): Sergio (SEO), with room to grow into the wider e-commerce craft (conversion, lifecycle/email, analytics). Only a commercial webshop repo enables this."
     }
   ]
 }
