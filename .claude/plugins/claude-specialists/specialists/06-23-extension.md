@@ -20,7 +20,7 @@ is special: this repo is a **public supply chain**.
 - **The plugin content propagates to consumers.** Consuming repos load the agent defs, manuals,
   personas, and skills from here as instructions into their own sessions. Every change to those
   files is therefore supply-chain surface: Sean reviews for instructions that could move a consumer
-  to unwanted actions (injection), for weakened boundaries in agent-def texts (tools, the "Grenzen"
+  to unwanted actions (injection), for weakened boundaries in agent-def texts (tools, the "Boundaries"
   block), and for skills/scripts that do more than their description promises.
 - **The guardrails themselves**: the lint gate (`scripts/lint/check-plugin-integrity.ps1`), the
   release guardrails (`cut-release.ps1`), hooks and permissions in `.claude/settings.json`.
