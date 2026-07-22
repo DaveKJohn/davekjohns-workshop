@@ -76,6 +76,10 @@ try {
     }
     $lensText = [System.IO.File]::ReadAllText((Join-Path $Fixture "$Pp\06-16-extension.md"), [System.Text.Encoding]::UTF8)
     Assert-True ($lensText -match 'VUL-IN') 'lens scaffold carries the VUL-IN marker'
+    # Rename-proof (issue #145): the agent-lens header carries the stable g-id slug, not the persona
+    # name -- so a later rename of the agent-def never drifts this generated header.
+    Assert-True ($lensText -match '(?m)^# 06-16 .* repo lens \(VUL-IN\)') 'lens scaffold header is the nameless g-id form (issue #145)'
+    Assert-True (-not ($lensText -match 'Victor')) 'lens scaffold does NOT bake the persona name (Victor) in (issue #145)'
     $claudeMd = Join-Path $Fixture 'CLAUDE.md'
     Assert-True (Test-Path -LiteralPath $claudeMd) 'CLAUDE.md scaffold created'
     $mdText = [System.IO.File]::ReadAllText($claudeMd, [System.Text.Encoding]::UTF8)

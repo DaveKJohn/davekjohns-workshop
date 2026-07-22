@@ -29,6 +29,10 @@
       - orphan (a roster token OR a lens file whose '<group>-<id>' has NO matching agent AND no
         matching persona in any enabled plugin) -> [INFO] (could be a just-removed specialist; also
         soft because personas are counted as backing, see below).
+      - lens header still naming a STALE persona name -> [INFO] (issue #145): an older scaffold baked
+        the first name into the lens header ("# Sean <midDot> repo-lens"); after a rename that name is
+        stale, but the lens is present, so it is a cosmetic mismatch, not missing-lens drift. Soft on
+        purpose (silent at session start); the sync-roster skill stages a paste-ready reconcile.
 
     Personas as orphan-backing: main-loop specialists (Chris 01-01, Derek 05-05, Rendall 05-06, ...)
     ship as <plugin>/personas/<g>-<id>-persona.md, NOT as agents, yet legitimately have a roster row
@@ -70,6 +74,9 @@ $cacheRoot = if ($CacheRootOverride) { $CacheRootOverride } else { Join-Path $en
 $script:errors = 0
 $script:infos  = 0
 
+# Middle dot used in the scaffold-lineage lens header; kept as a code point so this file stays ASCII.
+$midDot = [char]0x00B7
+
 # Write-Ok/Write-Info/Write-Failure + Test-PluginNameSlug/Test-PluginMarketplaceSlug + Resolve-PluginDir:
 # shared with check-connectors.ps1 and skills/sync-roster/sync-roster.ps1 (single source, issue
 # #114). This script is a whole-file mirror (scripts/lib/shared-scripts-lib.ps1); check-report-lib.ps1
@@ -109,15 +116,51 @@ function Test-InRoster {
     return ($RosterText -match ('(?<!\d)' + [regex]::Escape($Id) + '(?!\d)'))
 }
 
-# A lens for '<group>-<id>' exists at the plugin-path (the standard) or the legacy extensions-path.
-function Test-LensExists {
+# The lens path for '<group>-<id>': the plugin-path (the standard) or the legacy extensions-path,
+# whichever exists; $null when neither does.
+function Get-LensPath {
     param([string]$RepoRoot, [string]$PluginName, [string]$Id)
     $candidates = @(
         (Join-Path $RepoRoot (".claude\plugins\claude-specialists\$PluginName\$Id-extension.md")),
         (Join-Path $RepoRoot (".claude\extensions\$Id-extension.md"))
     )
-    foreach ($c in $candidates) { if (Test-Path -LiteralPath $c -PathType Leaf) { return $true } }
-    return $false
+    foreach ($c in $candidates) { if (Test-Path -LiteralPath $c -PathType Leaf) { return $c } }
+    return $null
+}
+
+# A lens for '<group>-<id>' exists at the plugin-path (the standard) or the legacy extensions-path.
+function Test-LensExists {
+    param([string]$RepoRoot, [string]$PluginName, [string]$Id)
+    return [bool](Get-LensPath -RepoRoot $RepoRoot -PluginName $PluginName -Id $Id)
+}
+
+# The agent's display name from its cache-file frontmatter (best-effort; '' when absent). Only the
+# `name:` line is needed here -- lighter than sync-roster's Get-AgentInfo, which also reads the desc.
+function Get-AgentName {
+    param([string]$PluginDir, [string]$Id)
+    $p = Join-Path (Join-Path $PluginDir 'agents') "$Id-agent.md"
+    if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { return '' }
+    foreach ($ln in (Get-Content -LiteralPath $p -TotalCount 15)) {
+        if ($ln -match '^name:\s*(.+?)\s*$') { return $Matches[1].Trim() }
+    }
+    return ''
+}
+
+# The leading name token of a scaffold-lineage lens header "# <Name> <midDot> repo[- ]lens" (both the
+# sync-roster and specialists-init generators write that shape). Returns '' when the first heading is
+# NOT that shape -- so a hand-customized header (no "<midDot> repo-lens" tail) is never touched, and
+# the new nameless scaffold "# <g>-<id> <midDot> repo-lens" returns the '<g>-<id>' token (which the
+# caller treats as up-to-date, not drift). $MidDot is passed in so this file stays pure ASCII.
+function Get-ScaffoldHeaderName {
+    param([string]$LensPath, [string]$MidDot)
+    if (-not $LensPath) { return '' }
+    $rx = [regex]("^#\s+(?<nm>[^\s#" + [regex]::Escape($MidDot) + "]+)\s+" + [regex]::Escape($MidDot) + "\s+repo[- ]lens")
+    foreach ($ln in (Get-Content -LiteralPath $LensPath -TotalCount 30 -Encoding UTF8)) {
+        $m = $rx.Match($ln)
+        if ($m.Success) { return $m.Groups['nm'].Value }
+        if ($ln -match '^#\s') { return '' }
+    }
+    return ''
 }
 
 # All lens ids present in the consumer (plugin-path for each enabled plugin + the legacy path), mapped
@@ -222,7 +265,8 @@ foreach ($plugId in ($enabledIds | Sort-Object -Unique)) {
             continue
         }
         $inRoster = Test-InRoster -RosterText $rosterText -Id $id
-        $hasLens  = Test-LensExists -RepoRoot $repoRoot -PluginName $name -Id $id
+        $lensPath = Get-LensPath -RepoRoot $repoRoot -PluginName $name -Id $id
+        $hasLens  = [bool]$lensPath
         if (-not $inRoster) {
             Write-Failure "agent '$id' ($plugId) has no roster row in $rosterRel -- add it to the roster."
         }
@@ -230,6 +274,22 @@ foreach ($plugId in ($enabledIds | Sort-Object -Unique)) {
             Write-Failure "agent '$id' ($plugId) has no repo-lens (.claude/plugins/claude-specialists/$name/$id-extension.md or the legacy .claude/extensions/ path)."
         }
         if ($inRoster -and $hasLens) { Write-Ok "agent '$id' present in roster + lens" }
+
+        # Header drift (INFO -- issue #145): a lens generated by an older scaffold bakes the persona's
+        # first name into its header ("# Sean <midDot> repo-lens"). After a rename that name is stale in
+        # every consumer, yet the lens itself is present, so this is NOT missing-lens drift -- it is a
+        # cosmetic mismatch. Kept INFO on purpose: silent at session start (the hook only surfaces
+        # [ERROR]), shown on a deliberate run, and staged as a paste-ready reconcile by the sync-roster
+        # skill. The nameless header the scaffold now writes never triggers this (its token is the g-id).
+        if ($hasLens) {
+            $staleName = Get-ScaffoldHeaderName -LensPath $lensPath -MidDot $midDot
+            if ($staleName -and $staleName -ne $id) {
+                $current = Get-DisplayName -RawName (Get-AgentName -PluginDir $pluginDir -Id $id) -Fallback $id
+                if ($current -and $staleName -ne $current) {
+                    Write-Info "lens '$id' ($plugId) header still names '$staleName' (agent is now '$current') -- run the sync-roster skill to reconcile the header."
+                }
+            }
+        }
     }
 }
 

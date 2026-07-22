@@ -1,0 +1,24 @@
+### Rename-proof lens scaffold (nameless header + propose-only reconcile) · Feat · 2026-07-22
+
+Made a persona rename stop forcing manual header fixes in every consumer (inbound #145).
+
+- **Nameless generated lens header.** Both scaffold generators (`sync-roster.ps1`'s `New-LensScaffold`
+  and `specialists-init`'s `bootstrap.ps1`) now write the stable `# <group>-<id> · repo-lens` slug
+  instead of baking the persona's first name into the header + intro. The name now lives in exactly
+  one place — the agent-def's `name:` frontmatter — so a later rename can never drift a generated
+  header again.
+- **Propose-only header reconcile.** `check-roster-sync.ps1` detects an existing lens whose header
+  still carries a stale scaffold name (`# Sean · repo-lens` after the agent became Sebastian) and
+  reports it as a non-blocking `[INFO]` (silent at session start, shown on a deliberate run). The
+  `sync-roster` skill parses that and prints the rename-proof, nameless replacement header to paste —
+  it never rewrites the lens file, matching its propose-only stance for roster rows. Hand-customized
+  headers (no `· repo-lens` tail) are never touched.
+- **`Get-DisplayName` centralized** into the shared `check-report-lib.ps1` (was duplicated across
+  `sync-roster.ps1` and `bootstrap.ps1`), now the single source for both the roster-row proposal and
+  the header-drift comparison.
+- Tests extended: nameless-scaffold assertions + stale-header detection/reconcile coverage across
+  `roster-sync`, `sync-roster`, and `bootstrap-drift`.
+
+Out of scope (noted): the persona-lens title copy in `bootstrap.ps1` (which snapshots the plugin
+persona's canonical heading) still carries a name; the roster table + routing rule in a consumer's
+`CLAUDE.md` remain repo-owned governance.

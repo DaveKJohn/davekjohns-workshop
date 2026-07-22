@@ -80,7 +80,7 @@ function Invoke-Ps {
 # sharing one cache root, matching the real $env:USERPROFILE\.claude\plugins\cache layout). Returns
 # the cache root.
 function New-FixtureCache {
-    param([hashtable]$VersionAgents, [hashtable]$VersionPersonas = @{}, [string]$Plugin = $PluginName, [switch]$KeepExisting)
+    param([hashtable]$VersionAgents, [hashtable]$VersionPersonas = @{}, [string]$Plugin = $PluginName, [switch]$KeepExisting, [hashtable]$Names = @{})
     $cache = Join-Path $Fixture 'cache'
     if (-not $KeepExisting -and (Test-Path -LiteralPath $cache)) { Remove-Item -Recurse -Force -LiteralPath $cache }
     foreach ($ver in $VersionAgents.Keys) {
@@ -88,7 +88,8 @@ function New-FixtureCache {
         New-Item -ItemType Directory -Path $adir -Force | Out-Null
         foreach ($id in $VersionAgents[$ver]) {
             $g = $id.Split('-')[0]; $i = $id.Split('-')[1]
-            [System.IO.File]::WriteAllText((Join-Path $adir "$id-agent.md"), "---`nname: x`nid: $i`ngroup: $g`n---`nfixture")
+            $nm = if ($Names.ContainsKey($id)) { $Names[$id] } else { 'x' }
+            [System.IO.File]::WriteAllText((Join-Path $adir "$id-agent.md"), "---`nname: $nm`nid: $i`ngroup: $g`n---`nfixture")
         }
     }
     foreach ($ver in $VersionPersonas.Keys) {
@@ -119,7 +120,10 @@ function New-FixtureConsumer {
         # are written under that plugin's OWN .claude/plugins/claude-specialists/<name>/ dir (a
         # second plugin has its own lens namespace, distinct from $PluginName's).
         [string[]]$ExtraEnabledPluginIds = @(),
-        [hashtable]$ExtraLensesByPlugin = @{}
+        [hashtable]$ExtraLensesByPlugin = @{},
+        # Per-id override for a plugin-path lens file's content (default 'lens'). Lets a case give a
+        # lens a specific header to exercise the stale-header detection (issue #145).
+        [hashtable]$LensContent = @{}
     )
     $root = Join-Path $Fixture 'consumer'
     if (Test-Path -LiteralPath $root) { Remove-Item -Recurse -Force -LiteralPath $root }
@@ -140,7 +144,10 @@ function New-FixtureConsumer {
     if ($LensIds.Count -gt 0) {
         $pdir = Join-Path $root ".claude\plugins\claude-specialists\$PluginName"
         New-Item -ItemType Directory -Path $pdir -Force | Out-Null
-        foreach ($id in $LensIds) { [System.IO.File]::WriteAllText((Join-Path $pdir "$id-extension.md"), "lens") }
+        foreach ($id in $LensIds) {
+            $body = if ($LensContent.ContainsKey($id)) { $LensContent[$id] } else { 'lens' }
+            [System.IO.File]::WriteAllText((Join-Path $pdir "$id-extension.md"), $body)
+        }
     }
     if ($LegacyLensIds.Count -gt 0) {
         $ldir = Join-Path $root '.claude\extensions'
@@ -338,6 +345,29 @@ try {
     Assert-NotMatch "orphan '06-16'" $r.Out 'two-plugin: 06-16 (backed by specialists) not an orphan'
     Assert-NotMatch "orphan '07-07'" $r.Out 'two-plugin: 07-07 (backed by widgets) not an orphan'
     Assert-Match '2 info signal' $r.Out 'two-plugin: BOTH orphans counted (not just the first)'
+
+    # --- 13. Stale lens header after a rename -> [INFO], exit 0 (issue #145) -----------------------
+    #     All three agents are present in roster + lens (no missing-lens/roster drift). What differs is
+    #     the LENS HEADER:
+    #       06-16: agent now 'sebastian', header still "# Sean <midDot> repo-lens"  -> stale  -> INFO.
+    #       06-17: agent 'edith', header "# Edith <midDot> repo-lens"               -> matches -> no INFO.
+    #       06-19: agent 'edith', hand-customized "# Whoever - Copy Editor" (no "<midDot> repo-lens"
+    #              tail)                                                            -> not scaffold shape -> no INFO.
+    #     Proves: detection fires on a drifted scaffold header, is silent when the name matches, and
+    #     never touches a hand-customized header. INFO -> exit 0 (never blocks the session).
+    $midDot = [char]0x00B7
+    $cache = New-FixtureCache -VersionAgents @{ '1.11.0' = @('06-16', '06-17', '06-19') } `
+        -Names @{ '06-16' = 'sebastian'; '06-17' = 'edith'; '06-19' = 'edith' }
+    $stale16 = "---`nid: 16`ngroup: 06`n---`n`n# Sean $midDot repo-lens`n`nbody"
+    $fresh17 = "---`nid: 17`ngroup: 06`n---`n`n# Edith $midDot repo-lens`n`nbody"
+    $hand19  = "---`nid: 19`ngroup: 06`n---`n`n# Whoever - Copy Editor`n`nbody"
+    $c = New-FixtureConsumer -RosterIds @('06-16', '06-17', '06-19') -LensIds @('06-16', '06-17', '06-19') `
+        -LensContent @{ '06-16' = $stale16; '06-17' = $fresh17; '06-19' = $hand19 }
+    $r = Invoke-Ps @('-ConsumerPathOverride', $c, '-CacheRootOverride', $cache)
+    Assert-Equal 0 $r.Code 'stale header: exit-code 0 (INFO, not blocking)'
+    Assert-Match "\[INFO\].*lens '06-16'.*header still names 'Sean'.*is now 'Sebastian'" $r.Out 'stale header: 06-16 drift reported'
+    Assert-NotMatch "lens '06-17'.*header still names" $r.Out 'stale header: 06-17 (name matches) not flagged'
+    Assert-NotMatch "lens '06-19'.*header still names" $r.Out 'stale header: 06-19 (hand-customized header) not flagged'
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
 }

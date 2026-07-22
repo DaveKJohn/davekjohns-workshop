@@ -45,8 +45,13 @@ The script:
 3. **Proposes a roster row** for each agent **missing a roster row**: it reads the agent's frontmatter
    (name + description) and prints a proposed markdown row (matching the roster's table/list style as
    best-effort) to stdout. It does **not** edit the roster / `CLAUDE.md`.
-4. Prints a summary of what was staged, plus an explicit reminder that **main is sacred**: the skill
-   wrote nothing to `CLAUDE.md` and committed nothing.
+4. **Proposes a header reconcile** for each lens whose header still carries a **stale persona name**.
+   An older scaffold baked the first name into the lens header (`# Sean · repo-lens`); after the
+   agent-def is renamed that name is stale in every consumer. The skill prints the rename-proof,
+   nameless replacement header (`# <group>-<id> · repo-lens`) for you to paste. New scaffolds are
+   already nameless, so they never drift again (issue #145). It does **not** rewrite the lens file.
+5. Prints a summary of what was staged, plus an explicit reminder that **main is sacred**: the skill
+   wrote nothing to `CLAUDE.md` or any lens, and committed nothing.
 
 ## The human's follow-up (the judgment calls)
 
@@ -57,7 +62,9 @@ After the script:
    gatekeepers it works under). The portable craft stays in the plugin manual.
 2. **Place the roster rows.** Paste the proposed row(s) into the roster and adjust them to the real
    columns/style of your table or list.
-3. **Branch + PR under your own governance.** Put the changes on a branch and open a PR -- never
+3. **Apply each header reconcile.** For each staged reconcile, replace the stale header line (and any
+   remaining stale-name mention in the intro just below it) in the named lens with the nameless form.
+4. **Branch + PR under your own governance.** Put the changes on a branch and open a PR -- never
    straight on `main`. Opening the PR follows this repo's own rules (in this workshop, on explicit
    request); the `open-pr` skill can do the push once you decide.
 

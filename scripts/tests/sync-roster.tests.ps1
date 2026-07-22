@@ -91,7 +91,7 @@ function New-FixtureCache {
 
 # Fixture consumer. RosterIds -> written into CLAUDE.md; LensIds -> lens files on the plugin path.
 function New-FixtureConsumer {
-    param([string[]]$RosterIds = @(), [string[]]$LensIds = @(), [string]$RosterStyle = 'table')
+    param([string[]]$RosterIds = @(), [string[]]$LensIds = @(), [string]$RosterStyle = 'table', [hashtable]$LensContent = @{})
     $root = Join-Path $Fixture 'consumer'
     if (Test-Path -LiteralPath $root) { Remove-Item -Recurse -Force -LiteralPath $root }
     New-Item -ItemType Directory -Path (Join-Path $root '.claude') -Force | Out-Null
@@ -108,7 +108,10 @@ function New-FixtureConsumer {
     if ($LensIds.Count -gt 0) {
         $pdir = Join-Path $root ".claude\plugins\claude-specialists\$PluginName"
         New-Item -ItemType Directory -Path $pdir -Force | Out-Null
-        foreach ($id in $LensIds) { [System.IO.File]::WriteAllText((Join-Path $pdir "$id-extension.md"), "existing-lens-$id") }
+        foreach ($id in $LensIds) {
+            $body = if ($LensContent.ContainsKey($id)) { $LensContent[$id] } else { "existing-lens-$id" }
+            [System.IO.File]::WriteAllText((Join-Path $pdir "$id-extension.md"), $body)
+        }
     }
     return $root
 }
@@ -152,7 +155,9 @@ try {
     if (Test-Path -LiteralPath $scaffold24) {
         $s24 = [System.IO.File]::ReadAllText($scaffold24, [System.Text.Encoding]::UTF8)
         Assert-Match '## Specific to this repo \(VUL-IN\)' $s24 'integration: scaffold has the VUL-IN slot'
-        Assert-Match 'Ravi' $s24 'integration: scaffold names the agent (Ravi)'
+        # Rename-proof (issue #145): the header carries the stable g-id slug, NOT the persona name.
+        Assert-Match '(?m)^# 06-24 .* repo-lens \(VUL-IN\)' $s24 'integration: scaffold header is the nameless g-id form'
+        Assert-NotMatch 'Ravi' $s24 'integration: scaffold does NOT bake the persona name (Ravi) in'
     }
     Assert-Match 'created lens scaffold.*06-24' $r.Out 'integration: output reports the created scaffold'
 
@@ -221,7 +226,30 @@ try {
     Assert-Match '- \*\*Ravi\*\* #24' $r.Out 'list style: proposed row uses the list form'
 
     # --- 5. Reminder that main is sacred / nothing was committed ------------------------------------
-    Assert-Match 'wrote NOTHING to.*CLAUDE.md and committed nothing' $r.Out 'reminder: sacred-main notice present'
+    Assert-Match 'wrote NOTHING to.*CLAUDE.md or any lens, and committed nothing' $r.Out 'reminder: sacred-main notice present'
+
+    # --- 6. Stale lens header (rename): a paste-ready nameless reconcile is proposed (issue #145) ----
+    #   Real check drives detection. 06-16's agent is now 'sebastian', but its lens header still names
+    #   'Sean' (an older scaffold) -> a header reconcile is staged. 06-17's header names 'Edith', which
+    #   MATCHES its agent -> no reconcile. The lens files are NEVER rewritten (propose-only).
+    $midDot = [char]0x00B7
+    $cache = New-FixtureCache -Agents @{
+        '06-16' = @{ Name = 'sebastian'; Desc = 'Security Engineer.' }
+        '06-17' = @{ Name = 'edith';     Desc = 'Copy Editor.' }
+    }
+    $staleHdr = "---`nid: 16`ngroup: 06`n---`n`n# Sean $midDot repo-lens`n`n> Repo-lens for Sean.`nfilled body"
+    $freshHdr = "---`nid: 17`ngroup: 06`n---`n`n# Edith $midDot repo-lens`n`nbody"
+    $c6 = New-FixtureConsumer -RosterIds @('06-16', '06-17') -LensIds @('06-16', '06-17') `
+        -LensContent @{ '06-16' = $staleHdr; '06-17' = $freshHdr }
+    $lens16Path = Join-Path $c6 "$lensRel\06-16-extension.md"
+    $lens16Before = Get-B64 $lens16Path
+    $r = Invoke-Ps @('-ConsumerPathOverride', $c6, '-CacheRootOverride', $cache)
+    Assert-Equal 0 $r.Code 'header reconcile: exit-code 0'
+    Assert-Match "header names 'Sean'.*is now 'Sebastian'" $r.Out 'header reconcile: stale 06-16 header detected'
+    Assert-Match "(?m)^\s*# 06-16 .* repo-lens\s*$" $r.Out 'header reconcile: nameless replacement header printed'
+    Assert-Match '1 header reconcile' $r.Out 'header reconcile: counted in the summary'
+    Assert-NotMatch "'06-17'.*header still names" $r.Out 'header reconcile: matching header (06-17=Edith) not flagged'
+    Assert-Equal $lens16Before (Get-B64 $lens16Path) 'header reconcile: lens file bytes unchanged (propose-only)'
 } finally {
     if (Test-Path -LiteralPath $Fixture) { Remove-Item -Recurse -Force -LiteralPath $Fixture }
 }

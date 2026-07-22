@@ -38,6 +38,9 @@
                                                           version -- [version]-sort, not
                                                           string-sort, so 1.10.0 beats 1.9.0 -- that
                                                           has an agents/ dir).
+      - Get-DisplayName                               -- sanitize + capitalize a raw agent name into a
+                                                          display name (single source for sync-roster
+                                                          and check-roster-sync -- issue #145).
 
     Not every caller needs every function -- e.g. sync-roster.ps1 uses its own non-counting
     Write-Info/Write-Failure (it tracks created/kept/proposed, not error/info signals, and always
@@ -109,4 +112,16 @@ function Resolve-PluginDir {
         }
     }
     return $null
+}
+
+function Get-DisplayName {
+    <# Sanitize + capitalize a raw agent name (from an agent-def's `name:` frontmatter) into a display
+       name. Defense-in-depth: the name may be written into a scaffold file or a proposed roster row,
+       so restrict it to a safe charset before use. Returns $Fallback when nothing usable remains.
+       Single source (issue #145) for skills/sync-roster/sync-roster.ps1 (roster-row proposals +
+       header-drift comparison) and scripts/sync/check-roster-sync.ps1 (header-drift detection). #>
+    param([string]$RawName, [string]$Fallback = '')
+    $n = $RawName -replace '[^A-Za-z0-9_-]', ''
+    if (-not $n) { return $Fallback }
+    return ($n.Substring(0, 1).ToUpper() + $n.Substring(1))
 }

@@ -259,26 +259,22 @@ foreach ($pluginName in ($pluginNames | Sort-Object -Unique)) {
         $group = $Matches[1]; $id = $Matches[2]
         $dest = Join-Path $pluginPad "$group-$id-extension.md"
         if (Test-Path -LiteralPath $dest -PathType Leaf) { $script:lensKept++; return }
-        $agentName = ''
-        foreach ($line in (Get-Content -LiteralPath $_.FullName -TotalCount 10)) {
-            if ($line -match '^name:\s*(\S+)') { $agentName = $Matches[1]; break }
-        }
         $midDot = [char]0x00B7
-        # Defense-in-depth (Sean advice): name ends up in written template -- restrict to
-        # safe character set, even if source plugin is within same trust boundary.
-        $agentName = $agentName -replace '[^A-Za-z0-9_-]', ''
-        if ($agentName) { $displayName = $agentName.Substring(0,1).ToUpper() + $agentName.Substring(1) } else { $displayName = "$group-$id" }
+        # Rename-proof (issue #145): the header carries the STABLE '<group>-<id>' slug, never the
+        # persona's first name -- so a later rename of the agent-def never drifts this generated
+        # header. The name lives in exactly one place, the agent-def's `name:` frontmatter.
+        $slug = "$group-$id"
         $template = @"
 ---
 id: $id
 group: $group
 ---
 
-# $displayName $midDot repo lens (VUL-IN)
+# $slug $midDot repo lens (VUL-IN)
 
-> Repo lens alongside portable domain guide for $displayName in ``$pluginName`` plugin.
+> Repo lens alongside portable domain guide for specialist $slug in ``$pluginName`` plugin.
 > Created by ``specialists-init`` as empty template; agent definition reads it automatically.
-> Fill in repo-specific tasks and context below that $displayName needs in this repo.
+> Fill in repo-specific tasks and context below that specialist $slug needs in this repo.
 
 ## Specific to this repo (VUL-IN)
 
@@ -289,7 +285,7 @@ group: $group
      Portable expertise remains in plugin manual; only repo-specific matters belong here. -->
 "@
         [System.IO.File]::WriteAllText($dest, $template, $Utf8NoBom)
-        Write-Host "  [create] lens scaffold $padRel/$pluginName/$group-$id-extension.md ($displayName)" -ForegroundColor Green
+        Write-Host "  [create] lens scaffold $padRel/$pluginName/$group-$id-extension.md" -ForegroundColor Green
         $script:scaffolded++
     }
 }

@@ -19,6 +19,10 @@
       - For each agent MISSING A ROSTER ROW it reads the agent's frontmatter (name + description) and
         PRINTS a proposed roster row to stdout for the human to paste. It NEVER edits the roster /
         CLAUDE.md.
+      - For each lens whose header still carries a STALE persona name (an older scaffold baked the
+        first name in; the agent-def was later renamed -- issue #145) it PRINTS the rename-proof,
+        nameless replacement header to paste. It NEVER rewrites the lens file itself -- same
+        propose-only stance as the roster rows.
 
     To read the agent frontmatter it resolves the plugin's cache dir the same way
     check-roster-sync.ps1 does (semantically highest version under the plugin cache). That is the only
@@ -65,9 +69,10 @@ $repoRoot = (Resolve-Path -LiteralPath $repoRoot).Path
 # Plugin cache root (overridable for tests) -- same default as check-roster-sync.ps1.
 $cacheRoot = if ($CacheRootOverride) { $CacheRootOverride } else { Join-Path $env:USERPROFILE '.claude\plugins\cache' }
 
-$script:created  = 0
-$script:kept     = 0
-$script:proposed = 0
+$script:created    = 0
+$script:kept       = 0
+$script:proposed   = 0
+$script:reconciled = 0
 
 # Write-Ok + Test-PluginNameSlug/Test-PluginMarketplaceSlug + Resolve-PluginDir: shared with
 # scripts/sync/check-roster-sync.ps1 and check-connectors.ps1 (single source, issue #114). This
@@ -141,19 +146,23 @@ function Get-AgentInfo {
 # blockquote intro + the "## Specific to this repo (VUL-IN)" slot + a TODO). BOM-less LF, never
 # overwrites. Prose is English (repo convention); "VUL-IN" is kept verbatim as the stable fill-in marker.
 function New-LensScaffold {
-    param([string]$Group, [string]$Id, [string]$DisplayName, [string]$PluginName)
+    # Rename-proof (issue #145): the header carries the STABLE '<group>-<id>' slug, never the persona's
+    # first name -- so a later rename of the agent-def never drifts this generated header. The name
+    # lives in exactly one place, the agent-def's `name:` frontmatter.
+    param([string]$Group, [string]$Id, [string]$PluginName)
     $midDot = [char]0x00B7
+    $slug = "$Group-$Id"
     $template = @"
 ---
 id: $Id
 group: $Group
 ---
 
-# $DisplayName $midDot repo-lens (VUL-IN)
+# $slug $midDot repo-lens (VUL-IN)
 
-> Repo-lens for the portable manual of $DisplayName in the ``$PluginName`` plugin. This file was put
+> Repo-lens for the portable manual of specialist $slug in the ``$PluginName`` plugin. This file was put
 > in place by ``sync-roster`` as an empty template; the agent-def reads it along automatically.
-> Fill in below the repo-specific tasks and context $DisplayName needs in this repo.
+> Fill in below the repo-specific tasks and context specialist $slug needs in this repo.
 
 ## Specific to this repo (VUL-IN)
 
@@ -166,14 +175,10 @@ group: $Group
     return ($template.TrimEnd() + "`n")
 }
 
-# Sanitize + capitalize a raw agent name into a display name (defense-in-depth: the name is written
-# into a scaffold file, so restrict it to a safe charset -- same as bootstrap.ps1).
-function Get-DisplayName {
-    param([string]$RawName, [string]$Fallback)
-    $n = $RawName -replace '[^A-Za-z0-9_-]', ''
-    if (-not $n) { return $Fallback }
-    return ($n.Substring(0, 1).ToUpper() + $n.Substring(1))
-}
+# Get-DisplayName (sanitize + capitalize a raw agent name) comes from the dot-sourced
+# check-report-lib.ps1 above -- single source shared with check-roster-sync.ps1 (issue #145). It is
+# still used here for the proposed roster row (which keeps the friendly name) and for the header-drift
+# comparison, NOT for the lens scaffold (that is now nameless -- see New-LensScaffold).
 
 Write-Host "== sync-roster -- $repoRoot ==" -ForegroundColor Cyan
 
@@ -203,9 +208,21 @@ foreach ($line in $checkOut) {
     if ($m.Groups['kind'].Value -eq 'repo-lens') { $missingLens += $entry } else { $missingRoster += $entry }
 }
 
-if ($missingLens.Count -eq 0 -and $missingRoster.Count -eq 0) {
-    Write-Ok "no missing-agent drift reported by check-roster-sync -- nothing to stage."
-    Write-Host "`nSummary: 0 scaffold(s) created, 0 roster row(s) proposed." -ForegroundColor Green
+# Stale-header drift (issue #145): check-roster-sync emits, per lens whose header still names an old
+# persona name:  [INFO] lens '<g>-<id>' (<pid>) header still names '<stale>' (agent is now '<current>')
+# ... . We stage a paste-ready reconcile (never rewrite the lens itself -- same propose-only stance as
+# the roster rows).
+$staleHeaders = @()   # ordered list of @{ Id; PluginId; Stale; Current }
+$rxHdr = [regex]"\[INFO\]\s+lens '(?<id>\d{2}-\d{2})' \((?<pid>[^)]+)\) header still names '(?<stale>[^']*)' \(agent is now '(?<cur>[^']*)'\)"
+foreach ($line in $checkOut) {
+    $mh = $rxHdr.Match($line)
+    if (-not $mh.Success) { continue }
+    $staleHeaders += @{ Id = $mh.Groups['id'].Value; PluginId = $mh.Groups['pid'].Value; Stale = $mh.Groups['stale'].Value; Current = $mh.Groups['cur'].Value }
+}
+
+if ($missingLens.Count -eq 0 -and $missingRoster.Count -eq 0 -and $staleHeaders.Count -eq 0) {
+    Write-Ok "no missing-agent drift or stale lens headers reported by check-roster-sync -- nothing to stage."
+    Write-Host "`nSummary: 0 scaffold(s) created, 0 roster row(s) proposed, 0 header reconcile(s)." -ForegroundColor Green
     exit 0
 }
 
@@ -250,17 +267,11 @@ foreach ($e in $missingLens) {
         continue
     }
 
-    $displayName = "$group-$idNum"
-    $pluginDir = Get-CachedPluginDir -Name $pi.Name -Marketplace $pi.Marketplace
-    if ($pluginDir) {
-        $info = Get-AgentInfo -PluginDir $pluginDir -Id $id
-        if ($info) { $displayName = Get-DisplayName -RawName $info.Name -Fallback "$group-$idNum" }
-    }
-
+    # The scaffold is nameless (issue #145) -- no agent-frontmatter lookup needed here anymore.
     $destDir = Split-Path $dest -Parent
     if (-not (Test-Path -LiteralPath $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
-    [System.IO.File]::WriteAllText($dest, (New-LensScaffold -Group $group -Id $idNum -DisplayName $displayName -PluginName $pi.Name), $Utf8NoBom)
-    Write-Ok "created lens scaffold .claude/plugins/claude-specialists/$($pi.Name)/$id-extension.md ($displayName)"
+    [System.IO.File]::WriteAllText($dest, (New-LensScaffold -Group $group -Id $idNum -PluginName $pi.Name), $Utf8NoBom)
+    Write-Ok "created lens scaffold .claude/plugins/claude-specialists/$($pi.Name)/$id-extension.md ($id)"
     $script:created++
 }
 
@@ -323,11 +334,29 @@ foreach ($e in $missingRoster) {
     $script:proposed++
 }
 
+# --- 4. Stale lens headers: PRINT the reconciled (nameless) header (never rewrite the lens) ---------
+# Propose-only, exactly like the roster rows above: this skill points at the drifted header and prints
+# the rename-proof replacement to paste; it does not edit the lens file. The replacement carries no
+# name (the g-id slug), so it can never drift again on a future rename (issue #145).
+$midDot = [char]0x00B7
+Write-Host "`n-- proposed lens-header reconciles -- replace the stale header in each lens" -ForegroundColor Cyan
+if ($staleHeaders.Count -eq 0) { Write-Info "no lens carries a stale scaffold header." }
+foreach ($h in $staleHeaders) {
+    $pi = Split-PluginId -PluginId $h.PluginId
+    $pname = if ($pi) { $pi.Name } else { 'claude-specialists' }
+    $lensPath = ".claude/plugins/claude-specialists/$pname/$($h.Id)-extension.md"
+    Write-Host "  $lensPath -- header names '$($h.Stale)', but agent '$($h.Id)' is now '$($h.Current)':" -ForegroundColor Yellow
+    Write-Host "    # $($h.Id) $midDot repo-lens" -ForegroundColor Green
+    Write-Host "    (also update any remaining '$($h.Stale)' mention in the intro line just below the header.)" -ForegroundColor Gray
+    $script:reconciled++
+}
+
 # --- Summary + the explicit sacred-main reminder ----------------------------------------------------
-Write-Host "`nSummary: $($script:created) lens scaffold(s) created, $($script:kept) already present; $($script:proposed) roster row(s) proposed." -ForegroundColor Cyan
-Write-Host "Reminder -- this skill wrote NOTHING to $rosterRel / CLAUDE.md and committed nothing (main is sacred)." -ForegroundColor Cyan
+Write-Host "`nSummary: $($script:created) lens scaffold(s) created, $($script:kept) already present; $($script:proposed) roster row(s) proposed; $($script:reconciled) header reconcile(s) proposed." -ForegroundColor Cyan
+Write-Host "Reminder -- this skill wrote NOTHING to $rosterRel / CLAUDE.md or any lens, and committed nothing (main is sacred)." -ForegroundColor Cyan
 Write-Host "Next (human, judgment calls):" -ForegroundColor Cyan
 Write-Host "  1. Fill in each created '## Specific to this repo (VUL-IN)' slot with the specialist's repo-lens." -ForegroundColor Gray
 Write-Host "  2. Review each proposed roster row before pasting into $rosterRel -- the name/description are lifted from plugin metadata, so read the wording (it lands in a governance doc) and adjust it to the roster's real columns/style." -ForegroundColor Gray
-Write-Host "  3. Put the changes on a branch and open a PR under your own governance -- never straight on main." -ForegroundColor Gray
+Write-Host "  3. Apply each proposed header reconcile to the named lens file (the header line, plus the intro mention)." -ForegroundColor Gray
+Write-Host "  4. Put the changes on a branch and open a PR under your own governance -- never straight on main." -ForegroundColor Gray
 exit 0
