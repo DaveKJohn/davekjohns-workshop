@@ -27,6 +27,15 @@ core is written repo-neutrally (no repo names, paths, or script names — that c
 consumer's repo lens); the domain groups name their domain explicitly, because only a matching repo
 enables them.
 
+### The e-commerce-related plugins
+
+Two of the four plugins serve a **commercial webshop** and are built to work together:
+
+- **`specialists-shopify`** — the *platform* layer: theme code, store management, configuration for a Shopify store.
+- **`specialists-ecomm`** — the platform-agnostic *disciplines* that any webshop needs: SEO, CRO, and performance/SEA.
+
+They sit on different axes — one is "which platform," the other is "which marketing disciplines" — so they complement rather than replace each other. A **Shopify** store repo typically enables **both**; a **non-Shopify** webshop enables just `specialists-ecomm`. The other two plugins — `specialists` (the core) and `specialists-lifehub` — fall outside this e-commerce grouping. This is a reading aid, not a packaging change: every plugin is still enabled or disabled on its own.
+
 ## Agent def vs. manual — two files, one specialist
 
 Every specialist in these plugins consists of two files, each with its own job:
