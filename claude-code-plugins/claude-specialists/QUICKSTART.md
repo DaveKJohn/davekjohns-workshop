@@ -45,7 +45,7 @@ Chris) + an empty repo-lens scaffold per specialist on the **plugin path**
 (his portable body from the plugin install + his repo lens), and a proposal for safety settings
 (`settings.suggested.jsonc`, for your own
 review). The details of this path are in the
-[root README › Adoption](../../README.md#adoption-the-bootstrap-path) — which counts the steps there
+[family README › Adoption](README.md#adoption-the-bootstrap-path) — which counts the steps there
 as "step 0" (the enabling above) and "step 1" (the skill).
 
 **Step 3 — restart and verify.** Start again and check that Chris takes the floor (every turn opens

@@ -45,35 +45,24 @@ themselves**. It is **not a replacement** for the safety rules or the routing.
 
 ## How a specialist is structured
 
+The general model — persona vs. subagent representations, the manual/agent-def split, the
+portable-craft-vs-repo-lens split, and persona templates as a third artifact — is the plugin
+family's concept and lives in one canonical place: the family README's
+[Manuals — the split model](../../../claude-code-plugins/claude-specialists/README.md#manuals--the-split-model).
+This section records only how that plays out **concretely in this repo**.
+
 ### Persona or subagent — one specialist, two representations
 
-1. **Craft manual + repo lens.** The complete, portable playbook (craft, hard rules, tone) lives
-   in the marketplace plugin (`<plugin>/manuals/<group>-<id>-manual.md`); the repo-specific
-   supplement lives locally in `.claude/extensions/<group>-<id>-extension.md`. For a **persona-only**
-   specialist (who runs in the main conversation), the *full* manual instead lives locally in
-   `specialists/` — it cannot be loaded from a plugin.
-2. **Agent definition** — `<group>-<id>-agent.md`, here sourced from the `specialists` plugin. This
-   is the compact, executable form (its own context window, restricted tools, its own model) that
-   turns the specialist into a real, parallel-invocable subagent. It **points to** the plugin craft
-   manual + the repo lens and does not repeat the rules — so there stays one source of truth.
+Which specialists here are a subagent lens vs. a persona lens (lens-only), and where their files
+live, is inventoried in [Layout of this directory](#layout-of-this-directory) above — not repeated
+here. What follows are the rules that build on that split:
 
 **Rules:** where both exist, the **manual is leading**; the agent def is the executable
-abbreviation. You change a craft rule in the manual; the agent def only when the operational core or
-tool set changes. The *principle* and the manuals belong to [Tessa #16](specialists/06-16-extension.md);
+abbreviation. The *principle* and the manuals belong to [Tessa #16](specialists/06-16-extension.md);
 the agent-def config (frontmatter, tools, model) belongs to [Sylvester #15](specialists/05-15-extension.md).
 **Chris remains a persona** — he is the only one who can **ask** Dave anything.
-
-### Every manual: portable craft and a repo-specific section
-
-Every playbook is built in two parts, and those two halves live physically apart:
-
-1. **The body — the portable craft** (in the plugin manual): the profession in generic terms, without
-   repo terms ("main branch" rather than `main`, no concrete script names, no `#id` references).
-2. **`## Specific to this repo (davekjohns-workshop)` — the repo-specific section** (the lens in
-   `specialists/`): everything that is repo-specific. Fixed structure: italic lens line → core claim
-   → repo sections → a "**how** (portable) vs. **what** (repo-specific)" closing.
-
-[Tessa #16](specialists/06-16-extension.md) guards this two-part split on every change.
+[Tessa #16](specialists/06-16-extension.md) guards the two-part manual split (portable body vs.
+repo lens) on every change here.
 
 ### Stable id + group — the filename is `<group>-<id>`
 

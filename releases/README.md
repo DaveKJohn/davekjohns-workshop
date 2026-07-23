@@ -5,7 +5,8 @@ The release history of the davekjohns-workshop marketplace. A release here is no
 lockstep. **No GitHub Releases** are published on purpose — the full notes live below in
 `development/<X>.x/<X.Y.Z>.md`, and the `## Releases` block in
 [`CHANGELOG.md`](../CHANGELOG.md) references them. Releases are cut only at Dave's explicit request
-via [`scripts/release/cut-release.ps1`](../scripts/release/cut-release.ps1). Each release also
+via [`scripts/release/cut-release.ps1`](../scripts/release/cut-release.ps1) — see
+[Cutting a release](#cutting-a-release) below for the full mechanics. Each release also
 refreshes, per plugin, the `RELEASE.md` card that consumers see (version + short notes, travelling
 along with the plugin cache via `claude plugin update`).
 
@@ -53,3 +54,40 @@ top one).
 | [1.1.1](development/1.x/1.1.1.md) | 2026-07-15 | Patch | Security baseline processed: injection guardrail, cleaned-up example paths, and the CI gate |
 | [1.1.0](development/1.x/1.1.0.md) | 2026-07-15 | Minor | Sean the Security Engineer + the reload-plugins lesson |
 | [1.0.0](development/1.x/1.0.0.md) | 2026-07-14 | Major | First official release |
+
+## Cutting a release
+
+A release is a **captured moment**: all plugins get the same version number
+(**lockstep, repo-wide**) and the state is tagged as `vX.Y.Z`. Nothing is published to GitHub Releases
+— only a git tag, the full notes here in `development/`, and a reference to them in
+[`CHANGELOG.md`](../CHANGELOG.md). A release is cut **only on Dave's explicit
+request** and deliberately does **not** go through a branch + PR: like the fold commit, the
+release commit is a permitted direct-on-`main` action (the second exception to "everything via
+branch + PR" — see [`CONTRIBUTING.md`](../CONTRIBUTING.md)).
+
+In one motion, on a clean `main`:
+[`scripts/release/cut-release.ps1`](../scripts/release/cut-release.ps1)`(-Version <X.Y.Z> | -Bump <major|minor|patch>) [-Title "…"]`
+
+1. bumps all `plugin.json` versions in lockstep to `X.Y.Z`;
+2. generates the full release notes in `development/<X>.x/<X.Y.Z>.md` (from the folded
+   `## Pull Requests` entries, per branch type), adds a row to this page's [Overview](#overview),
+   and places in `CHANGELOG.md` a reference under `## Releases` (the Pull Requests section is
+   emptied down to its intro);
+3. appends, per plugin, the entries that touched that plugin (selected via the `Plugins:` line that
+   the fold derives from the PR's files; as internal bookkeeping, the line itself doesn't travel along)
+   to the **per-plugin `CHANGELOG.md`**, and regenerates that plugin's **`RELEASE.md`** card (version,
+   one-line summary, and the entries for that version) — both consumer-facing artifacts that travel
+   along with the plugin cache. In all three outputs (the full notes, the per-plugin CHANGELOG, and
+   the RELEASE.md card) the entries are grouped by category — Features, Fixes, Documentation,
+   Maintenance, Other — with features and fixes at the top;
+4. commits that directly on `main` (`release: vX.Y.Z`) and sets an annotated tag `vX.Y.Z`;
+5. pushes `main` + the tag (unless `-NoPush` for inspection first).
+
+Guardrails: a clean `main`, no unfolded entry files, lint gate green, tag doesn't exist yet. The
+lint gate ([`scripts/lint/check-plugin-integrity.ps1`](../scripts/lint/check-plugin-integrity.ps1),
+check 9) also guards that every plugin's `RELEASE.md` card is present and its version matches
+`plugin.json`, since the two only ever change together via `cut-release.ps1`.
+
+The pure logic (version bump, CHANGELOG transformation, notes construction) lives in
+[`scripts/lib/release-lib.ps1`](../scripts/lib/release-lib.ps1) and is covered by
+[`scripts/tests/release-lib.tests.ps1`](../scripts/tests/release-lib.tests.ps1).
