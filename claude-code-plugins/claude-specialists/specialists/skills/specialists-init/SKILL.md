@@ -84,7 +84,13 @@ After the script:
    them out), and then remove the proposal file.
 3. **Write the governance.** The `CLAUDE.md` scaffold is bare — fill in the safety rules and the
    working method of this repo (see an existing consumer as a model).
-4. **Restart the session.** The new `@`-import and config only become active on a **restart** of
+4. **Enable auto-delete of merged branches (#163).** Turn on the GitHub repo setting
+   *"Automatically delete head branches"* (`deleteBranchOnMerge: true`) — via the repo settings UI
+   or `gh api -X PATCH repos/<owner>/<repo> -F delete_branch_on_merge=true`. That makes remote
+   branch cleanup automatic on merge; the local-clone cleanup (`git fetch --prune` +
+   `git branch -d <branch>`) stays the fixed closing step of the fold (see the `fold-changelog`
+   skill).
+5. **Restart the session.** The new `@`-import and config only become active on a **restart** of
    Claude Code.
 
 ## Important

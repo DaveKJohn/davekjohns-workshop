@@ -34,6 +34,27 @@ The script:
    entry come into existence in a single step. If the entry file already exists, that step is a
    no-op (same idempotence).
 
+## Recording intent and parking a branch (#162)
+
+Two optional parameters cover the "start now, continue later (maybe on another device)" case:
+
+- **`-Intent "<what is next / where I left off>"`** -- fills the changelog entry body with that
+  text instead of a placeholder. If you omit it, the body falls back to a directional block
+  (`**To do / where I left off:**` + a prompting TODO) rather than a bare one-line TODO, so a
+  forgotten `-Intent` still leaves a "what is next" prompt. Either way it is a scaffold: whoever
+  finishes the branch replaces the body with the final description before the PR.
+- **`-Park`** -- after creating the branch + entry, commits the entry (the intent carrier) and
+  pushes the branch to `origin` with `git push -u`. **This opens no PR.** Push is not a PR: parking
+  makes the branch reachable from another device, while the PR rule stays intact and separate.
+
+```powershell
+powershell -NoProfile -File "${CLAUDE_PLUGIN_ROOT}/scripts/task/new-branch.ps1" `
+  -Name "feat/spotify-dashboard" -Title "Spotify dashboard" `
+  -Intent "Skeleton + routing done; next: wire the API client." -Park
+```
+
+Parking additionally needs a configured, reachable `origin` (git only -- no `gh`, no PR).
+
 ## Requirements in the consumer
 
 The script is repo-agnostic, but reads its repo data from the **root** of the consumer
@@ -49,9 +70,10 @@ repo as a model, or use the `VUL-IN` scaffold the `specialists-init` bootstrap p
 
 ## Important
 
-- **No push, no PR.** The script only runs `git checkout`/`checkout -b` locally and writes the
-  entry file; nothing leaves the machine. Opening a PR remains a separate, explicit step
-  (the `open-pr` skill).
+- **No push, no PR by default.** Without `-Park` the script only runs `git checkout`/`checkout -b`
+  locally and writes the entry file; nothing leaves the machine. With `-Park` it also commits the
+  entry and pushes the branch to `origin` -- but still **opens no PR**. Opening a PR remains a
+  separate, explicit step (the `open-pr` skill).
 - **Idempotent repetition.** Running the script again on a branch that already exists, or for an
   entry file that is already there, does not fail or overwrite -- it simply resumes/no-ops.
 - The source of this script lives in the workshop repo; do not modify it locally in the consumer. A

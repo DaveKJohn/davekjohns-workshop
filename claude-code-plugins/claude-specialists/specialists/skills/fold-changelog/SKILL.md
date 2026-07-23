@@ -31,6 +31,24 @@ Without `-Branch` it folds all entry files present in the root. The script:
 
 Then commit the result (`CHANGELOG.md` + the removed entry files) directly on main.
 
+## Closing step: branch cleanup (#163)
+
+The fold is the **last step of the PR chain**, so branch cleanup belongs here as its fixed
+closing step -- not something to remember per repo or per time:
+
+- **Remote** -- a well-configured repo deletes the head branch automatically on merge (the GitHub
+  setting *"Automatically delete head branches"*, `deleteBranchOnMerge: true`; see the
+  `specialists-init` setup checklist). Nothing to do by hand.
+- **Local** -- GitHub never touches your own clone, so finish on `main` after the fold with:
+
+  ```powershell
+  git fetch --prune            # drop stale remote-tracking refs (origin/<merged-branch>, ...)
+  git branch -d <merged-branch>  # remove the merged local branch
+  ```
+
+  `git fetch --prune` matters even when the remote branch was auto-deleted: the stale
+  remote-tracking refs otherwise pile up in the local clone until pruned.
+
 ## Requirements in the consumer
 
 The script is repo-agnostic, but reads a small block of repo data from the **root** of the consumer

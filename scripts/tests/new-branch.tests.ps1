@@ -21,10 +21,13 @@
 #>
 $ErrorActionPreference = 'Stop'
 
-$RepoRoot        = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$NewBranchSrc    = Join-Path $RepoRoot 'scripts\task\new-branch.ps1'
-$NewChangelogSrc = Join-Path $RepoRoot 'scripts\release\new-changelog-entry.ps1'
-$BranchInfoSrc   = Join-Path $RepoRoot 'scripts\lib\branch-info.ps1'
+$RepoRoot         = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
+$NewBranchSrc     = Join-Path $RepoRoot 'scripts\task\new-branch.ps1'
+$NewChangelogSrc  = Join-Path $RepoRoot 'scripts\release\new-changelog-entry.ps1'
+$BranchInfoSrc    = Join-Path $RepoRoot 'scripts\lib\branch-info.ps1'
+# new-branch -Park dot-sources this sibling shared lib for its git push (the #107 stderr guard),
+# so the fixture must carry it too.
+$NativeCaptureSrc = Join-Path $RepoRoot 'scripts\lib\native-capture-lib.ps1'
 # Direct Test-BranchName calls (separate from the CLI) for the empty/whitespace-only case --
 # PowerShell's mandatory-param binding catches an empty -Name via the CLI with a generic error, so
 # the exact Reason text can only be tested directly.
@@ -67,9 +70,10 @@ function New-Fixture {
     New-Item -ItemType Directory -Path (Join-Path $dir 'scripts\task')    -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $dir 'scripts\release') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $dir 'scripts\lib')    -Force | Out-Null
-    Copy-Item -LiteralPath $NewBranchSrc    -Destination (Join-Path $dir 'scripts\task\new-branch.ps1')             -Force
-    Copy-Item -LiteralPath $NewChangelogSrc -Destination (Join-Path $dir 'scripts\release\new-changelog-entry.ps1') -Force
-    Copy-Item -LiteralPath $BranchInfoSrc   -Destination (Join-Path $dir 'scripts\lib\branch-info.ps1')             -Force
+    Copy-Item -LiteralPath $NewBranchSrc     -Destination (Join-Path $dir 'scripts\task\new-branch.ps1')             -Force
+    Copy-Item -LiteralPath $NewChangelogSrc  -Destination (Join-Path $dir 'scripts\release\new-changelog-entry.ps1') -Force
+    Copy-Item -LiteralPath $BranchInfoSrc    -Destination (Join-Path $dir 'scripts\lib\branch-info.ps1')             -Force
+    Copy-Item -LiteralPath $NativeCaptureSrc -Destination (Join-Path $dir 'scripts\lib\native-capture-lib.ps1')      -Force
 
     $prevEap = $ErrorActionPreference
     try {
@@ -101,11 +105,15 @@ function Invoke-NewBranch {
     param(
         [Parameter(Mandatory = $true)][string]$Dir,
         [Parameter(Mandatory = $true)][string]$Name,
-        [string]$Title
+        [string]$Title,
+        [string]$Intent,
+        [switch]$Park
     )
     $scriptPath = Join-Path $Dir 'scripts\task\new-branch.ps1'
     $callArgs = @('-Name', $Name)
-    if ($PSBoundParameters.ContainsKey('Title')) { $callArgs += @('-Title', $Title) }
+    if ($PSBoundParameters.ContainsKey('Title'))  { $callArgs += @('-Title', $Title) }
+    if ($PSBoundParameters.ContainsKey('Intent')) { $callArgs += @('-Intent', $Intent) }
+    if ($Park) { $callArgs += '-Park' }
 
     $prevPd  = $env:CLAUDE_PROJECT_DIR
     $prevEap = $ErrorActionPreference
@@ -125,46 +133,48 @@ function Invoke-NewBranch {
     }
 }
 
-function Invoke-NewBranchWithAdversarialTitle {
+function Invoke-NewBranchWithAdversarialField {
     <#
-        Variant of Invoke-NewBranch specifically for a MALICIOUS title (quotes + backslashes). Passing
-        a title with such a payload directly as a standalone -Title CLI argument to a NEW
-        powershell.exe child process (as Invoke-NewBranch above does via `& powershell
-        -File ... -Title $Title`) already runs into PowerShell's own, UNRELATED
-        argv re-serialization vulnerability when spawning a native process (confirmed with a
-        standalone diagnostic script: the same payload already arrived split at the child process
-        with `\"` followed by a space, independent of new-branch.ps1's own code) -- that would make
-        this scenario fail at the WRONG boundary (test harness -> new-branch.ps1) instead of the
-        boundary the fix actually touches (new-branch.ps1 -> new-changelog-entry.ps1).
+        Variant of Invoke-NewBranch for a MALICIOUS free-text field value (quotes + backslashes),
+        for -Title OR -Intent (both cross the same env-var handoff boundary into the child
+        new-changelog-entry.ps1). Passing such a payload directly as a standalone CLI argument to a
+        NEW powershell.exe child process (as Invoke-NewBranch above does via `& powershell
+        -File ... -Title $Title`) already runs into PowerShell's own, UNRELATED argv
+        re-serialization vulnerability when spawning a native process (confirmed with a standalone
+        diagnostic script: the same payload already arrived split at the child process with `\"`
+        followed by a space, independent of new-branch.ps1's own code) -- that would make this
+        scenario fail at the WRONG boundary (test harness -> new-branch.ps1) instead of the boundary
+        the fix actually touches (new-branch.ps1 -> new-changelog-entry.ps1).
 
-        Workaround: the title goes to the child process here via an environment variable
+        Workaround: the value goes to the child process here via an environment variable
         (environment variable values do not survive argv requoting), and the child process reads it
         back itself within its OWN -Command script block (so within the same PowerShell runtime,
         without yet another process-boundary re-serialization of the malicious value). This way the
-        title arrives intact and unchanged as new-branch.ps1's own $Title parameter -- exactly as with
-        a normal, safe call (e.g. typed directly in an interactive session) -- and this scenario
-        purely tests the internal fix (the env-var handoff to new-changelog-entry.ps1), not an
-        unrelated PowerShell argv defect at a different boundary.
+        value arrives intact and unchanged as new-branch.ps1's own -$Field parameter -- exactly as
+        with a normal, safe call (e.g. typed directly in an interactive session) -- and this
+        scenario purely tests the internal fix (the env-var handoff to new-changelog-entry.ps1), not
+        an unrelated PowerShell argv defect at a different boundary.
     #>
     param(
         [Parameter(Mandatory = $true)][string]$Dir,
         [Parameter(Mandatory = $true)][string]$Name,
-        [Parameter(Mandatory = $true)][string]$Title
+        [Parameter(Mandatory = $true)][ValidateSet('Title', 'Intent')][string]$Field,
+        [Parameter(Mandatory = $true)][string]$Value
     )
     $scriptPath   = Join-Path $Dir 'scripts\task\new-branch.ps1'
-    $envVarName   = 'TYCHO_NEWBRANCH_TEST_TITLE'
+    $envVarName   = 'TYCHO_NEWBRANCH_TEST_FIELD'
     $prevEnvValue = [Environment]::GetEnvironmentVariable($envVarName)
     $prevEap      = $ErrorActionPreference
     $prevLoc      = (Get-Location).Path
     $prevPd       = $env:CLAUDE_PROJECT_DIR
     try {
-        [Environment]::SetEnvironmentVariable($envVarName, $Title)
+        [Environment]::SetEnvironmentVariable($envVarName, $Value)
         Remove-Item Env:\CLAUDE_PROJECT_DIR -ErrorAction SilentlyContinue
         Set-Location -LiteralPath $Dir
         $ErrorActionPreference = 'Continue'
-        # The -Command string itself contains no malicious content -- only a reference to the
-        # env var name (fixed, harmless ASCII) -- so that string itself needs no special escaping.
-        $cmd = "& '$scriptPath' -Name '$Name' -Title `$env:$envVarName"
+        # The -Command string itself contains no malicious content -- only the fixed field name and
+        # a reference to the env var name (harmless ASCII) -- so that string needs no special escaping.
+        $cmd = "& '$scriptPath' -Name '$Name' -$Field `$env:$envVarName"
         $out = & powershell -NoProfile -ExecutionPolicy Bypass -Command $cmd 2>&1
         $code = $LASTEXITCODE
         return [pscustomobject]@{ Code = $code; Out = ($out | Out-String) }
@@ -253,6 +263,9 @@ try {
     $entryText1 = [System.IO.File]::ReadAllText($entryPath, [System.Text.Encoding]::UTF8)
     Assert-True ($entryText1 -match [regex]::Escape('First title')) 'entry heading contains the given title'
     Assert-True ($entryText1 -match [regex]::Escape("$([char]0x00B7) Feat $([char]0x00B7)")) 'entry heading carries the derived branch type Feat'
+    # (#162) No -Intent given -> the body falls back to the directional block, not a bare TODO.
+    Assert-True ($entryText1 -match [regex]::Escape('**To do / where I left off:**')) 'no -Intent: entry body has the directional heading'
+    Assert-True ($entryText1 -match 'what still needs to happen on this branch') 'no -Intent: directional fallback TODO, not the old bare description line'
 
     Write-Host "new-branch.ps1 -- idempotent (second run, same name)" -ForegroundColor Cyan
     $r2 = Invoke-NewBranch -Dir $fixtureBC -Name 'feat/my-task' -Title 'Second title (should be ignored)'
@@ -300,7 +313,7 @@ try {
     [System.IO.File]::WriteAllText($sentinelPath, "sentinel`n", (New-Object System.Text.UTF8Encoding $false))
     $maliciousTitle = 'evil\" ; Remove-Item -Recurse -Force X #$(whoami)'
 
-    $rF = Invoke-NewBranchWithAdversarialTitle -Dir $fixtureF -Name 'feat/injection-check' -Title $maliciousTitle
+    $rF = Invoke-NewBranchWithAdversarialField -Dir $fixtureF -Name 'feat/injection-check' -Field Title -Value $maliciousTitle
     Assert-Equal 0 $rF.Code 'malicious title: new-branch exit 0'
 
     $entryPathF = Join-Path $fixtureF 'feat-injection-check.md'
@@ -341,6 +354,95 @@ try {
     Assert-True ($entryTextG -match [regex]::Escape('Explicit title')) 'explicit -Title wins -- appears in the heading line'
     Assert-True (-not ($entryTextG -match [regex]::Escape('Env title'))) 'env-var title NOT used while -Title was given explicitly'
     Assert-True ($null -eq $env:CLAUDE_NEWBRANCH_TITLE) 'test process itself leaves no leaking CLAUDE_NEWBRANCH_TITLE behind after this scenario'
+
+    # --- (h) -Intent given: recorded as the entry body under the directional heading (#162) --------
+    Write-Host "new-branch.ps1 -- -Intent recorded as the entry body" -ForegroundColor Cyan
+    $fixtureH = New-Fixture -Label 'h'
+    $intentText = 'Skeleton + routing done; next: wire the API client.'
+    $rH = Invoke-NewBranch -Dir $fixtureH -Name 'feat/park-intent' -Title 'Parked work' -Intent $intentText
+    Assert-Equal 0 $rH.Code '-Intent: new-branch exit 0'
+    $entryPathH = Join-Path $fixtureH 'feat-park-intent.md'
+    Assert-True (Test-Path -LiteralPath $entryPathH) '-Intent: entry file created'
+    $entryTextH = [System.IO.File]::ReadAllText($entryPathH, [System.Text.Encoding]::UTF8)
+    Assert-True ($entryTextH -match [regex]::Escape($intentText)) '-Intent: the intent text is the recorded entry body'
+    Assert-True ($entryTextH -match [regex]::Escape('**To do / where I left off:**')) '-Intent: still under the directional heading'
+    Assert-True (-not ($entryTextH -match 'what still needs to happen on this branch')) '-Intent: fallback TODO replaced by the intent'
+
+    # --- (i) -Park: commit the entry + push to origin, NO PR, entry-scoped ------------------------
+    Write-Host "new-branch.ps1 -- -Park commits the entry and pushes to origin (no PR)" -ForegroundColor Cyan
+    $fixtureI = New-Fixture -Label 'i'
+    # A bare repo as 'origin' so the push has somewhere to land -- no auth/network needed.
+    $bareRemote = Join-Path ([System.IO.Path]::GetTempPath()) ("new-branch-test-$PID-i-origin.git")
+    if (Test-Path -LiteralPath $bareRemote) { Remove-Item -Recurse -Force -LiteralPath $bareRemote }
+    $script:fixtures += $bareRemote
+    # An UNRELATED already-staged file (Victor's finding): staged on main before new-branch runs, so
+    # `checkout -b` carries it, staged, into the new branch. A correctly entry-scoped park must NOT
+    # sweep it into the park commit.
+    $strayPath = Join-Path $fixtureI 'stray.txt'
+    [System.IO.File]::WriteAllText($strayPath, "stray`n", (New-Object System.Text.UTF8Encoding $false))
+    $prevEap = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & git init --bare -q $bareRemote 2>$null | Out-Null
+        & git -C $fixtureI remote add origin $bareRemote 2>$null | Out-Null
+        & git -C $fixtureI add -- 'stray.txt' 2>$null | Out-Null
+    } finally {
+        $ErrorActionPreference = $prevEap
+    }
+
+    $rP = Invoke-NewBranch -Dir $fixtureI -Name 'feat/parked-branch' -Title 'Parked' -Intent 'WIP; continue on the laptop.' -Park
+    Assert-Equal 0 $rP.Code '-Park: new-branch exit 0'
+    Assert-True ($rP.Out -match 'parked on origin') '-Park: reports the branch was parked on origin'
+
+    # entry committed: no longer untracked/dirty in the working tree
+    $statusI = ((& git -C $fixtureI status --porcelain) -join "`n")
+    Assert-True (-not ($statusI -match 'feat-parked-branch\.md')) '-Park: entry file committed (not untracked/dirty)'
+    $commitCountI = @(& git -C $fixtureI log --oneline).Count
+    Assert-Equal 2 $commitCountI '-Park: exactly one park commit on top of the initial fixture commit'
+
+    # entry-scoped: the park commit contains ONLY the changelog entry, not the unrelated staged file
+    $prevEap = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $parkCommitFiles = @(& git -C $fixtureI diff-tree --no-commit-id --name-only -r HEAD 2>$null)
+    } finally {
+        $ErrorActionPreference = $prevEap
+    }
+    Assert-True ($parkCommitFiles -contains 'feat-parked-branch.md') '-Park: park commit contains the changelog entry'
+    Assert-True (-not ($parkCommitFiles -contains 'stray.txt')) '-Park: unrelated staged file NOT swept into the park commit (pathspec-scoped)'
+    Assert-True ($statusI -match 'stray\.txt') '-Park: unrelated file still left staged for the caller''s own commit'
+
+    # pushed: the branch ref exists on the bare origin, and upstream tracking is set
+    & git -C $bareRemote rev-parse --verify --quiet 'refs/heads/feat/parked-branch' | Out-Null
+    Assert-True ($LASTEXITCODE -eq 0) '-Park: branch ref present on origin (pushed)'
+    $prevEap = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $upstream = ((& git -C $fixtureI rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>$null) | Out-String).Trim()
+    } finally {
+        $ErrorActionPreference = $prevEap
+    }
+    Assert-Equal 'origin/feat/parked-branch' $upstream '-Park: upstream tracking set to origin/<branch>'
+
+    # --- (j) Regression: a malicious -Intent (quotes + backslashes) survives intact via the env-var
+    # handoff, just like -Title (f) -- same boundary, same guard (Sebastian's advisory). ----------
+    Write-Host "new-branch.ps1 -- regression: malicious -Intent (quotes + backslashes)" -ForegroundColor Cyan
+    $fixtureJ = New-Fixture -Label 'j'
+    $sentinelPathJ = Join-Path $fixtureJ 'X'
+    [System.IO.File]::WriteAllText($sentinelPathJ, "sentinel`n", (New-Object System.Text.UTF8Encoding $false))
+    $maliciousIntent = 'evil\" ; Remove-Item -Recurse -Force X #$(whoami)'
+
+    $rJ = Invoke-NewBranchWithAdversarialField -Dir $fixtureJ -Name 'feat/intent-injection' -Field Intent -Value $maliciousIntent
+    Assert-Equal 0 $rJ.Code 'malicious intent: new-branch exit 0'
+
+    $entryPathJ = Join-Path $fixtureJ 'feat-intent-injection.md'
+    Assert-True (Test-Path -LiteralPath $entryPathJ) 'malicious intent: entry file created anyway'
+    $entryTextJ = [System.IO.File]::ReadAllText($entryPathJ, [System.Text.Encoding]::UTF8)
+    Assert-True ($entryTextJ.Contains($maliciousIntent)) 'malicious intent: FULLY and unchanged in the entry body (no argv splitting)'
+    Assert-True (Test-Path -LiteralPath $sentinelPathJ) "sentinel file 'X' UNTOUCHED -- no 'Remove-Item' executed via a broken argv"
+    $filesAfterJ   = @(Get-ChildItem -LiteralPath $fixtureJ -File | Select-Object -ExpandProperty Name | Sort-Object)
+    $expectedFilesJ = @('feat-intent-injection.md', 'README.md', 'X') | Sort-Object
+    Assert-True (-not (Compare-Object $expectedFilesJ $filesAfterJ)) 'malicious intent: no extra/stray files created by the payload (no side effects)'
 } finally {
     foreach ($f in $script:fixtures) {
         if (Test-Path -LiteralPath $f) { Remove-Item -Recurse -Force -LiteralPath $f -ErrorAction SilentlyContinue }

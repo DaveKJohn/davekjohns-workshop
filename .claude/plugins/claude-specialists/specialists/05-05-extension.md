@@ -146,8 +146,9 @@ via a temporary file.
   There is no second reviewer; the PR only opens on Dave's word, after which opening → merging →
   folding runs through in one motion, guarded by the lint gate and transparently reported by Chris.
 - **Never "final" in a branch name.** Use `-v2`, `-v3`, etc. for a second attempt.
-- After a merge the branch is already cleaned up via `gh pr merge --delete-branch`; prune the local
-  copy if needed with `git branch -d <branch>`.
+- After a merge the branch is already cleaned up via `gh pr merge --delete-branch`; tidy the local
+  clone as the fixed closing step with `git fetch --prune` + `git branch -d <branch>`. See the
+  portable rule (and what each command is for) in the `fold-changelog` skill (#163).
 - **Working in parallel from multiple machines** (lesson of July 16, 2026, when PR #46 and #47
   crossed each other): merging different branches in parallel is safe — the lint gate and CI protect
   `main` independently of which machine merges. Two rules keep it that way: **never the same branch
@@ -167,9 +168,12 @@ via a temporary file.
 
 Derek prefers not to touch the git commands by hand. His toolbox:
 
-- `scripts/task/new-branch.ps1 -Name <branch-name> [-Title "…"]` — create (or idempotently resume)
-  the branch and, in the same move, scaffold its changelog entry file by calling the shared
-  `new-changelog-entry.ps1` as a child step. No push, no PR — just the branch + the entry file on
+- `scripts/task/new-branch.ps1 -Name <branch-name> [-Title "…"] [-Intent "…"] [-Park]` — create (or
+  idempotently resume) the branch and, in the same move, scaffold its changelog entry file by
+  calling the shared `new-changelog-entry.ps1` as a child step. `-Intent` records where you left
+  off / what is next in the entry body (empty → a directional fallback block instead of a bare
+  TODO); `-Park` commits that entry and pushes the branch to `origin` for later / another device —
+  **still no PR** (#162). Without `-Park`: no push, no PR — just the branch + the entry file on
   disk. See [Step 3 above](#classifying-naming-and-creating-a-branch).
 - `scripts/release/open-pr.ps1 -Title "…" [-Body "…"] [-SkipLint] [-SkipTests]` — push the branch +
   open the PR, with the right label from the prefix. Without `-Body` **the script fills in the

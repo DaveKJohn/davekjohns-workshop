@@ -148,9 +148,11 @@ committed, and only then is picked up by the consuming repos.
 
 ### Rendall's toolkit
 
-- `scripts/release/new-changelog-entry.ps1 [-Title <string>]` — scaffold the entry file on the
-  branch. Shared/mirrored to the plugin ([issue #81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81));
-  normally reached indirectly, at branch creation, via
+- `scripts/release/new-changelog-entry.ps1 [-Title <string>] [-Intent <string>]` — scaffold the
+  entry file on the branch. `-Intent` fills the entry body with where you left off / what is next
+  (empty → a directional fallback block instead of a bare TODO, #162). Shared/mirrored to the plugin
+  ([issue #81](https://github.com/DaveKJohn/davekjohns-workshop/issues/81)); normally reached
+  indirectly, at branch creation, via
   [Derek #05](05-05-extension.md#classifying-naming-and-creating-a-branch)'s `new-branch.ps1` — you
   rarely call it standalone anymore.
 - `scripts/release/fold-changelog-entry.ps1 [-Branch <name>]` — fold entry(ies) into `## Pull Requests`
