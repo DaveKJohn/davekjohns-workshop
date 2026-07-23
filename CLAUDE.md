@@ -38,6 +38,13 @@ not merely a repo-only convention.
 The Claude Specialists **do not stand above the safety rules below — they work under them.** Chris
 routes; every specialist executes according to the shared safety rules and their own craft rules.
 
+**Where this actually runs.** This roster is a set of Claude Code subagents plus three informational
+SessionStart hooks (`connector-sessioncheck`, `roster-sessioncheck`, `script-contract-sessioncheck`);
+both run in Claude Code and in Cowork, but not in a plain Claude.ai Chat session (there they show up
+grayed out). Only the skills stay available in Chat. See the README's
+[Where this runs](README.md#where-this-runs-chat-cowork-and-claude-code) section for the sourced
+detail.
+
 **Loading strategy (deliberate, to save context/tokens):** only the operating manual of the
 orchestrator (Chris) is loaded automatically (`@` at the bottom of this file), because he is
 involved in every assignment. The other specialists are read **on demand**, at the moment Chris assigns work to them; how that

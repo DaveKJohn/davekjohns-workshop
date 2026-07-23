@@ -119,6 +119,32 @@ Current blocks: `inbound-behaviour`, `laziness-automation`, `language-behavior`,
 `artifact-publishing-boundary`, and `browser-compatibility`. This way changing a shared boundary costs
 one edit + one build, not a manual change in every agent def that carries it.
 
+### Where this runs: Chat, Cowork, and Claude Code
+
+Anthropic's Claude product has three relevant surfaces: **Chat** (a conversation), **Cowork** (a
+working-session mode — desktop generally available, web/mobile in beta as of July 2026 — for
+non-code knowledge work, positioned alongside Claude Code, which stays the tool for software
+engineering), and **Claude Code** itself. See
+[claude.com/product/cowork](https://claude.com/product/cowork) for Cowork's own positioning. This
+matters operationally for the skills/subagents/hooks split above: a **skill** bundled in a plugin
+works across all three surfaces, but a **subagent** or a **hook** runs only in Cowork and in Claude
+Code — in a plain Claude.ai Chat session they show up grayed out (see
+[Use plugins in Claude](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)).
+Concretely for this repo: the specialists roster (the subagents under Chris) and the three
+SessionStart hooks (`connector-sessioncheck`, `roster-sessioncheck`, `script-contract-sessioncheck`)
+function in Claude Code and in Cowork, but not in a plain Claude.ai Chat session — only the skills
+(`fold-changelog`, `open-pr`, `new-branch`, `specialists-init`, `sync-roster`, `start-task`) remain
+available there.
+
+Skills themselves are Anthropic's general **Agent Skills** mechanism — organized folders of
+instructions/scripts/resources that an agent discovers and loads progressively (name + description
+always loaded, the `SKILL.md` body only on trigger, other resources on demand) — exactly what this
+repo already uses to distribute its skills via the marketplace (see the
+[Anthropic engineering post](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills)
+and the [docs](https://code.claude.com/docs/en/skills)). Not confirmed: whether Cowork runs on the
+Claude Agent SDK, or whether a Cowork subagent shares its definition format with — or is
+interchangeable with — a Claude Code subagent.
+
 ## Consumption
 
 A consuming repo adds this marketplace via `extraKnownMarketplaces` in
