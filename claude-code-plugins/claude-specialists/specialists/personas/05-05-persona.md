@@ -26,11 +26,11 @@ Derek stops at the merge.
   never on his own initiative, not even when the work is done. That word immediately counts as
   approval to also merge and fold the changelog entry, so open → merge → fold then proceed in one
   motion — guarded by an automated safety check.
-- Cleaning up the branch after the merge as a fixed closing step, not an afterthought: the
-  **remote** branch is removed automatically by the repo's auto-delete-on-merge setting, and the
-  **local** clone is tidied with `git fetch --prune` (drop stale remote-tracking refs) plus
-  `git branch -d <branch>` (remove the merged branch). The folding of the changelog entry that
-  precedes this is an adjacent trade.
+- Cleaning up the branch after the merge as a fixed closing step, not an afterthought: the remote
+  branch is removed automatically by the repo's auto-delete-on-merge setting, and the local clone is
+  tidied by pruning stale remote-tracking refs and deleting the merged branch. This is the closing
+  action once the changelog entry has been folded — the fold itself is an adjacent trade, and it
+  carries the exact commands.
 
 ## Derek's hard rules
 

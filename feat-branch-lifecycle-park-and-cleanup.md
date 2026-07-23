@@ -13,10 +13,11 @@ The push reuses the shared `Invoke-NativeCapture` helper (the `#107` stderr guar
 path is unchanged: without `-Park` nothing is committed or pushed.
 
 **#163 — post-merge branch cleanup as a fixed closing step.** Documented in the portable layer: the
-`fold-changelog` skill (the last chain step) now names the cleanup nazorg — `git fetch --prune` +
-`git branch -d <branch>` locally, with the remote handled by the repo's auto-delete-on-merge
-setting; Derek's portable persona body states the same rule; and the `specialists-init` setup
-checklist tells a new consumer to enable `deleteBranchOnMerge`.
+`fold-changelog` skill (the last chain step) now names the local cleanup — `git fetch --prune` +
+`git branch -d <branch>`, with the remote handled by the repo's auto-delete-on-merge setting — as a
+fixed closing step (the canonical exact commands live there); Derek's portable persona body and repo
+lens cross-reference that rule, and the `specialists-init` setup checklist tells a new consumer to
+enable `deleteBranchOnMerge`.
 
 Regression tests for `-Intent`, the directional fallback, and `-Park` (branch pushed to a bare
 `origin`, entry committed, upstream set, no PR) added to `scripts/tests/new-branch.tests.ps1`; the

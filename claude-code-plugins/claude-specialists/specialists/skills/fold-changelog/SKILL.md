@@ -34,7 +34,7 @@ Then commit the result (`CHANGELOG.md` + the removed entry files) directly on ma
 ## Closing step: branch cleanup (#163)
 
 The fold is the **last step of the PR chain**, so branch cleanup belongs here as its fixed
-finishing action -- not something to remember per repo or per time:
+closing step -- not something to remember per repo or per time:
 
 - **Remote** -- a well-configured repo deletes the head branch automatically on merge (the GitHub
   setting *"Automatically delete head branches"*, `deleteBranchOnMerge: true`; see the

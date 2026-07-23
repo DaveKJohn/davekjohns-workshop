@@ -167,15 +167,29 @@ if ($Park -and $entryCode -eq 0) {
         if ($addRes.ExitCode -ne 0) { Write-Error "park: staging the changelog entry failed."; exit 1 }
     }
 
-    # Commit only if something is actually staged: a re-park of an already-committed entry stages
-    # nothing (`git diff --cached --quiet` -> exit 0), and we then just push the existing commit
-    # rather than failing on an empty commit. The commit message is deliberately free of the intent
-    # free-text (branch name only) -- the quoting lesson: `"` in a -m argument breaks native argv.
-    $diffRes = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'diff', '--cached', '--quiet')
+    # Everything below is scoped to the entry pathspec (`-- $parkEntry`), so a park commits ONLY the
+    # changelog entry: any content the caller already staged for their own next commit is left
+    # exactly as it was (staged, uncommitted), not swept into the park commit.
+    #
+    # Commit only if the entry path actually has staged changes: a re-park of an already-committed
+    # entry stages nothing (`git diff --cached --quiet -- <path>` -> exit 0), and we then just push
+    # the existing commit rather than failing on an empty commit.
+    $diffRes = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'diff', '--cached', '--quiet', '--', $parkEntry)
     if ($diffRes.ExitCode -ne 0) {
-        $commitRes = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'commit', '-m', "park: $Name (work parked for later)")
-        $commitRes.Output | ForEach-Object { Write-Host $_ }
-        if ($commitRes.ExitCode -ne 0) { Write-Error "park: committing the changelog entry failed."; exit 1 }
+        # The commit message goes via `git commit -F <file>`, not `-m "...$Name..."`: a branch name
+        # may legally carry a `"` (git check-ref-format allows it, and Test-BranchName does not
+        # restrict characters), which embedded in an -m argument would break native argv
+        # reconstruction (the quoting lesson). A message file sidesteps argv entirely -- the same
+        # pattern open-pr.ps1 uses for the PR body. Cleaned up in finally, whether or not git succeeds.
+        $msgFile = Join-Path ([System.IO.Path]::GetTempPath()) "new-branch-park-msg-$PID.txt"
+        [System.IO.File]::WriteAllText($msgFile, "park: $Name (work parked for later)", (New-Object System.Text.UTF8Encoding $false))
+        try {
+            $commitRes = Invoke-NativeCapture -FilePath 'git' -Arguments @('-C', $repoRoot, 'commit', '-F', $msgFile, '--', $parkEntry)
+            $commitRes.Output | ForEach-Object { Write-Host $_ }
+            if ($commitRes.ExitCode -ne 0) { Write-Error "park: committing the changelog entry failed."; exit 1 }
+        } finally {
+            Remove-Item -Path $msgFile -Force -ErrorAction SilentlyContinue
+        }
     } else {
         Write-Host "park: nothing new to commit (entry already committed) -- pushing as-is." -ForegroundColor Yellow
     }
@@ -184,6 +198,10 @@ if ($Park -and $entryCode -eq 0) {
     $pushRes.Output | ForEach-Object { Write-Host $_ }
     if ($pushRes.ExitCode -ne 0) { Write-Error "park: git push failed (is 'origin' configured and reachable?)."; exit 1 }
     Write-Host "Branch '$Name' parked on origin (pushed, no PR)." -ForegroundColor Green
+} elseif ($Park) {
+    # -Park was requested but the entry step did not succeed -- do not commit/push, and say why
+    # rather than falling through silently.
+    Write-Warning "park: skipped -- the changelog entry step exited $entryCode, so nothing was committed or pushed."
 }
 
 exit $entryCode

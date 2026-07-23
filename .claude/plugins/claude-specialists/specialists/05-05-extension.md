@@ -147,9 +147,8 @@ via a temporary file.
   folding runs through in one motion, guarded by the lint gate and transparently reported by Chris.
 - **Never "final" in a branch name.** Use `-v2`, `-v3`, etc. for a second attempt.
 - After a merge the branch is already cleaned up via `gh pr merge --delete-branch`; tidy the local
-  clone as the fixed closing step with `git fetch --prune` (drop stale remote-tracking refs) +
-  `git branch -d <branch>` (remove the merged local branch). See the portable rule in the
-  `fold-changelog` skill (#163).
+  clone as the fixed closing step with `git fetch --prune` + `git branch -d <branch>`. See the
+  portable rule (and what each command is for) in the `fold-changelog` skill (#163).
 - **Working in parallel from multiple machines** (lesson of July 16, 2026, when PR #46 and #47
   crossed each other): merging different branches in parallel is safe — the lint gate and CI protect
   `main` independently of which machine merges. Two rules keep it that way: **never the same branch
