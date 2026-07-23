@@ -6,6 +6,7 @@ description: >-
   this script locally. Use this on main, immediately after merging a branch, to fold the entry
   files (<branch-name>.md in the repo root) into the ## Pull Requests section and then remove
   them.
+disable-model-invocation: true
 ---
 
 # fold-changelog — the shared fold for consumers
