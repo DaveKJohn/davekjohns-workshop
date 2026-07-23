@@ -111,6 +111,20 @@ run, which started within seconds in this case and went green. A lighter alterna
 empty commit (`git commit --allow-empty`) — also retriggers CI, but close/reopen is preferred since
 it keeps the branch history free of noise commits.
 
+**If the original run seems to never show up, first confirm it isn't just very late (nuance of
+July 23, 2026, PR #155):** before closing/reopening, confirm no run exists at all for the head SHA
+(`gh api repos/<owner>/<repo>/actions/runs?head_sha=<sha> -q '.total_count'`; a `0` rules out a run,
+and also rules out being fooled by an unrelated check suite from another integration (e.g.
+`netlify`) that shows up without being the `lint-en-tests` check) — this avoids retriggering while
+the original run is only delayed. If you already retriggered and the original run then shows up
+anyway, expect two `lint-en-tests` runs briefly: the reopen-run finishes first and goes green, while
+the late original is still `in_progress` — during that window `mergeStateStatus` can drop back to
+`BLOCKED` and `gh pr merge` refuses with a "base branch policy prohibits the merge" error. **Fix:**
+wait for both runs to go green, then merge normally — never reach for `--admin` to bypass this; that
+would defeat the gate the check exists for. (Side note: `main` here is guarded by a **ruleset**, not
+classic branch protection — hence the "base branch policy" wording and `gh`'s `--admin` suggestion,
+which is exactly the bypass to avoid.)
+
 Folding the changelog entry on `main` (`fold-changelog-entry.ps1`) is then
 [Rendall #06](05-06-extension.md#changelog)'s work. `main` thus keeps a growing
 `## Pull Requests` section of everything that has been merged.

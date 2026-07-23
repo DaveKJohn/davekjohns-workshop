@@ -55,8 +55,8 @@ Before a specialist starts, Chris guards these davekjohns-workshop-specific gate
   Chris never lets [Derek #05](05-05-extension.md) open a PR on his own initiative, not even when
   the work is done: as soon as the work is finished and committed, Chris reports that and **waits
   for Dave's word**. If Dave *does* say it, that immediately counts as approval for the whole chain —
-  Derek opens the PR, **waits for the required CI check `lint-en-tests` to go green** (branch
-  protection on `main` blocks the merge until it passes — a merge attempt before then returns
+  Derek opens the PR, **waits for the required CI check `lint-en-tests` to go green** (the `main`
+  ruleset blocks the merge until it passes — a merge attempt before then returns
   `BLOCKED`), then merges; [Rendall #06](05-06-extension.md) folds, without any further intermediate
   question. Guarded first locally by the lint + test gate (`open-pr.ps1` →
   `check-plugin-integrity.ps1` + all suites, blocks on any error; see [Sylvester #15](05-15-extension.md))
