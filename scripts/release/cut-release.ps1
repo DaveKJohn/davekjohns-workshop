@@ -83,7 +83,11 @@ function Write-Utf8NoBom([string]$Path, [string]$Content) {
     [System.IO.File]::WriteAllText($Path, $Content, $Utf8NoBom)
 }
 
-$reservedRootMd = @('CHANGELOG.md', 'CLAUDE.md', 'README.md', 'LICENSE.md')
+# Permanent root .md files that are NOT branch changelog entries. The stray-entry guardrail below
+# treats every other root *.md as an unfolded entry (deliberately catch-all, so an entry with an
+# unknown branch prefix is never missed) -- so any permanent root doc added over time must be
+# listed here, or a release would falsely refuse to cut. Add new permanent root docs here.
+$reservedRootMd = @('CHANGELOG.md', 'CLAUDE.md', 'README.md', 'LICENSE.md', 'CONTRIBUTING.md', 'SECURITY.md')
 
 function Get-PluginManifests {
     # The marketplace definition is the source of truth about what a plugin is: the manifests are
