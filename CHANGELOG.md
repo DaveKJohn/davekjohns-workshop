@@ -2,7 +2,7 @@
 
 The history of the davekjohns-workshop marketplace: under **Pull Requests** every merged branch
 with its PR, under **Releases** the recorded versions. How the mechanism works (entry files,
-folding) is described in [`README.md`](README.md#contributing--changelog--pr-workflow).
+folding) is described in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Pull Requests
 

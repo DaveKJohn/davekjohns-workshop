@@ -94,6 +94,24 @@ start of a workday or session:
 Syncing itself remains **pull-based per consumer**: each connected repo pulls changes in its own
 session, under its own governance — this registry signals, it never writes cross-repo.
 
+## Maintenance: drift lint
+
+Through the `github` marketplace source, the Claude Code CLI clones and caches this repo itself for
+every consumer, so no physical copy in the consuming repo is needed and thus no sync step either —
+every consumer literally consumes the same files. Left over from a transition, however, a consuming
+repo may still have an outdated local copy of an agent def that is by now shared here.
+[`scripts/lint/check-consumer-drift.ps1`](../../../scripts/lint/check-consumer-drift.ps1) (invoked
+per consumer as part of the `check-connectors.ps1` run above, or standalone) compares such a local
+copy (read-only, changes nothing) with the canonical version here and reports `MISSING` (already
+migrated), `IDENTICAL` (dead copy, safe to remove), or `DRIFTED` (inspect first before removing). The
+cleanup itself happens in the consuming repo, not by this script. The same script's persona-body
+comparison is covered separately below, see [Persona drift](#persona-drift-how-to-read-a-drifted-report-doctrine).
+
+```powershell
+./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\path\to\life-hub
+./scripts/lint/check-consumer-drift.ps1 -ConsumerPath C:\path\to\smartwatchbanden
+```
+
 ## Persona drift: how to read a DRIFTED report (doctrine)
 
 Recorded after the drift investigation of July 17, 2026 (Rebecca; dossier

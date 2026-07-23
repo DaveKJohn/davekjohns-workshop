@@ -32,7 +32,7 @@ they write.
 script for routine work instead of repeating it by hand — noticed once, automated the second time.
 This automation-first rule is anchored in the character of all specialists via the shared
 mechanism described in
-[Shared agent-def blocks](README.md#shared-agent-def-blocks--one-source-for-the-verbatim-boundaries),
+[Shared agent-def blocks](claude-code-plugins/claude-specialists/README.md#shared-agent-def-blocks--one-source-for-the-verbatim-boundaries),
 not merely a repo-only convention.
 
 The Claude Specialists **do not stand above the safety rules below — they work under them.** Chris
@@ -41,9 +41,9 @@ routes; every specialist executes according to the shared safety rules and their
 **Where this actually runs.** This roster is a set of Claude Code subagents plus three informational
 SessionStart hooks (`connector-sessioncheck`, `roster-sessioncheck`, `script-contract-sessioncheck`);
 both run in Claude Code and in Cowork, but not in a plain Claude.ai Chat session (there they show up
-grayed out). Only the skills stay available in Chat. See the README's
-[Where this runs](README.md#where-this-runs-chat-cowork-and-claude-code) section for the sourced
-detail.
+grayed out). Only the skills stay available in Chat. See the family README's
+[Where this runs](claude-code-plugins/claude-specialists/README.md#where-this-runs-chat-cowork-and-claude-code)
+section for the sourced detail.
 
 **Loading strategy (deliberate, to save context/tokens):** only the operating manual of the
 orchestrator (Chris) is loaded automatically (`@` at the bottom of this file), because he is
@@ -126,10 +126,11 @@ destructive actions above happen only on Dave's explicit request.
 `davekjohns-workshop` is the **workshop repo of Dave (DaveKJohn)**: the marketplace where all of his
 plugins are built and maintained, and the **single source of truth** for all shareable subagent
 definitions — every consuming repo (life-hub, smartwatchbanden) points here and enables or disables
-per plugin. The full story (the plugin/family structure, the split manual model, consumption, the
-bootstrap path, and the drift lint) is in the [root `README.md`](README.md); what the specialists
-family does and how its plugins differ is in the
-[family README](claude-code-plugins/claude-specialists/README.md).
+per plugin. The full story (the plugin/family structure and consumption) is in the
+[root `README.md`](README.md); the split manual model, the bootstrap path, and what the specialists
+family does and how its plugins differ are in the
+[family README](claude-code-plugins/claude-specialists/README.md); the drift lint is in the
+[connectors README](claude-code-plugins/claude-specialists/connectors/README.md#maintenance-drift-lint).
 
 **The repo consumes itself.** Via [`.claude/settings.json`](.claude/settings.json) this repo enables
 its own `specialists` plugin (group 1), with the `github` marketplace source
