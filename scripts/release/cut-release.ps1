@@ -173,7 +173,11 @@ Write-Host "  created: $notesRelPath ($($entries.Count) entries)" -ForegroundCol
 
 # --- Update the releases/README.md overview table ------------------------------------------------
 # The overview table header is English ("Version | Date | Type | Title", #114 follow-up), so
-# $headerRe below matches that; a new row is inserted right after it.
+# $headerRe below matches that; a new row is inserted right after it. The overview is grouped by
+# major version (### 2.x, ### 1.x, ... newest first), each group its own table with this same
+# header; $headerRe.Match returns the FIRST match, so the row always lands in the top (current
+# major) table -- correct for every minor/patch bump. A brand-new major starts a new top section
+# manually first (a deliberate milestone moment), after which its table becomes the insertion target.
 $relReadme = Join-Path $repoRoot 'releases\README.md'
 $shortTitle = if ($Title) { $Title } else { "$typeLabel release" }
 $newRow = "| [$new](development/$minorDir/$new.md) | $today | $typeLabel | $shortTitle |"

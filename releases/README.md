@@ -11,9 +11,19 @@ along with the plugin cache via `claude plugin update`).
 
 ## Overview
 
+Grouped by major version, newest first. New releases are added to the current major's table (the
+top one).
+
+### 2.x
+
 | Version | Date | Type | Title |
 |---|---|---|---|
 | [2.0.0](development/2.0/2.0.0.md) | 2026-07-23 | Major | Chapter 1 consolidated (v1.0 -> v1.18) |
+
+### 1.x
+
+| Version | Date | Type | Title |
+|---|---|---|---|
 | [1.18.0](development/1.18/1.18.0.md) | 2026-07-22 | Minor | Rename-proof lens scaffolds |
 | [1.17.0](development/1.17/1.17.0.md) | 2026-07-22 | Minor | E-commerce specialist group (Sergio, Craig, Sean) + Sean-to-Sebastian rename |
 | [1.16.0](development/1.16/1.16.0.md) | 2026-07-22 | Minor | ship-pr one-command flow, category-grouped release output, and the post-review doc consistency pass |
