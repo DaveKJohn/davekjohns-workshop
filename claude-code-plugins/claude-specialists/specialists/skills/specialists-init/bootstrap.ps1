@@ -54,7 +54,7 @@ $ErrorActionPreference = 'Stop'
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
 # The persona source is two levels above this script: <plugin>/skills/specialists-init/ -> <plugin>/personas/
-$personaDir = Join-Path $PSScriptRoot '..\..\personas'
+$personaDir = Join-Path $PSScriptRoot '../../personas'
 if (-not (Test-Path -LiteralPath $personaDir -PathType Container)) {
     Write-Host "Cannot find the persona source ($personaDir) -- stopping." -ForegroundColor Red
     exit 1
@@ -129,7 +129,7 @@ $personaTilde = $personaTilde -replace '\\', '/'
 
 # Plugin path in the consumer (standard location for lenses).
 $padRel = ".claude/plugins/$family"
-$padDirRoot = Join-Path $ConsumerRoot (".claude\plugins\$family")
+$padDirRoot = Join-Path $ConsumerRoot (".claude/plugins/$family")
 
 Write-Host "== specialists-init bootstrap -- $ConsumerRoot ==" -ForegroundColor Cyan
 
@@ -220,13 +220,13 @@ function Get-PluginAgentsDir([string]$PluginName, [string]$OwnPluginRoot) {
     return $null
 }
 
-$ownPluginRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
+$ownPluginRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 $ownPluginName = Get-OwnPluginName $ownPluginRoot
 
 # Enabled plugins from consumer settings; without (readable) settings, only own plugin.
 # Plugin names validated as slugs before converting to paths.
 $pluginNames = @($ownPluginName)
-$consumerSettings = Join-Path $ConsumerRoot '.claude\settings.json'
+$consumerSettings = Join-Path $ConsumerRoot '.claude/settings.json'
 if (Test-Path -LiteralPath $consumerSettings -PathType Leaf) {
     try {
         $cs = Get-Content -LiteralPath $consumerSettings -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -321,7 +321,7 @@ function Get-RepoBlobUrl {
 }
 
 # VUL-IN: repo-root-relative path to lint gate executed by open-pr before PR,
-# e.g. 'scripts\lint\check-plugin-integrity.ps1' or 'scripts\maintenance\lint-brain.ps1'.
+# e.g. 'scripts/lint/check-plugin-integrity.ps1' or 'scripts/maintenance/lint-brain.ps1'.
 $script:LintScript = 'VUL-IN'
 
 function Get-LintScript {
@@ -428,16 +428,15 @@ if ($derivedRepo) {
 }
 
 $scriptScaffolds = @(
-    @{ Rel = 'scripts\repo-config.ps1';     Content = $repoConfigScaffold }
-    @{ Rel = 'scripts\lib\branch-info.ps1'; Content = $branchInfoScaffold }
+    @{ Rel = 'scripts/repo-config.ps1';     Content = $repoConfigScaffold }
+    @{ Rel = 'scripts/lib/branch-info.ps1'; Content = $branchInfoScaffold }
 )
 $scriptScaffolded = 0; $scriptKept = 0
 $repoConfigDerived = $false
 foreach ($s in $scriptScaffolds) {
     $dest = Join-Path $ConsumerRoot $s.Rel
-    $relDisplay = $s.Rel -replace '\\', '/'
     if (Test-Path -LiteralPath $dest -PathType Leaf) {
-        Write-Host "  [keep]   $relDisplay already exists -- not overwritten." -ForegroundColor DarkGray
+        Write-Host "  [keep]   $($s.Rel) already exists -- not overwritten." -ForegroundColor DarkGray
         $scriptKept++
         continue
     }
@@ -445,11 +444,11 @@ foreach ($s in $scriptScaffolds) {
     if (-not (Test-Path -LiteralPath $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
     [System.IO.File]::WriteAllText($dest, ($s.Content.TrimEnd() + "`n"), $Utf8NoBom)
     $note = ''
-    if ($s.Rel -eq 'scripts\repo-config.ps1' -and $derivedRepo) {
+    if ($s.Rel -eq 'scripts/repo-config.ps1' -and $derivedRepo) {
         $note = " (RepoName derived: $derivedRepo)"
         $repoConfigDerived = $true
     }
-    Write-Host "  [create] script scaffold $relDisplay$note" -ForegroundColor Green
+    Write-Host "  [create] script scaffold $($s.Rel)$note" -ForegroundColor Green
     $scriptScaffolded++
 }
 

@@ -67,7 +67,7 @@ $repoRoot = if ($ConsumerPathOverride) { $ConsumerPathOverride }
 $repoRoot = (Resolve-Path -LiteralPath $repoRoot).Path
 
 # Plugin cache root (overridable for tests) -- same default as check-roster-sync.ps1.
-$cacheRoot = if ($CacheRootOverride) { $CacheRootOverride } else { Join-Path $env:USERPROFILE '.claude\plugins\cache' }
+$cacheRoot = if ($CacheRootOverride) { $CacheRootOverride } else { Join-Path $env:USERPROFILE '.claude/plugins/cache' }
 
 $script:created    = 0
 $script:kept       = 0
@@ -80,7 +80,7 @@ $script:reconciled = 0
 # -- it ships as part of the SAME plugin payload as this skill, two levels up under scripts/lib/,
 # so the $PSScriptRoot-relative path resolves correctly from the workshop checkout and from a
 # consumer's plugin cache alike.
-. (Join-Path $PSScriptRoot '..\..\scripts\lib\check-report-lib.ps1')
+. (Join-Path $PSScriptRoot '../../scripts/lib/check-report-lib.ps1')
 
 # This script tracks created/kept/proposed (not error/info signals, and always exits 0 -- drift is
 # the expected input here, not a failure), so it deliberately keeps its own non-counting
@@ -96,10 +96,10 @@ function Write-Failure ([string]$Msg) { Write-Host "  [ERROR] $Msg" -ForegroundC
 function Resolve-CheckScript {
     if ($CheckScriptOverride) { return $CheckScriptOverride }
     if ($env:CLAUDE_PLUGIN_ROOT) {
-        $c = Join-Path $env:CLAUDE_PLUGIN_ROOT 'scripts\sync\check-roster-sync.ps1'
+        $c = Join-Path $env:CLAUDE_PLUGIN_ROOT 'scripts/sync/check-roster-sync.ps1'
         if (Test-Path -LiteralPath $c -PathType Leaf) { return $c }
     }
-    $mirror = Join-Path $PSScriptRoot '..\..\scripts\sync\check-roster-sync.ps1'
+    $mirror = Join-Path $PSScriptRoot '../../scripts/sync/check-roster-sync.ps1'
     if (Test-Path -LiteralPath $mirror -PathType Leaf) { return (Resolve-Path -LiteralPath $mirror).Path }
     return $null
 }
@@ -260,7 +260,7 @@ foreach ($e in $missingLens) {
     $pi = Split-PluginId -PluginId $e.PluginId
     if ($null -eq $pi) { Write-Failure "skipping lens for '$id' -- invalid plugin id '$($e.PluginId)'."; continue }
 
-    $dest = Join-Path $repoRoot ".claude\plugins\claude-specialists\$($pi.Name)\$id-extension.md"
+    $dest = Join-Path $repoRoot ".claude/plugins/claude-specialists/$($pi.Name)/$id-extension.md"
     if (Test-Path -LiteralPath $dest -PathType Leaf) {
         Write-Info "lens $id-extension.md already exists -- left untouched (additive only)."
         $script:kept++
@@ -280,7 +280,7 @@ foreach ($e in $missingLens) {
 # propose a table row; if it contains list bullets, propose a list line; otherwise default to a table
 # row. Read the roster path via repo-config's Get-RosterPath (default CLAUDE.md), same as the check.
 $rosterRel = 'CLAUDE.md'
-$configPath = Join-Path $repoRoot 'scripts\repo-config.ps1'
+$configPath = Join-Path $repoRoot 'scripts/repo-config.ps1'
 if (Test-Path -LiteralPath $configPath -PathType Leaf) {
     . $configPath
     if (Get-Command Get-RosterPath -ErrorAction SilentlyContinue) { $rosterRel = Get-RosterPath }
@@ -312,7 +312,8 @@ foreach ($e in $missingRoster) {
         }
     }
     if (-not $desc) { $desc = '(add a short description)' }
-    # Short-form description: first sentence, capped, so a proposed row stays one line.
+    # Short-form description: first sentence, capped at 160 chars -- a readability cap (not a hard
+    # limit) that keeps the proposed table/list row on one line for the human to paste.
     $short = $desc
     $dotIdx = $short.IndexOf('. ')
     if ($dotIdx -gt 0) { $short = $short.Substring(0, $dotIdx + 1) }
