@@ -4,6 +4,82 @@ Consumer-facing history of this plugin: per release, the changes that touched th
 Automatically appended by `cut-release.ps1` of the marketplace repo (davekjohns-workshop); the full
 workshop history lives there in `CHANGELOG.md` and `releases/`.
 
+## v2.0.2 — 2026-07-23
+
+### Maintenance
+
+#### #157 · Skill/script hygiene: fold-changelog invocation, forward-slash paths, magic-number comment · Chore · 2026-07-23
+
+Applies the three nice-to-haves from Sylvester's own skill audit. `fold-changelog`'s `SKILL.md`
+(`claude-code-plugins/claude-specialists/specialists/skills/fold-changelog/SKILL.md`) gets
+`disable-model-invocation: true` in its frontmatter, mirroring the `open-pr` pattern from PR #155:
+folding commits directly to `main` (the fold exception), and Rendall's own manual already documents
+it as a direct `fold-changelog-entry.ps1` call, never a Skill-tool invocation -- so the flag closes
+the autonomous-invocation surface without touching the actual fold mechanism.
+
+The bundled scripts `specialists-init/bootstrap.ps1` and `sync-roster/sync-roster.ps1` get their
+backslash path literals (`Join-Path` arguments, the script-scaffold `Rel` table, one VUL-IN comment
+example) replaced with forward slashes, so a path stays valid if a consumer ever runs these on
+non-Windows pwsh. Regex/string-parsing logic that relies on backslash (segment splitting, the
+`@-import` normalization) is left untouched, as is the one Windows-style path in the `.EXAMPLE` doc
+comment (a user-typed CLI argument, not a script path literal).
+
+`sync-roster.ps1`'s 160-character cap on a proposed roster description now carries an inline
+comment explaining the number: it keeps the proposed table/list row on one line for the human to
+paste. No behavior change.
+
+Verified: `check-plugin-integrity.ps1` stays green (0 errors), and both `bootstrap-drift.tests.ps1`
+and `sync-roster.tests.ps1` (90 asserts, including the git-remote-derivation and idempotency cases
+most sensitive to path changes) pass unchanged, alongside the shared-script/open-pr/fold-changelog
+suites (104 asserts).
+
+[PR #157](https://github.com/DaveKJohn/davekjohns-workshop/pull/157)
+
+---
+
+#### #155 · Harden open-pr invocation control and fix sync-roster description person · Chore · 2026-07-23
+
+Applies the two must-fixes from Sylvester's own skill audit. `open-pr`'s `SKILL.md`
+(`claude-code-plugins/claude-specialists/specialists/skills/open-pr/SKILL.md`) gets
+`disable-model-invocation: true` in its frontmatter, removing the autonomous Skill-tool invocation
+surface in support of the constitution rule that a PR is only opened on Dave's explicit word — the
+same pattern `start-task` already uses in the Shopify family. Note this only closes the Skill-tool
+path; a direct Bash call to `scripts/release/open-pr.ps1` or the plugin mirror is not gated by this
+field, so the actual guarantee remains the CLAUDE.md constitution rule plus branch discipline.
+
+`sync-roster`'s `SKILL.md`
+(`claude-code-plugins/claude-specialists/specialists/skills/sync-roster/SKILL.md`) gets its
+description rewritten from second person ("for you to paste", "you want ... done for you") to third
+person, same content, matching the style of every other skill description. Verified: the lint gate
+(`check-plugin-integrity.ps1`) accepts the new field with no findings, and neither description is
+duplicated elsewhere in the repo (plugin.json, generated mirrors, or drift-lint fixtures).
+
+[PR #155](https://github.com/DaveKJohn/davekjohns-workshop/pull/155)
+
+---
+
+#### #154 · Flatten release notes into per-major folders · Chore · 2026-07-23
+
+Flattens the release-notes layout from per-minor folders
+(`releases/development/<X.Y>/<X.Y.Z>.md`) to one folder per major
+(`releases/development/<X>.x/<X.Y.Z>.md`) — so all 1.x notes now live in `1.x/` and all 2.x notes
+in `2.x/`, matching the per-major grouping already applied to the overview table (#152). The 27
+existing 1.x notes and the two 2.x notes were moved via `git mv` (renames preserved); the empty
+minor folders are gone.
+
+Because the depth is unchanged (a single `<X>.x` folder replaces the single `<X.Y>` folder), the
+root-relative links inside the notes (`../../../`) keep resolving — no note body was touched.
+Updated: `cut-release.ps1` + `release-lib.ps1` now derive `<major>.x` (was `<major>.<minor>`); the
+29 note-path links in `releases/README.md` + the `## Releases` block in `CHANGELOG.md`, the four
+per-plugin `RELEASE.md` cards, the descriptive `<X.Y>` references in `README.md`/`05-06-extension.md`,
+and the `release-lib` test's expected paths. Git tags (`vX.Y.Z`) are unaffected — they point to
+commits, not paths. Archived note bodies keep their original (historical, sometimes Dutch) path
+mentions on purpose. Lint gate green (dead-link scan clean); all test suites pass.
+
+[PR #154](https://github.com/DaveKJohn/davekjohns-workshop/pull/154)
+
+---
+
 ## v2.0.0 — 2026-07-23
 
 ### Features
