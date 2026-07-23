@@ -1,0 +1,28 @@
+# Line-ending normalization for this repo (Windows-authored, LF in Git).
+#
+# Baseline: treat everything Git detects as text as "text", normalize it to LF
+# on checkin and keep it LF on checkout too (eol=lf) -- so the repo content is
+# stored consistently regardless of which OS/editor made the change, and the
+# recurring "LF will be replaced by CRLF" warning on commit goes away.
+* text=auto eol=lf
+
+# Explicit text types this repo actually contains (belt-and-suspenders on top
+# of the auto-detection above -- makes the intent explicit for scripts/docs).
+*.ps1  text eol=lf
+*.md   text eol=lf
+*.json text eol=lf
+*.jsonc text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.txt  text eol=lf
+
+# Known binary types -- never touched by line-ending normalization, even if
+# one shows up later (none currently tracked in this repo).
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
