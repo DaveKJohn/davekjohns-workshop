@@ -6,6 +6,7 @@ description: >-
   to duplicate this script locally. Runs the repo's own lint and test gate first; on an error,
   nothing is pushed and no PR is opened. Use this when a branch is ready and the PR may be
   opened (on explicit request).
+disable-model-invocation: true
 ---
 
 # open-pr — the shared PR opener for consumers

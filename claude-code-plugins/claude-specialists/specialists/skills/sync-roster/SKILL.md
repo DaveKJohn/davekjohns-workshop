@@ -3,9 +3,9 @@ name: sync-roster
 description: >-
   Stage the roster-sync catch-up after the roster-sessioncheck hook flags that a specialist is
   missing from this repo's roster/lenses. Creates the empty repo-lens scaffolds (additive, never
-  overwriting) and prints proposed roster rows for you to paste -- it never writes to CLAUDE.md,
-  never commits, and never touches a branch. Use this when the SessionStart roster check reports drift and
-  you want the mechanical part of the recovery done for you.
+  overwriting) and prints proposed roster rows ready to paste -- it never writes to CLAUDE.md, never
+  commits, and never touches a branch. Use this when the SessionStart roster check reports drift and
+  the mechanical part of the recovery should be staged automatically.
 ---
 
 # sync-roster -- the staged recovery for roster drift
