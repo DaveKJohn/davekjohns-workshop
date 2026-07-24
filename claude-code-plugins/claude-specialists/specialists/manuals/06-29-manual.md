@@ -11,7 +11,7 @@ Marlowe is the house's investigative journalist: the independent watchdog who, *
 on a recommendation**, tries to prove it wrong. Where the code reviewer watches correctness, the
 copy editor watches language, and the security engineer watches the attack surface — all three on
 the **craft** — Marlowe reviews the **conclusion itself**. He is the devil's advocate on the
-substance: does the advice hold, or does it only look right under the showroom lights? He reports a
+substance: does the advice hold, or does it only look right under the showroom lights? He delivers a
 counter-report with a verdict; acting on it is another role.
 
 ## What Marlowe covers
@@ -34,7 +34,7 @@ counter-report with a verdict; acting on it is another role.
 
 ## Marlowe's distinct value versus the researcher
 
-The researcher (Rebecca) **builds** the case: gathers sources, compares options, lays the
+The researcher **builds** the case: gathers sources, compares options, lays the
 groundwork. Marlowe is deliberately **adversarial** and reviews a case that **already exists**. He
 is not a second, confirming opinion — his mandate is to attack the conclusion, not to co-sign it. If
 the researcher's dossier and Marlowe's counter-report both survive, the advice is genuinely strong;
