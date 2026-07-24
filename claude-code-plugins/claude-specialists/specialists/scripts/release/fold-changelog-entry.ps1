@@ -2,6 +2,11 @@
 Folds one or more changelog entry files (<branch-name>.md in the repo root) into the
 ## Pull Requests section of CHANGELOG.md, and then removes the entry files.
 
+In fold-all mode (no -Branch) only files that are actually changelog entries are folded: an entry
+opens with the '### <title> <midDot> <type> <midDot> <date>' H3 heading, so repo-root meta docs
+(CONTRIBUTING.md, SECURITY.md, ...) that open with an H1 are left untouched. -Branch mode targets
+exactly the named entry and is unaffected.
+
 The entry file is already compact (heading `### title - type - date` with middot separation,
 followed by the description) -- matching the CHANGELOG format. When folding, fold only adds
 '#NN - ' at the front of the title and, as the last line, the link `[PR #NN](url)`. The PR number +
@@ -87,13 +92,33 @@ function Write-Utf8NoBom([string]$Path, [string]$Content) {
     [System.IO.File]::WriteAllText($Path, $Content, $Utf8NoBom)
 }
 
+function Test-IsChangelogEntryFile {
+    # A changelog entry file (created by new-changelog-entry.ps1) always opens with the compact
+    # entry heading '### <title> <midDot> <type> <midDot> <date>' -- an H3. Repo-root meta docs
+    # (CONTRIBUTING.md, SECURITY.md, a future CODE_OF_CONDUCT.md, ...) open with an H1 ('# ...').
+    # Fold-all mode keys off this structural signature so it only ever folds a genuine entry, never
+    # whatever other *.md happens to sit in the repo root. Deliberately independent of the branch-
+    # prefix table: consumer-extended prefixes (Shopify's style/, liquid/, ...) still fold, since an
+    # entry from any prefix is written in this same format. The denylist below stays as a cheap
+    # first filter; this is the actual gate.
+    param([Parameter(Mandatory = $true)][string]$Path)
+    foreach ($line in [System.IO.File]::ReadAllLines($Path, [System.Text.Encoding]::UTF8)) {
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        return ($line -match '^###\s')
+    }
+    return $false
+}
+
 if ($Branch) {
+    # Explicit target: the caller named the branch, so trust it and fold exactly that entry file.
     $entryFiles = @(($Branch -replace '/', '-') + ".md")
 }
 else {
+    # Fold-all: never fold a file that is not an actual changelog entry (structural gate above).
     $reserved = @("CHANGELOG.md", "CLAUDE.md", "README.md")
     $entryFiles = Get-ChildItem -Path $repoRoot -Filter "*.md" -File |
         Where-Object { $reserved -notcontains $_.Name } |
+        Where-Object { Test-IsChangelogEntryFile -Path $_.FullName } |
         Select-Object -ExpandProperty Name
 }
 
