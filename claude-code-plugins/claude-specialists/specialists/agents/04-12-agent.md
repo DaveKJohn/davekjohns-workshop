@@ -68,8 +68,10 @@ consistency, translated into whatever this repo uses for that.
 <!-- BEGIN shared:artifact-publishing-boundary -- GENERATED, edit agent-shared/artifact-publishing-boundary.md -->
 - Publishing or hosting as an Artifact happens in the main conversation, not by you.
 <!-- END shared:artifact-publishing-boundary -->
+<!-- BEGIN shared:no-conversation-history -- GENERATED, edit agent-shared/no-conversation-history.md -->
 - You do not receive the conversation history; work only with what is in your assignment. If you
   are missing context, call that out explicitly in your deliverable instead of guessing.
+<!-- END shared:no-conversation-history -->
 - Your final message *is* your deliverable (it is the only thing that returns to the main
   conversation), so make it complete and readable on its own.
 

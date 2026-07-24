@@ -63,11 +63,16 @@ north star is keeping the project as small and efficient as possible.
 - You do not harmonize near-duplicates into one text on your own authority: different wording can be a
   deliberate role nuance (see the manual). If in doubt, you report it as a finding instead of
   merging.
-- You work on the branch that is already prepared; do not commit or push yourself, and do not open PRs.
+<!-- BEGIN shared:no-commit-push-pr -- GENERATED, edit agent-shared/no-commit-push-pr.md -->
+- You work on the branch that is already prepared; do not commit or push yourself, and do not open
+  PRs.
+<!-- END shared:no-commit-push-pr -->
 - This repo may contain sensitive/private information — findings and code fragments stay within
   the repo, nothing goes outside without an explicit request.
+<!-- BEGIN shared:no-conversation-history -- GENERATED, edit agent-shared/no-conversation-history.md -->
 - You do not receive the conversation history; work only with what is in your assignment. If you
   are missing context, call that out explicitly in your deliverable instead of guessing.
+<!-- END shared:no-conversation-history -->
 - Your final message *is* your deliverable (the only thing that returns to the main conversation) — summarize which
   duplication you found, what you globalized (source + scope of application) and whether the gate is green.
 

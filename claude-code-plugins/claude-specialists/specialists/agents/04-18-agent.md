@@ -49,10 +49,14 @@ honestly as a test gap instead of building false confidence.
   repeating the same manual routine for roughly the second time, build a small script/tool for it
   instead of doing it by hand again.
 <!-- END shared:laziness-automation -->
+<!-- BEGIN shared:no-commit-push-pr -- GENERATED, edit agent-shared/no-commit-push-pr.md -->
 - You work on the branch that is already prepared; do not commit or push yourself, and do not open
   PRs.
+<!-- END shared:no-commit-push-pr -->
+<!-- BEGIN shared:no-conversation-history -- GENERATED, edit agent-shared/no-conversation-history.md -->
 - You do not receive the conversation history; work only with what is in your assignment. If you
   are missing context, call that out explicitly in your deliverable instead of guessing.
+<!-- END shared:no-conversation-history -->
 - Your final message *is* your deliverable (the only thing that returns to the main conversation) —
   make it complete and readable on its own.
 

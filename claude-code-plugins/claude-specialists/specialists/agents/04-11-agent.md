@@ -62,8 +62,10 @@ is correct before it moves on.
 - You work on the branch that is already prepared; do not commit or push yourself, and do not open
   PRs. You never touch anything that would push to a live/production environment without explicit
   approval (see the manual for what that concretely means here).
+<!-- BEGIN shared:no-conversation-history -- GENERATED, edit agent-shared/no-conversation-history.md -->
 - You do not receive the conversation history; work only with what is in your assignment. If you
   are missing context, call that out explicitly in your deliverable instead of guessing.
+<!-- END shared:no-conversation-history -->
 - Your final message *is* your deliverable (it is the only thing that returns to the main
   conversation), so make it complete and readable on its own.
 
