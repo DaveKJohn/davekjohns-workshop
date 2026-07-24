@@ -55,7 +55,7 @@ lens in `.claude/plugins/claude-specialists/specialists/<group>-<id>-extension.m
 its plugin, and every consuming repo keeps only its repo lens in `.claude/plugins/claude-specialists/specialists/`:
 
 - **`specialists` (group 1)** → `specialists/manuals/` (Paula, Rebecca, Vera, Gwen, Cody, Tycho,
-  Sylvester, Tessa, Edith, Victor, Sebastian, Ravi).
+  Sylvester, Tessa, Edith, Victor, Sebastian, Ravi, Nolan, Marlowe).
 - **`specialists-lifehub` (group 2)** → `specialists-lifehub/manuals/` (Astrid, Fiona, Hugo, Ian, Onyx).
 - **`specialists-shopify` (group 3)** → `specialists-shopify/manuals/` (Liam, Sandra, Steven).
 - **`specialists-ecomm` (group 4)** → `specialists-ecomm/manuals/` (Sergio, Craig, Sean).

@@ -78,6 +78,7 @@ Before a specialist starts, Chris guards these davekjohns-workshop-specific gate
 | Security review before a merge: secrets/PII in the diff, injection surface of plugin content, audits of guardrails/permissions/hooks | **Sebastian** #23 | [`06-23-extension.md`](06-23-extension.md) |
 | Duplication of behavioral rules (boundaries/working methods) across agent defs/personas; promoting a rule that lives in ≥2 places to a single shared source | **Ravi** #24 | [`06-24-extension.md`](06-24-extension.md) |
 | Token-/context-budget cost, loading strategy (automatic vs. on-demand), the size of agent defs/manuals/personas | **Nolan** #25 | [`06-25-extension.md`](06-25-extension.md) |
+| A recommendation/conclusion about to be acted on: red-teaming advice, hunting the fine print/the catch, testing assumptions, marketing-vs-reality on an option or research dossier | **Marlowe** #29 | [`06-29-extension.md`](06-29-extension.md) |
 
 The entire `specialists` plugin (group 1) is enabled, so Paula #09, Vera #11, Gwen #12, and Cody #13
 are also invocable as `@specialists:<name>` — but they rarely have work in this repo and therefore
@@ -109,9 +110,10 @@ Typical chains:
   diff touches agent defs, manuals, personas, skills, hooks, scripts, or manifests) + Ravi
   (duplication check: newly introduced verbatim-shared behavioral rules — only relevant if the diff
   touches agent defs or personas) + Nolan (token/context-cost check — only relevant if the diff
-  measurably touches the loading strategy or the size of agent defs/manuals/personas) → Derek (PR
-  on Dave's word). Victor, Edith, Sebastian, Ravi, and Nolan work in parallel on the same diff, not in
-  sequence.
+  measurably touches the loading strategy or the size of agent defs/manuals/personas) + Marlowe
+  (conclusion red-team — only relevant if the diff carries a recommendation someone is about to act
+  on) → Derek (PR on Dave's word). Victor, Edith, Sebastian, Ravi, Nolan, and Marlowe work in
+  parallel on the same diff, not in sequence.
 - **Globalizing duplication:** Ravi (tracks down the duplicated behavioral rule and promotes it to
   a single shared source using the existing `agent-shared/` mechanism, for the circle that shares the
   rule) → Sylvester (only if new machinery is needed: extending the generator/lint, e.g. to

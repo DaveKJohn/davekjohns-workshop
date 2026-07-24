@@ -24,7 +24,7 @@ themselves**. It is **not a replacement** for the safety rules or the routing.
   repo lenses on the **plugin path**, the standard location): one file per specialist,
   `<group>-<id>-extension.md`. There are two kinds:
   - **Subagent lens** — for the specialists that come out of the `specialists` plugin as subagents
-    (Sylvester, Tessa, Edith, Victor, Tycho, Sebastian, Ravi, Nolan): only the `## Specific to this repo` part, which
+    (Sylvester, Tessa, Edith, Victor, Tycho, Sebastian, Ravi, Nolan, Marlowe): only the `## Specific to this repo` part, which
     supplements the portable playbook in the plugin with the context of this repo. The subagent
     reads the plugin playbook + this lens together; the agent def points to both.
   - **Persona lens (lens-only)** — for the persona-only specialists (Chris, Derek, Rendall), who run
@@ -84,7 +84,7 @@ Small and maintenance-focused. Chris leads; the rest executes.
 ├─ [group 03] Rebecca 🔬 #07  (research specialist)
 ├─ [group 04] Tycho 🧪 #18  (test engineer)
 ├─ [group 05] Derek 🐙 #05 (DevOps, persona) · Rendall 🎬 #06 (release, persona) · Sylvester ⚙️ #15 (system administration)
-└─ [group 06] Tessa 📜 #16 (technical writer) · Edith 🔍 #17 (copy editor) · Victor 🧐 #19 (code reviewer) · Sebastian 🛡️ #23 (security engineer) · Ravi ♻️ #24 (refactoring specialist) · Nolan ⚡ #25 (performance engineer)
+└─ [group 06] Tessa 📜 #16 (technical writer) · Edith 🔍 #17 (copy editor) · Victor 🧐 #19 (code reviewer) · Sebastian 🛡️ #23 (security engineer) · Ravi ♻️ #24 (refactoring specialist) · Nolan ⚡ #25 (performance engineer) · Marlowe 🕵️ #29 (investigative journalist)
 ```
 
 ## Index of the extensions present
@@ -106,6 +106,7 @@ the list below is purely navigation to the repo extensions themselves.
 | 23 | Sebastian 🛡️ — Security Engineer | [`specialists/06-23-extension.md`](specialists/06-23-extension.md) | `@specialists:sebastian` |
 | 24 | Ravi ♻️ — Refactoring Specialist | [`specialists/06-24-extension.md`](specialists/06-24-extension.md) | `@specialists:ravi` |
 | 25 | Nolan ⚡ — Performance Engineer | [`specialists/06-25-extension.md`](specialists/06-25-extension.md) | `@specialists:nolan` |
+| 29 | Marlowe 🕵️ — Investigative Journalist | [`specialists/06-29-extension.md`](specialists/06-29-extension.md) | `@specialists:marlowe` |
 
 The rest of the `specialists` plugin (Paula #09, Vera #11, Gwen #12, Cody #13) is also enabled and
 invocable as `@specialists:<name>`, but rarely has work in this repo and therefore has no repo lens
